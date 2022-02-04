@@ -9,7 +9,7 @@ import { init } from '@orcaprotocol/sdk';
 
 // Any ethers provider works.
 // 1 for mainnet, 4 for rinkeby.
-init({ provider: ethers.getDefaultProvider(), network: 1 })
+init({ provider: ethers.getDefaultProvider(), network: 1 });
 ```
 
 Once you init the SDK, you can call `getPod()` or `getUserPods()` anywhere to fetch Pod objects.
