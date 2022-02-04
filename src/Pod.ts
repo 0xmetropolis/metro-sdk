@@ -2,18 +2,25 @@ import { ethers } from 'ethers';
 import { config, getPodFetchersByAddress, getPodFetchersById } from './';
 import { getDeployment } from '@orcaprotocol/contracts';
 import axios from 'axios';
+import ENS from '@ensdomains/ensjs';
 
 export class Pod {
+
+    /**
+     * 
+     * @param identifier Can be either podId or safe address
+     * @returns 
+     */
     constructor(identifier: string | number) {
       const { network } = config;
       // This is a kind of hacky way to go about an async constructor.
       // It works, typescript just doesn't like it.
       // @ts-ignore
       return (async () => {
-        let Controller;
-        let podId;
-        let Name;
-        let safe;
+        let podId: number;
+        let safe: string;
+        let Controller: ethers.Contract;
+        let Name: ENS.Name;
         try {
           let fetchers;
           if (typeof identifier === 'string') {
@@ -21,27 +28,29 @@ export class Pod {
           } else if (typeof identifier === 'number') {
             fetchers = await getPodFetchersById(identifier);
           }
-          Controller = fetchers.Controller;
           podId = fetchers.podId;
-          Name = fetchers.Name;
           safe = fetchers.safe;
+          Controller = fetchers.Controller;
+          Name = fetchers.Name;
         } catch (err) {
           return null;
         }
-        this.admin = await Controller.podAdmin(podId);
+
+        const fetchedAdmin = await Controller.podAdmin(podId);
+        this.admin = fetchedAdmin === ethers.constants.AddressZero ? null : fetchedAdmin;
         this.id = podId;
         this.safe = safe;
         this.ensName = Name.name;
 
         const baseUrl = `https://nft-wtk219-orca-protocol.vercel.app${network === 4 ? "/assets/testnet/" : "/assets/"}`;
-        const image = `${baseUrl}${parseInt(podId, 10).toString(16).padStart(64, "0")}-image-no-text`;
+        const image = `${baseUrl}${podId.toString(16).padStart(64, "0")}-image-no-text`;
         this.image = image;
         return this;
       })();
     }
     
     // These values will be fetched in the constructor
-    id: string;
+    id: number;
     safe: string;
     ensName: string;
     admin: string;

@@ -32,6 +32,18 @@ test('getPod should return null if the given address is not a pod', async () => 
   expect(pod).toBeNull();
 });
 
+test('pod.admin should be null if there is none', async () => {
+  jest.spyOn(index, 'getPodFetchersByAddress').mockResolvedValueOnce({
+    // Default value is AddressZero
+    Controller: { podAdmin: jest.fn().mockResolvedValue(ethers.constants.AddressZero)},
+    safe: orcanautAddress,
+    podId: orcanautPod.id,
+    Name: { name: orcanautPod.ensName },
+  });
+  const pod = await getPod(orcanautAddress);
+  expect(pod.admin).toBeNull();
+});
+
 test('getPod should be able to fetch users via async call', async () => {
   jest.spyOn(index, 'getPodFetchersByAddress').mockResolvedValueOnce({
     Controller: { podAdmin: jest.fn().mockResolvedValue(orcanautPod.admin)},
