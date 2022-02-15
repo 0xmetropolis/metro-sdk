@@ -26,4 +26,4 @@ async function getUserPods(address: string): Promise<Pod[]> {
   return Promise.all(unsortedPods.map(async pod => new Pod(pod)));
 }
 
-export { init, getPod, getUserPods };
+export { init, config, getPod, getUserPods };
