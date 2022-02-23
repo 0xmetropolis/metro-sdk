@@ -32,7 +32,7 @@ describe('user memberships', () => {
     const [pod] = await getUserPods(userAddress);
     expect(pod.id).toEqual(orcaCorePod.id);
     expect(pod.safe).toEqual(orcaCorePod.safe);
-    expect(pod.image).toEqual(orcaCorePod.image);
+    expect(pod.imageUrl).toEqual(orcaCorePod.imageUrl);
     expect(pod.admin).toEqual(orcaCorePod.admin);
     expect(pod.ensName).toEqual(orcaCorePod.ensName);
   });

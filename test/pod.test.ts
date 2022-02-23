@@ -31,7 +31,7 @@ test('getPod should return a Pod object if one exists', async () => {
   const pod = await getPod(orcanautAddress);
   expect(pod.id).toEqual(orcanautPod.id);
   expect(pod.safe).toEqual(orcanautPod.safe);
-  expect(pod.image).toEqual(orcanautPod.image);
+  expect(pod.imageNoTextUrl).toEqual(orcanautPod.imageNoTextUrl);
   expect(pod.admin).toEqual(orcanautPod.admin);
   expect(pod.ensName).toEqual(orcanautPod.ensName);
 });

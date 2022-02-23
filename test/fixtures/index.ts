@@ -4,7 +4,9 @@ export const orcanautAddress = '0x97F7Dcdf56934Cf87a2d5DF860fD881FA84ad142';
 export const orcaCorePod = {
   id: 0,
   safe: '0x7bf660f3e287d2a05F46b72Ae69a048f3781Db90',
-  image:
+  imageUrl:
+    'https://nft-wtk219-orca-protocol.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000000-image',
+  imageNoTextUrl:
     'https://nft-wtk219-orca-protocol.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000000-image-no-text',
   admin: '0x4B4C43F66ec007D1dBE28f03dAC975AAB5fbb888',
   ensName: 'orca-core.pod.xyz',
@@ -13,7 +15,9 @@ export const orcaCorePod = {
 export const orcanautPod = {
   id: 1,
   safe: orcanautAddress,
-  image:
+  imageUrl:
+    'https://nft-wtk219-orca-protocol.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000001-image',
+  imageNoTextUrl:
     'https://nft-wtk219-orca-protocol.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000001-image-no-text',
   admin: '0xcABB78f39Fbeb0CdFBD3C8f30E37630EB9e7A151',
   ensName: 'orcanauts.pod.xyz',
