@@ -45,8 +45,11 @@ export default class Pod {
       const baseUrl = `https://nft-wtk219-orca-protocol.vercel.app${
         network === 4 ? '/assets/testnet/' : '/assets/'
       }`;
-      const image = `${baseUrl}${podId.toString(16).padStart(64, '0')}-image-no-text`;
-      this.image = image;
+      const imageUrl = `${baseUrl}${podId.toString(16).padStart(64, '0')}-image`;
+      const imageNoTextUrl = `${baseUrl}${podId.toString(16).padStart(64, '0')}-image-no-text`;
+
+      this.imageUrl = imageUrl;
+      this.imageNoTextUrl = imageNoTextUrl;
       return this;
     })();
   }
@@ -60,7 +63,9 @@ export default class Pod {
 
   admin: string;
 
-  image: string;
+  imageUrl: string;
+
+  imageNoTextUrl: string;
 
   // Cache for future calls.
   users?: string[];
