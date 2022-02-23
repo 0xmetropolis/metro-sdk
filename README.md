@@ -18,7 +18,9 @@ Once you init the SDK, you can call `getPod()` or `getUserPods()` anywhere to fe
 import { getPod, getUserPods } from '@orcaprotocol/sdk';
 
 // ENS names also work for the below.
-const pod = await getPod(podAddress);
+// Returns null if no such pod exists.
+const pod = await getPod('mypod.pod.xyz');
+const pod2  = await getPod('0x123456');
 const userPods = await getUserPods(userAddress);
 ```
 
@@ -34,7 +36,8 @@ const {
   safe, // Gnosis safe address, aka the Pod address
   ensName, // E.g., orcanauts.pod.xyz
   admin, // Address of pod admin
-  image, // Location of the NFT image
+  imageUrl, // Source of NFT image
+  imageNoTextUrl, // Source of NFT image without text (used for avatars)
 } = await getPod();
 ```
 
