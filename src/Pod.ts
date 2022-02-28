@@ -145,4 +145,24 @@ export default class Pod {
     await this.populateMembers();
     return this.memberPods;
   }
+
+  /**
+   * Checks if the user is the admin of the pod, and then mints a member.
+   */
+  async mintMember(newMember: string, signer: ethers.Signer) {}
+
+  /**
+   * Checks if the user is the admin of the pod, and then burns a member.
+   */
+  async burnMember(memberToBurn: string, signer: ethers.Signer) {}
+
+  /**
+   * Any member of a pod can call this
+   */
+  async proposeMintMember(newMember: string, signer: ethers.Signer) {}
+
+  /**
+   * Any member of a pod can call this
+   */
+  async proposeBurnMember(memberToBurn: string, signer: ethers.Signer) {}
 }
