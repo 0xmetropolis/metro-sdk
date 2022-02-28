@@ -18,9 +18,10 @@ Once you init the SDK, you can call `getPod()` or `getUserPods()` anywhere to fe
 import { getPod, getUserPods } from '@orcaprotocol/sdk';
 
 // ENS names also work for the below.
-// Returns null if no such pod exists.
 const pod = await getPod('mypod.pod.xyz');
-const pod2  = await getPod('0x123456');
+const pod2  = await getPod('0x123...456');
+// Returns null.
+const notAPod = await getPod('not a pod');
 const userPods = await getUserPods(userAddress);
 ```
 
@@ -41,23 +42,37 @@ const {
 } = await getPod();
 ```
 
-Users and sub-pods can be fetched with the following functions:
+Members, EOAs and member Pods can be fetched with the following functions:
 
-### getUsers()
+Note that the Pod object has `members`, `memberEOAs` and `memberPods` properties, but these properties are not populated until the relevant functions are called.
 
-Fetches the list of users from the pod, including pods, as an array of ethereum addresses.
+### getMembers()
+
+Fetches the list of all members from the pod, including pods, as an array of Ethereum addresses.
 
 ```js
 const pod = await getPod(podAddress);
-const users = await pod.getUsers();
+const members = await pod.getMembers();
 
-console.log(users[0]);
+console.log(members[0]);
+// Outputs '0x25f55d2e577a937433686a01439e5ffdffe62218';
+```
+
+### getMemberEOAs()
+
+Fetches any member EOAs (externally owned accounts). That is, any member that is not a smart contract or pod.
+
+```js
+const pod = await getPod(podAddress);
+const EOAs = await pod.getMemberEOAs();
+
+console.log(EOAs[0]);
 // Outputs '0x25f55d2e577a937433686a01439e5ffdffe62218';
 ```
 
 ### getMemberPods()
 
-Fetches Pod objects for any child pods.
+Fetches Pod objects for any member pods.
 
 ```js
 const pod = await getPod(podAddress);

@@ -40,7 +40,7 @@ describe('user memberships', () => {
   test('getUserPods should be able to async fetch users', async () => {
     jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUserPods);
     const [pod] = await getUserPods(userAddress);
-    const users = await pod.getUsers();
+    const users = await pod.getMembers();
 
     expect(users).toEqual(
       expect.arrayContaining([
