@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { ethers } from 'ethers';
 import Pod from './Pod';
 import { init, config } from './config';
 
@@ -7,6 +8,11 @@ async function getPod(address: string): Promise<Pod> {
 }
 
 async function getUserPods(address: string): Promise<Pod[]> {
+  try {
+    ethers.utils.getAddress(address);
+  } catch {
+    throw new TypeError(`Invalid address provided to getUserPods: ${address}`);
+  }
   const { data } = await axios.post(config.subgraphUrl, {
     query: `query GetUserPods($id: ID!) {
         user(id: $id) {

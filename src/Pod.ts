@@ -96,6 +96,7 @@ export default class Pod {
       variables: { id: this.id },
     });
     const { users } = data.data.pod || { users: [] };
+    // console.log('users', users);
     this.members = users.length > 0 ? users.map(user => ethers.utils.getAddress(user.user.id)) : [];
     return this.members;
   }

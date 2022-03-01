@@ -1,0 +1,41 @@
+name: Validate Code
+
+on: pull_request
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14.17.5
+
+      - name: install dependencies
+        run: |
+          npm install -g npm
+          npm ci
+        env:
+          GITHUB_TOKEN: ${{ secrets.GPR_TOKEN }} # PAT to access packages
+
+
+      - run: npm run lint
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # We just need a value here
+
+      - run: npm run test
+        env:
+          CI: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # We just need a value here
+
+      - run: npm run compile
+        env:
+          CI: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # We just need a value here
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
