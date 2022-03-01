@@ -1,7 +1,13 @@
 import axios from 'axios';
 import { ethers } from 'ethers';
 import { init, getUserPods } from '../src';
-import { orcaCorePod, userAddress, gqlGetUserPods } from './fixtures';
+import {
+  orcaCorePod,
+  userAddress,
+  gqlGetUserPods,
+  gqlGetUserPodsEmpty,
+  gqlGetMembers,
+} from './fixtures';
 
 beforeAll(async () => {
   const provider = new ethers.providers.InfuraProvider('mainnet', {
@@ -22,8 +28,13 @@ describe('user memberships', () => {
     expect(pods[2].id).toEqual(3);
   });
 
+  test('getUsersPods should throw if it receives something other than a valid eth address', async () => {
+    await expect(getUserPods('badAddress')).rejects.toThrowError('Invalid address provided');
+  });
+
   test('getUsersPods should return an empty array if a user is not part of any pods', async () => {
-    const pods = await getUserPods('badAddress');
+    jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUserPodsEmpty);
+    const pods = await getUserPods(ethers.constants.AddressZero);
     expect(pods).toEqual([]);
   });
 
@@ -39,6 +50,7 @@ describe('user memberships', () => {
 
   test('getUserPods should be able to async fetch users', async () => {
     jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUserPods);
+    jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetMembers);
     const [pod] = await getUserPods(userAddress);
     const users = await pod.getMembers();
 
