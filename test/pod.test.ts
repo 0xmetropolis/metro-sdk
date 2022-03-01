@@ -3,6 +3,7 @@ import axios from 'axios';
 import { init, getPod } from '../src';
 import { gqlGetUsers, orcanautAddress, orcanautPod } from './fixtures';
 import * as fetchers from '../src/fetchers';
+import Pod from '../src/Pod';
 
 function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
   const admin = opts?.overrideAdmin ? opts.overrideAdmin : orcanautPod.admin;
@@ -36,8 +37,12 @@ test('getPod should return a Pod object if one exists', async () => {
   expect(pod.ensName).toEqual(orcanautPod.ensName);
 });
 
+test('getPod should throw if it receives a non-address string', async () => {
+  await expect(getPod('not valid string')).rejects.toThrowError('Non-address string');
+});
+
 test('getPod should return null if the given address is not a pod', async () => {
-  const pod = await getPod('notAPod');
+  const pod = await getPod(ethers.constants.AddressZero);
   expect(pod).toBeNull();
 });
 
@@ -47,13 +52,13 @@ test('pod.admin should be null if there is none', async () => {
   expect(pod.admin).toBeNull();
 });
 
-test('getPod should be able to fetch users via async call', async () => {
+test('getPod should be able to fetch members via async call', async () => {
   mockGetPodFetchersByAddress();
   jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
 
   const pod = await getPod(orcanautAddress);
-  const users = await pod.getUsers();
-  expect(users).toEqual([
+  const members = await pod.getMembers();
+  expect(members).toEqual([
     '0x25F55d2e577a937433686A01439E5fFdffe62218',
     '0x46E69D6801d4E09360Ab62A638849D72623A2e7E',
     '0x4846162806B025Dcd0759cACF9ec6F9474274282',
@@ -84,19 +89,40 @@ test('Pod object should be able to fetch member pods via async call', async () =
   );
 });
 
-test('Pod.getUsers() should include member pods in its list', async () => {
+test('Pod.getMembers() should include member pods in its list', async () => {
   mockGetPodFetchersByAddress();
   jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
 
   // No mock on getMemberPods
   const rootPod = await getPod(orcanautAddress);
   const [artNaut, devNaut, orgNaut, govNaut] = await rootPod.getMemberPods();
-  const users = await rootPod.getUsers();
+  const members = await rootPod.getMembers();
 
   // users should contain the safe addresses of member pods
-  expect(users).toEqual(
+  expect(members).toEqual(
     expect.arrayContaining([artNaut.safe, devNaut.safe, orgNaut.safe, govNaut.safe]),
   );
+});
+
+test('Pod.getMemberEOAs() should not include pod members', async () => {
+  mockGetPodFetchersByAddress();
+  jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
+
+  const rootPod = await getPod(orcanautAddress);
+  const members = await rootPod.getMembers();
+  const EOAs = await rootPod.getMemberEOAs();
+
+  expect(members).toEqual(
+    expect.arrayContaining([
+      '0xcABB78f39Fbeb0CdFBD3C8f30E37630EB9e7A151',
+      '0xAfBb354FF03E17b1EffBaF661FFca106ba78b966',
+      '0x46E69D6801d4E09360Ab62A638849D72623A2e7E',
+      '0x4846162806B025Dcd0759cACF9ec6F9474274282',
+      '0x7B54195b743BF76c314e9dBDDf110F5a22743998',
+    ]),
+  );
+  expect(members.length).toBeGreaterThan(EOAs.length);
+  expect(EOAs.every(element => typeof element === 'string')).toBeTruthy();
 });
 
 test('Pod.getMemberPods() should not include non-pod users', async () => {
@@ -104,10 +130,21 @@ test('Pod.getMemberPods() should not include non-pod users', async () => {
   jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
 
   const rootPod = await getPod(orcanautAddress);
-  const users = await rootPod.getUsers();
+  const members = await rootPod.getMembers();
   const memberPods = await rootPod.getMemberPods();
 
   // rootPod has some users that are not pods,
   // therefore there should be more users than member pods.
-  expect(users.length).toBeGreaterThan(memberPods.length);
+  expect(members.length).toBeGreaterThan(memberPods.length);
+  expect(memberPods.every(pod => pod instanceof Pod)).toBeTruthy();
+});
+
+test('Pod.getMemberPods should also async fetch memberEOAs', async () => {
+  mockGetPodFetchersByAddress();
+  jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
+
+  const rootPod = await getPod(orcanautAddress);
+  await rootPod.getMemberPods();
+
+  expect(rootPod.memberEOAs.length > 0).toBeTruthy();
 });
