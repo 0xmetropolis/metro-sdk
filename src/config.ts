@@ -20,6 +20,15 @@ export function init({
     throw new Error('Network can only be 1 or 4 (mainnet or rinkeby)');
   }
   config.provider = provider;
+  try {
+    config.provider.getSigner();
+  } catch (err) {
+    // Workaround for signer-less providers for ens.js
+    if (err.message.includes('does not support signing')) {
+      config.provider.getSigner = () => {};
+    }
+  }
+
   config.network = network;
   if (subgraphUrl) {
     config.subgraphUrl = subgraphUrl;
