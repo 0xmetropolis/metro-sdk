@@ -19,7 +19,7 @@ export const orcanautPod = {
     'https://nft-wtk219-orca-protocol.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000001-image',
   imageNoTextUrl:
     'https://nft-wtk219-orca-protocol.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000001-image-no-text',
-  admin: '0xcABB78f39Fbeb0CdFBD3C8f30E37630EB9e7A151',
+  admin: '0x094A473985464098b59660B37162a284b5132753',
   ensName: 'orcanauts.pod.xyz',
 };
 

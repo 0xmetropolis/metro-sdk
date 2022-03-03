@@ -7,7 +7,7 @@ import Pod from '../src/Pod';
 
 function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
   const admin = opts?.overrideAdmin ? opts.overrideAdmin : orcanautPod.admin;
-  jest.spyOn(fetchers, 'getPodFetchersByAddress').mockResolvedValueOnce({
+  jest.spyOn(fetchers, 'getPodFetchersByAddressOrEns').mockResolvedValueOnce({
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     Controller: { podAdmin: jest.fn().mockResolvedValue(admin) },
@@ -34,10 +34,37 @@ test('getPod should return a Pod object if one exists', async () => {
   expect(pod.ensName).toEqual(orcanautPod.ensName);
 });
 
-test('getPod should throw if it receives a non-address string', async () => {
-  await expect(getPod('not valid string')).rejects.toThrowError('Non-address string');
+test('getPod should be able to fetch via ens name', async () => {
+  mockGetPodFetchersByAddress();
+  const pod = await getPod(orcanautPod.ensName);
+  expect(pod.id).toEqual(orcanautPod.id);
+  expect(pod.safe).toEqual(orcanautPod.safe);
+  expect(pod.imageNoTextUrl).toEqual(orcanautPod.imageNoTextUrl);
+  expect(pod.admin).toEqual(orcanautPod.admin);
+  expect(pod.ensName).toEqual(orcanautPod.ensName);
 });
 
+test('getPod should be able to fetch via pod id', async () => {
+  jest.spyOn(fetchers, 'getPodFetchersById').mockResolvedValueOnce({
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    Controller: { podAdmin: jest.fn().mockResolvedValue(orcanautPod.admin) },
+    safe: orcanautAddress,
+    podId: orcanautPod.id,
+    Name: { name: orcanautPod.ensName },
+  });
+  const pod = await getPod(orcanautPod.id);
+  expect(pod.id).toEqual(orcanautPod.id);
+  expect(pod.safe).toEqual(orcanautPod.safe);
+  expect(pod.imageNoTextUrl).toEqual(orcanautPod.imageNoTextUrl);
+  expect(pod.admin).toEqual(orcanautPod.admin);
+  expect(pod.ensName).toEqual(orcanautPod.ensName);
+});
+
+test('getPod should return null if given a value that doesnt resolve to an address', async () => {
+  const pod = await getPod('not valid string');
+  expect(pod).toBe(null);
+});
 test('getPod should return null if the given address is not a pod', async () => {
   const pod = await getPod(ethers.constants.AddressZero);
   expect(pod).toBeNull();
