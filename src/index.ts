@@ -3,8 +3,8 @@ import { ethers } from 'ethers';
 import Pod from './Pod';
 import { init, config } from './config';
 
-async function getPod(address: string | number): Promise<Pod> {
-  return new Pod(address);
+async function getPod(identifier: string | number): Promise<Pod> {
+  return new Pod(identifier);
 }
 
 async function getUserPods(address: string): Promise<Pod[]> {

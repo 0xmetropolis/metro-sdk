@@ -80,3 +80,57 @@ export const gqlGetMembers = {
     },
   },
 };
+
+export const erc20TransferTransaction = {
+  safe: '0x66703b7696845BC112BD2ee562403E6868BeA761',
+  to: '0xaFF4481D10270F50f203E0763e2597776068CBc5',
+  value: '0',
+  data: '0xa9059cbb0000000000000000000000003f4e2cfe11aa607570e0aee7ac74fbff9633fa8e0000000000000000000000000000000000000000000000004563918244f40000',
+  operation: 0,
+  gasToken: '0x0000000000000000000000000000000000000000',
+  safeTxGas: 51900,
+  baseGas: 0,
+  gasPrice: '0',
+  refundReceiver: '0x0000000000000000000000000000000000000000',
+  nonce: 5,
+  executionDate: null,
+  submissionDate: '2021-07-28T21:06:55.940821Z',
+  modified: '2021-07-28T21:06:55.957846Z',
+  blockNumber: null,
+  transactionHash: null,
+  safeTxHash: '0xa382f3f9a3fc80b8694b97906354918858b8e5c8147304ff4dc6311f95ac2b93',
+  executor: null,
+  isExecuted: false,
+  isSuccessful: null,
+  ethGasPrice: null,
+  gasUsed: null,
+  fee: null,
+  origin: null,
+  dataDecoded: {
+    method: 'transfer',
+    parameters: [
+      {
+        name: 'to',
+        type: 'address',
+        value: '0x3f4e2cFE11Aa607570E0Aee7AC74fbff9633fa8E',
+      },
+      {
+        name: 'value',
+        type: 'uint256',
+        value: '5000000000000000000',
+      },
+    ],
+  },
+  confirmationsRequired: null,
+  confirmations: [
+    {
+      owner: '0x3f4e2cFE11Aa607570E0Aee7AC74fbff9633fa8E',
+      submissionDate: '2021-07-28T21:06:55.957846Z',
+      transactionHash: null,
+      signature:
+        '0x542500ca06dccca5cf3f6764c17efb9a5f414ef1cd80d6dee8e7cc4dd981f72227b25895f74faa7962077b4c86e9cb33914a844f7a0923917244ce377c813ab41c',
+      signatureType: 'EOA',
+    },
+  ],
+  signatures: null,
+};
