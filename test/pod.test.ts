@@ -21,9 +21,6 @@ beforeAll(async () => {
   const provider = new ethers.providers.InfuraProvider('mainnet', {
     infura: '69ecf3b10bc24c6a972972666fe950c8',
   });
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  provider.getSigner = () => {};
   init({ provider, network: 1 });
 });
 
