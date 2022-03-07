@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import axios from 'axios';
 import ENS from '@ensdomains/ensjs';
 import { config } from './config';
-import { getPodFetchersByAddress, getPodFetchersById } from './fetchers';
+import { getPodFetchersByAddressOrEns, getPodFetchersById } from './fetchers';
 
 export default class Pod {
   /**
@@ -24,8 +24,7 @@ export default class Pod {
       try {
         let fetchers;
         if (typeof identifier === 'string') {
-          const checkSummedAddress = ethers.utils.getAddress(identifier);
-          fetchers = await getPodFetchersByAddress(checkSummedAddress);
+          fetchers = await getPodFetchersByAddressOrEns(identifier);
         } else if (typeof identifier === 'number') {
           fetchers = await getPodFetchersById(identifier);
         }

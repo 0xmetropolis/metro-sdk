@@ -7,7 +7,7 @@ import { config } from './config';
  * Returns Controller, ENS Name and pod ID for a given pod address.
  * @param address Pod address
  */
-export async function getPodFetchersByAddress(address: string): Promise<{
+export async function getPodFetchersByAddressOrEns(identifier: string): Promise<{
   podId: number;
   safe: string;
   Controller: ethers.Contract;
@@ -16,11 +16,23 @@ export async function getPodFetchersByAddress(address: string): Promise<{
   const { provider, network } = config;
   const ens = new ENS({ provider, ensAddress: getEnsAddress(network) });
 
-  // `name` is the literal ens name.
-  // `Name` is the interface used to perform lookups on ENS
-  const { name } = await ens.getName(address);
-  if (!name) throw new Error('Address did not have an ENS name');
-  const Name = ens.name(name);
+  let address;
+  // Name is the interface used to perform lookups on ENS
+  let Name;
+  try {
+    // Handle addresses
+    address = ethers.utils.getAddress(identifier);
+
+    // `name` is the literal ens name.
+    const { name } = await ens.getName(address);
+    if (!name) throw new Error('Address did not have an ENS name');
+    Name = ens.name(name);
+  } catch (err) {
+    // Might be ENS name instead of address
+    // If so, resolve it. The getText below will throw if it's not a valid pod.
+    Name = ens.name(identifier);
+    address = await provider.resolveName(Name.name);
+  }
 
   const podId = await Name.getText('podId');
   if (!podId) throw new Error('No podId on ENS found');
@@ -36,14 +48,17 @@ export async function getPodFetchersByAddress(address: string): Promise<{
   const controllerAddress = await MemberToken.memberController(podId);
 
   const controllerDeployment = getControllerByAddress(controllerAddress, network);
+  // console.log('controllerDeployment', controllerDeployment);
+  const Controller = new ethers.Contract(
+    controllerDeployment.address,
+    controllerDeployment.abi,
+    provider,
+  );
+  // console.log('Controller', Controller);
   return {
     podId: parseInt(podId, 10),
     safe: address,
-    Controller: new ethers.Contract(
-      controllerDeployment.address,
-      controllerDeployment.abi,
-      provider,
-    ),
+    Controller,
     Name,
   };
 }
