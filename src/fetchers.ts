@@ -20,6 +20,7 @@ export async function getPodFetchersByAddressOrEns(identifier: string): Promise<
   // Name is the interface used to perform lookups on ENS
   let Name;
   try {
+    // Handle addresses
     address = ethers.utils.getAddress(identifier);
 
     // `name` is the literal ens name.
@@ -47,14 +48,17 @@ export async function getPodFetchersByAddressOrEns(identifier: string): Promise<
   const controllerAddress = await MemberToken.memberController(podId);
 
   const controllerDeployment = getControllerByAddress(controllerAddress, network);
+  // console.log('controllerDeployment', controllerDeployment);
+  const Controller = new ethers.Contract(
+    controllerDeployment.address,
+    controllerDeployment.abi,
+    provider,
+  );
+  // console.log('Controller', Controller);
   return {
     podId: parseInt(podId, 10),
     safe: address,
-    Controller: new ethers.Contract(
-      controllerDeployment.address,
-      controllerDeployment.abi,
-      provider,
-    ),
+    Controller,
     Name,
   };
 }

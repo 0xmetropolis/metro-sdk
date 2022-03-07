@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import Pod from './Pod';
 import { init, config } from './config';
 
-async function getPod(address: string): Promise<Pod> {
+async function getPod(address: string | number): Promise<Pod> {
   return new Pod(address);
 }
 
