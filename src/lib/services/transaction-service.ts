@@ -285,7 +285,7 @@ export async function approveSafeTransaction(
 /**
  * Creates safe transaction
  * @param input.safe - Address of Gnosis safe
- * @param input.to - Address to send funds to
+ * @param input.to - Smart contract address (i.e., MemberToken)
  * @param input.value - Value to send
  * @param input.data - Transaction data
  * @param input.sender - Address that is initiating the transaction
