@@ -18,10 +18,12 @@ Once you init the SDK, you can call `getPod()` or `getUserPods()` anywhere to fe
 import { getPod, getUserPods } from '@orcaprotocol/sdk';
 
 // ENS names also work for the below.
-const pod = await getPod('mypod.pod.xyz');
-const pod2  = await getPod('0x123...456');
-// Returns null.
+const podFromEnsName = await getPod('mypod.pod.xyz');
+const podFromAddress = await getPod('0x123...456');
+const podFromId = await getPod(1);
+// Returns null
 const notAPod = await getPod('not a pod');
+
 const userPods = await getUserPods(userAddress);
 ```
 
@@ -43,8 +45,6 @@ const {
 ```
 
 Members, EOAs and member Pods can be fetched with the following functions:
-
-Note that the Pod object has `members`, `memberEOAs` and `memberPods` properties, but these properties are not populated until the relevant functions are called.
 
 ### getMembers()
 

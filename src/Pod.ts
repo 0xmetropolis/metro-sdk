@@ -3,6 +3,8 @@ import axios from 'axios';
 import ENS from '@ensdomains/ensjs';
 import { config } from './config';
 import { getPodFetchersByAddressOrEns, getPodFetchersById } from './fetchers';
+import { getContract, handleEthersError, encodeFunctionData } from './lib/utils';
+import { createSafeTransaction } from './lib/services/transaction-service';
 
 export default class Pod {
   /**
@@ -144,5 +146,112 @@ export default class Pod {
     if (this.memberPods) return this.memberPods;
     await this.populateMembers();
     return this.memberPods;
+  }
+
+  /**
+   * Checks if the user is the admin of the pod, and then mints a member.
+   */
+  async mintMember(
+    newMember: string,
+    signer: ethers.Signer,
+  ): Promise<ethers.providers.TransactionResponse> {
+    try {
+      // eslint-disable-next-line no-param-reassign
+      newMember = ethers.utils.getAddress(newMember);
+    } catch {
+      throw new TypeError(`Invalid address provided to mintMember: ${newMember}`);
+    }
+    try {
+      return getContract('MemberToken', signer).mint(newMember, this.id, ethers.constants.HashZero);
+    } catch (err) {
+      return handleEthersError(err);
+    }
+  }
+
+  /**
+   * Checks if the user is the admin of the pod, and then burns a member.
+   */
+  async burnMember(
+    memberToBurn: string,
+    signer: ethers.Signer,
+  ): Promise<ethers.providers.TransactionResponse> {
+    try {
+      // eslint-disable-next-line no-param-reassign
+      memberToBurn = ethers.utils.getAddress(memberToBurn);
+    } catch {
+      throw new TypeError(`Invalid address provided to burnMember: ${memberToBurn}`);
+    }
+    try {
+      return getContract('MemberToken', signer).burn(memberToBurn, this.id);
+    } catch (err) {
+      return handleEthersError(err);
+    }
+  }
+
+  /**
+   * Any member of a pod can call this
+   */
+  async proposeMintMember(newMember: string, signer: ethers.Signer) {
+    try {
+      // eslint-disable-next-line no-param-reassign
+      newMember = ethers.utils.getAddress(newMember);
+    } catch {
+      throw new TypeError(`Invalid address provided to proposeMintMember: ${newMember}`);
+    }
+    const data = encodeFunctionData('MemberToken', 'mint', [
+      ethers.utils.getAddress(newMember),
+      this.id,
+      ethers.constants.HashZero,
+    ]);
+
+    const { address: memberTokenAddress } = getContract('MemberToken', signer);
+    const memberAddress = await signer.getAddress();
+    try {
+      await createSafeTransaction(
+        {
+          sender: memberAddress,
+          safe: this.safe,
+          to: memberTokenAddress,
+          data,
+        },
+        signer,
+      );
+    } catch (err) {
+      throw new Error(err);
+    }
+  }
+
+  /**
+   * Any member of a pod can call this
+   */
+  async proposeBurnMember(memberToBurn: string, signer: ethers.Signer) {
+    try {
+      // eslint-disable-next-line no-param-reassign
+      memberToBurn = ethers.utils.getAddress(memberToBurn);
+    } catch {
+      throw new TypeError(`Invalid address provided to proposeMintMember: ${memberToBurn}`);
+    }
+
+    const data = encodeFunctionData('MemberToken', 'burn', [
+      ethers.utils.getAddress(memberToBurn),
+      this.id,
+    ]);
+
+    const { address: memberTokenAddress } = getContract('MemberToken', signer);
+    const memberAddress = await signer.getAddress();
+
+    try {
+      await createSafeTransaction(
+        {
+          sender: memberAddress,
+          safe: this.safe,
+          to: memberTokenAddress,
+          data,
+        },
+        signer,
+      );
+    } catch (err) {
+      throw new Error(err);
+    }
   }
 }
