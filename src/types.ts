@@ -1,6 +1,6 @@
 import type Pod from './Pod';
 
-export interface Proposal {
+interface Proposal {
   nonce: number;
   title: string;
   state: string;
@@ -9,3 +9,5 @@ export interface Proposal {
   type: string;
   pod: Pod;
 }
+
+export { Proposal, Pod };
