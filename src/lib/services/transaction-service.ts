@@ -7,7 +7,6 @@ import { signMessage } from '../utils';
 
 // used to checksum addresses
 const { getAddress } = ethers.utils;
-const { gnosisUrl } = config;
 
 const GnosisSafe = getSafeSingletonDeployment({ version: process.env.GNOSIS_SAFE_VERSION });
 
@@ -138,7 +137,7 @@ export async function populateDataDecoded(
  */
 export async function getSafeInfo(address: string): Promise<Safe> {
   // Transaction-service expects a checksum address, but graphql does not checksum its addresses
-  const result = await axios.get(`${gnosisUrl}/safes/${getAddress(address)}`);
+  const result = await axios.get(`${config.gnosisUrl}/safes/${getAddress(address)}`);
   return result.data;
 }
 
@@ -149,7 +148,7 @@ export async function getSafeInfo(address: string): Promise<Safe> {
  * @returns - Gas
  */
 export async function getGasEstimation(transaction: SafeTransaction): Promise<number> {
-  const url = `${gnosisUrl}/safes/${getAddress(
+  const url = `${config.gnosisUrl}/safes/${getAddress(
     transaction.safe,
   )}/multisig-transactions/estimations/`;
   const data = {
@@ -176,7 +175,7 @@ export async function getSafeTxHash(transaction: SafeTransaction): Promise<strin
     throw new Error('Unexpected contractTransactionHash at getContractTransactionHash');
 
   let contractTransactionHash: string;
-  const url = `${gnosisUrl}/safes/${getAddress(transaction.safe)}/multisig-transactions/`;
+  const url = `${config.gnosisUrl}/safes/${getAddress(transaction.safe)}/multisig-transactions/`;
 
   try {
     // Sending the transaction service a made up transaction hash causes it to
@@ -212,7 +211,7 @@ export async function getSafeTxHash(transaction: SafeTransaction): Promise<strin
 export async function submitSafeTransactionToService(
   transaction: SafeTransaction,
 ): Promise<SafeTransaction> {
-  const url = `${gnosisUrl}/safes/${getAddress(transaction.safe)}/multisig-transactions/`;
+  const url = `${config.gnosisUrl}/safes/${getAddress(transaction.safe)}/multisig-transactions/`;
   let result;
   try {
     result = await axios.post(url, {
@@ -238,7 +237,7 @@ export function addConfirmationToSafeTransaction(
   contractTransactionHash: string,
   signedMessage: string,
 ) {
-  const url = `${gnosisUrl}/multisig-transactions/${contractTransactionHash}/confirmations/`;
+  const url = `${config.gnosisUrl}/multisig-transactions/${contractTransactionHash}/confirmations/`;
   return axios.post(url, { signature: signedMessage });
 }
 
@@ -251,7 +250,7 @@ export function addConfirmationToSafeTransaction(
 export async function getSafeTransactionByHash(
   contractTransactionHash: string,
 ): Promise<SafeTransaction> {
-  const url = `${gnosisUrl}/multisig-transactions/${contractTransactionHash}`;
+  const url = `${config.gnosisUrl}/multisig-transactions/${contractTransactionHash}`;
   const result = await axios.get(url);
   return result.data;
 }
