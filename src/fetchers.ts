@@ -46,15 +46,12 @@ export async function getPodFetchersByAddressOrEns(identifier: string): Promise<
   );
 
   const controllerAddress = await MemberToken.memberController(podId);
-
   const controllerDeployment = getControllerByAddress(controllerAddress, network);
-  // console.log('controllerDeployment', controllerDeployment);
   const Controller = new ethers.Contract(
     controllerDeployment.address,
     controllerDeployment.abi,
     provider,
   );
-  // console.log('Controller', Controller);
   return {
     podId: parseInt(podId, 10),
     safe: address,
