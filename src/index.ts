@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { ethers } from 'ethers';
 import Pod from './Pod';
+import { Pod as PodType, Proposal } from './types';
 import { init, config } from './config';
 
 async function getPod(identifier: string | number): Promise<Pod> {
@@ -32,4 +33,4 @@ async function getUserPods(address: string): Promise<Pod[]> {
   return Promise.all(unsortedPods.map(async pod => new Pod(pod)));
 }
 
-export { init, config, getPod, getUserPods };
+export { init, config, getPod, getUserPods, PodType as Pod, Proposal };
