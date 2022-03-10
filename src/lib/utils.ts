@@ -1,18 +1,12 @@
 import { ethers } from 'ethers';
 import { getDeployment } from '@orcaprotocol/contracts';
 // These fetch the rinkeby deployments, but we just need the ABIs so it's irrelevant where we're fetching from.
-import Controller from '@orcaprotocol/contracts/deployments/rinkeby/Controller.json';
-import ControllerV1 from '@orcaprotocol/contracts/deployments/rinkeby/ControllerV1.json';
 import MemberToken from '@orcaprotocol/contracts/deployments/rinkeby/MemberToken.json';
-import IController from '@orcaprotocol/contracts/artifacts/contracts/interfaces/IController.sol/IController.json';
 import { config } from '../config';
 
 // Mapping contractNames to JSONs
 const contractJsons = {
   MemberToken,
-  Controller,
-  ControllerV1,
-  IController,
 };
 
 /**
