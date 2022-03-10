@@ -42,7 +42,7 @@ export function init({
     config.subgraphUrl =
       network === 1
         ? 'https://gateway.thegraph.com/api/50ba04ffb3711883f1fd80df4f93242b/subgraphs/id/0x3f4e2cfe11aa607570e0aee7ac74fbff9633fa8e-0'
-        : 'https://api.studio.thegraph.com/query/3720/orca-1/v0.1.0';
+        : 'https://api.studio.thegraph.com/query/3720/orca-1/v0.1.2';
   }
 
   config.gnosisUrl =
