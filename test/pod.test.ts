@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import axios from 'axios';
 import * as ENS from '@ensdomains/ensjs';
 import { init, getPod, config } from '../src';
-import { gqlGetUsers, orcanautAddress, orcanautPod, userAddress, userAddress2 } from './fixtures';
+import { gqlGetUsers, orcanautAddress, orcanautPod, userAddress, userAddress2, gqlGetMembersPartial } from './fixtures';
 import * as fetchers from '../src/fetchers';
 import Pod from '../src/Pod';
 
@@ -115,6 +115,9 @@ test('getPod should return null if given a value that doesnt resolve to an addre
 });
 
 test('getPod should return null if the given address is not a pod', async () => {
+  jest.spyOn(fetchers, 'getPodFetchersByAddressOrEns').mockImplementationOnce(() => {
+    throw new Error('failed pod fetch or whatever');
+  });
   const pod = await getPod(ethers.constants.AddressZero);
   expect(pod).toBeNull();
 });
@@ -146,7 +149,7 @@ test('getPod should be able to fetch members via async call', async () => {
 
 test('Pod object should be able to fetch member pods via async call', async () => {
   mockGetPodFetchersByAddress();
-  jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
+  jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetMembersPartial);
 
   // This one doesn't mock the getMemberPods call.
   const rootPod = await getPod(orcanautAddress);
@@ -155,25 +158,22 @@ test('Pod object should be able to fetch member pods via async call', async () =
   expect(podNames).toEqual(
     expect.arrayContaining([
       'art-naut.pod.xyz',
-      'dev-naut.pod.xyz',
-      'org-naut.pod.xyz',
-      'gov-naut.pod.xyz',
     ]),
   );
 });
 
 test('Pod.getMembers() should include member pods in its list', async () => {
   mockGetPodFetchersByAddress();
-  jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
+  jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetMembersPartial);
 
   // No mock on getMemberPods
   const rootPod = await getPod(orcanautAddress);
-  const [artNaut, devNaut, orgNaut, govNaut] = await rootPod.getMemberPods();
+  const [artNaut] = await rootPod.getMemberPods();
   const members = await rootPod.getMembers();
 
   // users should contain the safe addresses of member pods
   expect(members).toEqual(
-    expect.arrayContaining([artNaut.safe, devNaut.safe, orgNaut.safe, govNaut.safe]),
+    expect.arrayContaining([artNaut.safe]),
   );
 });
 
@@ -227,10 +227,14 @@ test('Pod.isMember() should return true/false if a given address is a member', a
   jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
 
   const pod = await getPod(orcanautAddress);
-  const isMember1 = await pod.isMember('0xcABB78f39Fbeb0CdFBD3C8f30E37630EB9e7A151');
+  // User address.
+  const isMember1 = await pod.isMember('0x46E69D6801d4E09360Ab62A638849D72623A2e7E');
   expect(isMember1).toBe(true);
   const isMember2 = await pod.isMember(userAddress2);
   expect(isMember2).toBe(false);
+  // Pod address
+  const isMemberPod = await pod.isMember('0x7aAef56837f37965fb410F4901bDC1172870e2F8');
+  expect(isMemberPod).toBe(true);
 });
 
 test('Pod.isMember() should reject on non-address inputs', async () => {
