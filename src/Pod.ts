@@ -3,7 +3,7 @@ import axios from 'axios';
 import ENS from '@ensdomains/ensjs';
 import { config } from './config';
 import { getPodFetchersByAddressOrEns, getPodFetchersById } from './fetchers';
-import { getContract, handleEthersError, encodeFunctionData } from './lib/utils';
+import { getContract, handleEthersError, encodeFunctionData, checkAddress } from './lib/utils';
 import { createSafeTransaction } from './lib/services/transaction-service';
 
 export default class Pod {
@@ -146,6 +146,35 @@ export default class Pod {
     if (this.memberPods) return this.memberPods;
     await this.populateMembers();
     return this.memberPods;
+  }
+
+  async isMember(address: string): Promise<boolean> {
+    checkAddress(address);
+    if (!this.memberEOAs) await this.populateMembers();
+    return this.memberEOAs.includes(address);
+  }
+
+  isAdmin(address: string): boolean {
+    checkAddress(address);
+    return address === this.admin;
+  }
+
+  /**
+   * Checks if given address is a member of any subpods.
+   * This includes EOAs and other pods (or smart contracts).
+   * @param address
+   * @returns
+   */
+  async isSubPodMember(address: string): Promise<boolean> {
+    checkAddress(address);
+    if (!this.memberPods) await this.populateMembers();
+    const results = await Promise.all(
+      this.memberPods.map(async pod => {
+        const members = await pod.getMembers();
+        return members.includes(address);
+      }),
+    );
+    return results.includes(true);
   }
 
   /**

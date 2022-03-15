@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import axios from 'axios';
 import * as ENS from '@ensdomains/ensjs';
 import { init, getPod, config } from '../src';
-import { gqlGetUsers, orcanautAddress, orcanautPod } from './fixtures';
+import { gqlGetUsers, orcanautAddress, orcanautPod, userAddress, userAddress2 } from './fixtures';
 import * as fetchers from '../src/fetchers';
 import Pod from '../src/Pod';
 
@@ -220,4 +220,61 @@ test('Pod.getMemberPods should also async fetch memberEOAs', async () => {
   await rootPod.getMemberPods();
 
   expect(rootPod.memberEOAs.length > 0).toBeTruthy();
+});
+
+test('Pod.isMember() should return true/false if a given address is a member', async () => {
+  mockGetPodFetchersByAddress();
+  jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
+
+  const pod = await getPod(orcanautAddress);
+  const isMember1 = await pod.isMember('0xcABB78f39Fbeb0CdFBD3C8f30E37630EB9e7A151');
+  expect(isMember1).toBe(true);
+  const isMember2 = await pod.isMember(userAddress2);
+  expect(isMember2).toBe(false);
+});
+
+test('Pod.isMember() should reject on non-address inputs', async () => {
+  mockGetPodFetchersByAddress();
+  jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
+
+  const pod = await getPod(orcanautAddress);
+  await expect(pod.isMember('not an address')).rejects.toThrow('Invalid address');
+});
+
+test('Pod.isAdmin() should return true/false if a given address is the admin', async () => {
+  mockGetPodFetchersByAddress();
+  jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
+
+  const pod = await getPod(orcanautAddress);
+  const isAdmin1 = pod.isAdmin('0x094A473985464098b59660B37162a284b5132753');
+  expect(isAdmin1).toBe(true);
+  const isAdmin2 = pod.isAdmin(userAddress);
+  expect(isAdmin2).toBe(false);
+});
+
+test('Pod.isAdmin() should throw if given a non-address input', async () => {
+  mockGetPodFetchersByAddress();
+  jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
+
+  const pod = await getPod(orcanautAddress);
+  expect(() => { pod.isAdmin('not an address') }).toThrow('Invalid address');
+});
+
+test('Pod.isNestedMember() should return true/false if a given address is a nested member', async () => {
+  mockGetPodFetchersByAddress();
+  jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
+
+  const pod = await getPod(orcanautAddress);
+  const isSubPodMember1 = await pod.isSubPodMember('0x094A473985464098b59660B37162a284b5132753');
+  expect(isSubPodMember1).toBe(true);
+  const isSubPodMember2 = await pod.isSubPodMember(userAddress);
+  expect(isSubPodMember2).toBe(false);
+});
+
+test('Pod.isNestedMember() should throw on non-address inputs', async () => {
+  mockGetPodFetchersByAddress();
+  jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
+
+  const pod = await getPod(orcanautAddress);
+  await expect(pod.isSubPodMember('not an address')).rejects.toThrow('Invalid address');
 });
