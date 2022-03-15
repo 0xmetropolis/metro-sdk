@@ -22,6 +22,19 @@ export function getContract(contractName: string, signer: ethers.Signer) {
 }
 
 /**
+ * Checks to see if an address is valid (checksum or not)
+ * @param address
+ * @returns
+ */
+export function checkAddress(address: string) {
+  try {
+    return ethers.utils.getAddress(address);
+  } catch {
+    throw new TypeError(`Invalid address provided: ${address}`);
+  }
+}
+
+/**
  * Handles ethers errors, as they have non-standard error formats.
  * @param error
  */
