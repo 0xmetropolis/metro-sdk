@@ -67,6 +67,7 @@ export const gqlGetUserPodsEmpty = {
   },
 };
 
+// Members of a pod.
 export const gqlGetMembers = {
   data: {
     data: {
@@ -79,6 +80,20 @@ export const gqlGetMembers = {
           { user: { id: '0x653E430f15535B7C5C6f8Ae6FC514B28a6906438' } },
           { user: { id: '0x99B7f60Ba045c8810b2E22fcf9e89391490E17a0' } },
           { user: { id: '0xf065BdC0A5A92F34E9270F686355B5EA7b95bEBE' } },
+        ],
+      },
+    },
+  },
+};
+
+// Partial members of a pod, i.e., one pod and one normal user
+export const gqlGetMembersPartial = {
+  data: {
+    data: {
+      pod: {
+        users: [
+          { user: { id: '0x25F55d2e577a937433686A01439E5fFdffe62218' } },
+          { user: { id: '0x094A473985464098b59660B37162a284b5132753' } },
         ],
       },
     },

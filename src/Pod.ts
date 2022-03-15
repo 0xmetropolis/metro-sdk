@@ -150,8 +150,8 @@ export default class Pod {
 
   async isMember(address: string): Promise<boolean> {
     checkAddress(address);
-    if (!this.memberEOAs) await this.populateMembers();
-    return this.memberEOAs.includes(address);
+    if (!this.members) await this.getMembers();
+    return this.members.includes(address);
   }
 
   isAdmin(address: string): boolean {
@@ -184,12 +184,7 @@ export default class Pod {
     newMember: string,
     signer: ethers.Signer,
   ): Promise<ethers.providers.TransactionResponse> {
-    try {
-      // eslint-disable-next-line no-param-reassign
-      newMember = ethers.utils.getAddress(newMember);
-    } catch {
-      throw new TypeError(`Invalid address provided to mintMember: ${newMember}`);
-    }
+    checkAddress(newMember);
     try {
       return getContract('MemberToken', signer).mint(newMember, this.id, ethers.constants.HashZero);
     } catch (err) {
@@ -204,12 +199,7 @@ export default class Pod {
     memberToBurn: string,
     signer: ethers.Signer,
   ): Promise<ethers.providers.TransactionResponse> {
-    try {
-      // eslint-disable-next-line no-param-reassign
-      memberToBurn = ethers.utils.getAddress(memberToBurn);
-    } catch {
-      throw new TypeError(`Invalid address provided to burnMember: ${memberToBurn}`);
-    }
+    checkAddress(memberToBurn);
     try {
       return getContract('MemberToken', signer).burn(memberToBurn, this.id);
     } catch (err) {
@@ -221,12 +211,7 @@ export default class Pod {
    * Any member of a pod can call this
    */
   async proposeMintMember(newMember: string, signer: ethers.Signer) {
-    try {
-      // eslint-disable-next-line no-param-reassign
-      newMember = ethers.utils.getAddress(newMember);
-    } catch {
-      throw new TypeError(`Invalid address provided to proposeMintMember: ${newMember}`);
-    }
+    checkAddress(newMember);
     const data = encodeFunctionData('MemberToken', 'mint', [
       ethers.utils.getAddress(newMember),
       this.id,
@@ -254,12 +239,7 @@ export default class Pod {
    * Any member of a pod can call this
    */
   async proposeBurnMember(memberToBurn: string, signer: ethers.Signer) {
-    try {
-      // eslint-disable-next-line no-param-reassign
-      memberToBurn = ethers.utils.getAddress(memberToBurn);
-    } catch {
-      throw new TypeError(`Invalid address provided to proposeMintMember: ${memberToBurn}`);
-    }
+    checkAddress(memberToBurn);
 
     const data = encodeFunctionData('MemberToken', 'burn', [
       ethers.utils.getAddress(memberToBurn),
