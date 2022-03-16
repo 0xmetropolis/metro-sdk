@@ -47,7 +47,7 @@ export default class Pod {
       this.safe = safe;
       this.ensName = Name.name;
 
-      const baseUrl = `https://nft-wtk219-orca-protocol.vercel.app${
+      const baseUrl = `https://orcaprotocol-nft.vercel.app${
         network === 4 ? '/assets/testnet/' : '/assets/'
       }`;
       const imageUrl = `${baseUrl}${podId.toString(16).padStart(64, '0')}-image`;
@@ -152,11 +152,7 @@ export default class Pod {
     checkAddress(address);
     if (!this.members) await this.getMembers();
     return this.members.includes(address);
-<<<<<<< HEAD
-  }
-=======
   };
->>>>>>> 852951f (fix: export Pod member functions)
 
   isAdmin = (address: string): boolean => {
     checkAddress(address);
