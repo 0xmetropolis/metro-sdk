@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { ethers } from 'ethers';
-import { init, getUserPods } from '../src';
+import { init, getUserPods, getAdminPods } from '../src';
 import {
   orcaCorePod,
   userAddress,
@@ -62,5 +62,12 @@ describe('user memberships', () => {
         '0xf065BdC0A5A92F34E9270F686355B5EA7b95bEBE',
       ]),
     );
+  });
+});
+
+test('getAdminPods should fetch Pod objects for all the pods an address is admin of', async () => {
+  const pods = await getAdminPods(userAddress);
+  pods.forEach(pod => {
+    expect(pod.admin).toEqual(userAddress);
   });
 });

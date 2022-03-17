@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import Pod from './Pod';
 import { Pod as PodType, Proposal } from './types';
 import { init, config } from './config';
+import { checkAddress } from './lib/utils';
 
 async function getPod(identifier: string | number): Promise<Pod> {
   return new Pod(identifier);
@@ -33,4 +34,19 @@ async function getUserPods(address: string): Promise<Pod[]> {
   return Promise.all(unsortedPods.map(async pod => new Pod(pod)));
 }
 
-export { init, config, getPod, getUserPods, PodType as Pod, Proposal };
+async function getAdminPods(address: string): Promise<Pod[]> {
+  checkAddress(address);
+
+  const { data } = await axios.post(config.subgraphUrl, {
+    query: `query GetUserPods($id: ID!) {
+        user(id: $id) {
+          adminPods
+        }
+      }`,
+    variables: { id: address.toLowerCase() },
+  });
+  const { adminPods } = data.data.user || { adminPods: [] };
+  return Promise.all(adminPods.map(async pod => new Pod(parseInt(pod, 10))));
+}
+
+export { init, config, getPod, getUserPods, getAdminPods, PodType as Pod, Proposal };
