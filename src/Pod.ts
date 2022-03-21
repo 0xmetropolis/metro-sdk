@@ -207,6 +207,16 @@ export default class Pod {
     }
   };
 
+  mintFromAdminPod = async (
+    podIdentifier: Pod | string | number,
+    newMember: string,
+    signer: ethers.Signer,
+  ) => {
+    let pod;
+    if (podIdentifier instanceof Pod) pod = podIdentifier;
+    if (!(podIdentifier instanceof Pod)) pod = new Pod(podIdentifier);
+  };
+
   /**
    * Any member of a pod can call this
    */

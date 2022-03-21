@@ -12,6 +12,7 @@ import {
   userAddress,
   userAddress2,
 } from './fixtures';
+import { solidityKeccak256 } from 'ethers/lib/utils';
 
 let provider;
 
@@ -123,3 +124,66 @@ test('As a pod member, I should be able to create a proposal to burn a member', 
     mockSigner,
   );
 });
+
+
+describe('mintMemberFromAdminPod', () => {
+  test('As a member of an admin pod, I should be able to create a proposal on the admin pod to mint a member to a subpod', async () => {
+    const mockSigner = {
+      getAddress: jest.fn().mockResolvedValueOnce(userAddress2),
+    };
+  
+    const adminPod = await sdk.getPod(orcanautAddress);
+    // subPod is member of adminPod
+    const subPod = await sdk.getPod('art-naut.pod.xyz');
+  
+    // Creates a proposal on the admin pod to mint a new member to subPod using admin privileges.
+    await subPod.mintMemberFromAdminPod(adminPod, newMember, mockSigner);
+  });
+
+  test('The function should also accept podIds or safe addresses in lieu of a Pod object', async () => {
+    const mockSigner = {
+      getAddress: jest.fn().mockResolvedValueOnce(userAddress2),
+    };
+
+    const subPod = await sdk.getPod('art-naut.pod.xyz');
+  
+    // Using pod ID
+    await subPod.mintMemberFromAdminPod('orcanautAddress', newMember, mockSigner);
+  });
+
+  test("Should throw if the adminPod is not the admin of the Pod you're trying to mint to");
+
+  test('Should throw if the signer of mintMemberFromAdminPod is not a member of the admin pod', async () => {
+    const mockSigner = {
+      // This address is NOT a member of the admin pod
+      getAddress: jest.fn().mockResolvedValueOnce('WRONG ADDRESS'),
+    };
+  
+    const adminPod = await sdk.getPod(orcanautAddress);
+    // subPod is member of adminPod
+    const subPod = await sdk.getPod('art-naut.pod.xyz');
+  
+    // Creates a proposal on the admin pod to mint a new member to subPod using admin privileges.
+    await expect(subPod.mintMemberFromAdminPod(adminPod, newMember, mockSigner)).toThrow('Signer was not member of admin pod');
+  });
+
+  test('Cannot mint a member that already exists on the sub pod');
+});
+
+describe('mintMemberFromSubPod', () => {
+  test('As a member of a sub pod, I should be able to create a proposal on the sub pod to mint a member to the admin pod', async () => {
+    const parentPod = await sdk.getPod(orcanautAddress);
+    const subPod = await sdk.getPod('art-naut.pod.xyz');
+
+    await parentPod.mintMemberFromSubPod(subPod, newMember, mockSigner);
+  });
+
+  test('I should be able to use podIds or safe addresses in lieu of a Pod object');
+
+  test('Should throw if provided subPod is not a subPod of the parent');
+
+  test('Should throw if the signer is not a member of the subPod');
+
+  test('Should throw if the newMember is already a member of the admin pod');
+});
+
