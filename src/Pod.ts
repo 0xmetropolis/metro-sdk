@@ -47,7 +47,7 @@ export default class Pod {
       this.safe = safe;
       this.ensName = Name.name;
 
-      const baseUrl = `https://nft-wtk219-orca-protocol.vercel.app${
+      const baseUrl = `https://orcaprotocol-nft.vercel.app${
         network === 4 ? '/assets/testnet/' : '/assets/'
       }`;
       const imageUrl = `${baseUrl}${podId.toString(16).padStart(64, '0')}-image`;
@@ -81,7 +81,7 @@ export default class Pod {
    * Returns of list of all member addresses.
    * @returns string[]
    */
-  async getMembers(): Promise<string[]> {
+  getMembers = async (): Promise<string[]> => {
     const { subgraphUrl } = config;
     if (this.members) return this.members;
     const { data } = await axios.post(subgraphUrl, {
@@ -100,7 +100,7 @@ export default class Pod {
     // console.log('users', users);
     this.members = users.length > 0 ? users.map(user => ethers.utils.getAddress(user.user.id)) : [];
     return this.members;
-  }
+  };
 
   /**
    * Populates the memberEOAs and memberPods fields.
@@ -132,32 +132,32 @@ export default class Pod {
    * Returns list of all member EOAs, not including any smart contract/pod members.
    * @returns
    */
-  async getMemberEOAs(): Promise<string[]> {
+  getMemberEOAs = async (): Promise<string[]> => {
     if (this.memberEOAs) return this.memberEOAs;
     await this.populateMembers();
     return this.memberEOAs;
-  }
+  };
 
   /**
    * Returns Pod objects of all member pods.
    * @returns Pod[]
    */
-  async getMemberPods(): Promise<Pod[]> {
+  getMemberPods = async (): Promise<Pod[]> => {
     if (this.memberPods) return this.memberPods;
     await this.populateMembers();
     return this.memberPods;
-  }
+  };
 
-  async isMember(address: string): Promise<boolean> {
+  isMember = async (address: string): Promise<boolean> => {
     checkAddress(address);
     if (!this.members) await this.getMembers();
     return this.members.includes(address);
-  }
+  };
 
-  isAdmin(address: string): boolean {
+  isAdmin = (address: string): boolean => {
     checkAddress(address);
     return address === this.admin;
-  }
+  };
 
   /**
    * Checks if given address is a member of any subpods.
@@ -165,7 +165,7 @@ export default class Pod {
    * @param address
    * @returns
    */
-  async isSubPodMember(address: string): Promise<boolean> {
+  isSubPodMember = async (address: string): Promise<boolean> => {
     checkAddress(address);
     if (!this.memberPods) await this.populateMembers();
     const results = await Promise.all(
@@ -175,42 +175,42 @@ export default class Pod {
       }),
     );
     return results.includes(true);
-  }
+  };
 
   /**
    * Checks if the user is the admin of the pod, and then mints a member.
    */
-  async mintMember(
+  mintMember = async (
     newMember: string,
     signer: ethers.Signer,
-  ): Promise<ethers.providers.TransactionResponse> {
+  ): Promise<ethers.providers.TransactionResponse> => {
     checkAddress(newMember);
     try {
       return getContract('MemberToken', signer).mint(newMember, this.id, ethers.constants.HashZero);
     } catch (err) {
       return handleEthersError(err);
     }
-  }
+  };
 
   /**
    * Checks if the user is the admin of the pod, and then burns a member.
    */
-  async burnMember(
+  burnMember = async (
     memberToBurn: string,
     signer: ethers.Signer,
-  ): Promise<ethers.providers.TransactionResponse> {
+  ): Promise<ethers.providers.TransactionResponse> => {
     checkAddress(memberToBurn);
     try {
       return getContract('MemberToken', signer).burn(memberToBurn, this.id);
     } catch (err) {
       return handleEthersError(err);
     }
-  }
+  };
 
   /**
    * Any member of a pod can call this
    */
-  async proposeMintMember(newMember: string, signer: ethers.Signer) {
+  proposeMintMember = async (newMember: string, signer: ethers.Signer) => {
     checkAddress(newMember);
     const data = encodeFunctionData('MemberToken', 'mint', [
       ethers.utils.getAddress(newMember),
@@ -233,12 +233,12 @@ export default class Pod {
     } catch (err) {
       throw new Error(err);
     }
-  }
+  };
 
   /**
    * Any member of a pod can call this
    */
-  async proposeBurnMember(memberToBurn: string, signer: ethers.Signer) {
+  proposeBurnMember = async (memberToBurn: string, signer: ethers.Signer) => {
     checkAddress(memberToBurn);
 
     const data = encodeFunctionData('MemberToken', 'burn', [
@@ -262,5 +262,5 @@ export default class Pod {
     } catch (err) {
       throw new Error(err);
     }
-  }
+  };
 }

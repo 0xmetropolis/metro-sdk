@@ -9,9 +9,9 @@ export const orcaCorePod = {
   id: 0,
   safe: '0x7bf660f3e287d2a05F46b72Ae69a048f3781Db90',
   imageUrl:
-    'https://nft-wtk219-orca-protocol.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000000-image',
+    'https://orcaprotocol-nft.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000000-image',
   imageNoTextUrl:
-    'https://nft-wtk219-orca-protocol.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000000-image-no-text',
+    'https://orcaprotocol-nft.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000000-image-no-text',
   admin: '0x4B4C43F66ec007D1dBE28f03dAC975AAB5fbb888',
   ensName: 'orca-core.pod.xyz',
 };
@@ -20,9 +20,9 @@ export const orcanautPod = {
   id: 1,
   safe: orcanautAddress,
   imageUrl:
-    'https://nft-wtk219-orca-protocol.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000001-image',
+    'https://orcaprotocol-nft.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000001-image',
   imageNoTextUrl:
-    'https://nft-wtk219-orca-protocol.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000001-image-no-text',
+    'https://orcaprotocol-nft.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000001-image-no-text',
   admin: '0x094A473985464098b59660B37162a284b5132753',
   ensName: 'orcanauts.pod.xyz',
 };
