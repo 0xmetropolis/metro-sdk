@@ -230,6 +230,8 @@ test('Pod.isMember() should return true/false if a given address is a member', a
   // User address.
   const isMember1 = await pod.isMember('0x46E69D6801d4E09360Ab62A638849D72623A2e7E');
   expect(isMember1).toBe(true);
+  const isMember1LowerCase = await pod.isMember('0x46e69d6801d4e09360ab62a638849d72623a2e7e');
+  expect(isMember1LowerCase).toBe(true);
   const isMember2 = await pod.isMember(userAddress2);
   expect(isMember2).toBe(false);
   // Pod address
@@ -252,6 +254,8 @@ test('Pod.isAdmin() should return true/false if a given address is the admin', a
   const pod = await getPod(orcanautAddress);
   const isAdmin1 = pod.isAdmin('0x094A473985464098b59660B37162a284b5132753');
   expect(isAdmin1).toBe(true);
+  const isAdmin1LowerCase = pod.isAdmin('0x094A473985464098b59660B37162a284b5132753'.toLowerCase());
+  expect(isAdmin1LowerCase).toBe(true);
   const isAdmin2 = pod.isAdmin(userAddress);
   expect(isAdmin2).toBe(false);
 });
@@ -271,6 +275,8 @@ test('Pod.isNestedMember() should return true/false if a given address is a nest
   const pod = await getPod(orcanautAddress);
   const isSubPodMember1 = await pod.isSubPodMember('0x094A473985464098b59660B37162a284b5132753');
   expect(isSubPodMember1).toBe(true);
+  const isSubPodMember1LowerCase = await pod.isSubPodMember('0x094A473985464098b59660B37162a284b5132753'.toLowerCase());
+  expect(isSubPodMember1LowerCase).toBe(true);
   const isSubPodMember2 = await pod.isSubPodMember(userAddress);
   expect(isSubPodMember2).toBe(false);
 });
