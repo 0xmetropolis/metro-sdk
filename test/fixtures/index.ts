@@ -25,7 +25,55 @@ export const orcanautPod = {
     'https://orcaprotocol-nft.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000001-image-no-text',
   admin: '0x094A473985464098b59660B37162a284b5132753',
   ensName: 'orcanauts.pod.xyz',
+  members: [
+    '0x094A473985464098b59660B37162a284b5132753',
+    '0x25F55d2e577a937433686A01439E5fFdffe62218',
+    '0x46E69D6801d4E09360Ab62A638849D72623A2e7E',
+    '0x4846162806B025Dcd0759cACF9ec6F9474274282',
+    '0x7aAef56837f37965fb410F4901bDC1172870e2F8',
+    '0x7B54195b743BF76c314e9dBDDf110F5a22743998',
+    '0x7f08D6A56b7B6f75eb8c628384855b82D2Ab18C8',
+    '0x7f33BeaA131a6896B97E27c505c532cE40f88f33',
+    '0x88d3767814FDE34891dD84D1A950310aB3D1ca96',
+    '0xAfBb354FF03E17b1EffBaF661FFca106ba78b966',
+    '0xc9fef0515d141bB86a13f362e853D7CfabCF29a4'
+  ],
 };
+
+export const artNautPod = {
+    admin: '0x094A473985464098b59660B37162a284b5132753',
+    id: 6,
+    safe: '0x25F55d2e577a937433686A01439E5fFdffe62218',
+    ensName: 'art-naut.pod.xyz',
+    imageUrl: 'https://orcaprotocol-nft.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000006-image',
+    imageNoTextUrl: 'https://orcaprotocol-nft.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000006-image-no-text',
+    members: [
+      '0x094A473985464098b59660B37162a284b5132753',
+      '0x29864e4d1588C4164DEe7cc495147Ec141f9c9d5',
+      '0x2cecb3B75bc8dFb22725ff657062C47d6ddD4629',
+      '0x46E69D6801d4E09360Ab62A638849D72623A2e7E',
+      '0x4846162806B025Dcd0759cACF9ec6F9474274282',
+      '0xb4fbd802d9dc5C0208346c311BCB6B9ECFF468C6'
+    ],
+};
+
+/** 
+ * Turns arrays into the stupid format that GQL returns
+ */
+export const constructGqlGetUsers = (input: string[]) => {
+  const converted = input.map(element => {
+    return { user: { id: element }};
+  });
+  return {
+    data: {
+      data: {
+        pod: {
+          users: converted,
+        }
+      }
+    }
+  }
+}
 
 export const gqlGetUsers = {
   data: {
