@@ -115,39 +115,6 @@ export const gqlGetUserPodsEmpty = {
   },
 };
 
-// Members of a pod.
-export const gqlGetMembers = {
-  data: {
-    data: {
-      pod: {
-        users: [
-          { user: { id: '0x094A473985464098b59660B37162a284b5132753' } },
-          { user: { id: '0x1cC62cE7cb56ed99513823064295761f9b7C856e' } },
-          { user: { id: '0x403f69b1092cf1cB82487CD137F96E8200f03BD5' } },
-          { user: { id: '0x4B4C43F66ec007D1dBE28f03dAC975AAB5fbb888' } },
-          { user: { id: '0x653E430f15535B7C5C6f8Ae6FC514B28a6906438' } },
-          { user: { id: '0x99B7f60Ba045c8810b2E22fcf9e89391490E17a0' } },
-          { user: { id: '0xf065BdC0A5A92F34E9270F686355B5EA7b95bEBE' } },
-        ],
-      },
-    },
-  },
-};
-
-// Partial members of a pod, i.e., one pod and one normal user
-export const gqlGetMembersPartial = {
-  data: {
-    data: {
-      pod: {
-        users: [
-          { user: { id: '0x25F55d2e577a937433686A01439E5fFdffe62218' } },
-          { user: { id: '0x094A473985464098b59660B37162a284b5132753' } },
-        ],
-      },
-    },
-  },
-};
-
 export const erc20TransferTransaction = {
   safe: '0x66703b7696845BC112BD2ee562403E6868BeA761',
   to: '0xaFF4481D10270F50f203E0763e2597776068CBc5',
