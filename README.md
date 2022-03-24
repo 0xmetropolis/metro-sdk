@@ -40,7 +40,7 @@ Types can be imported as such:
 import { Pod, Proposal } from '@orcaprotocol/orca-sdk';
 ```
 
-### Pod
+## Pod
 
 The `Pod` object is the interface for fetching pod data.
 
@@ -83,4 +83,45 @@ const isAdmin = pod.isAdmin(userAddress);
 
 // Includes both pods and users as sub pod members.
 const isSubPodMember = await pod.isSubPodMember(userAddress);
+```
+
+### Member management
+
+Pod members are managed via the MemberToken contract. The Pod object provides several methods to interact with this contract.
+
+Pod admins can mint/burn members directly via the `mintMember()` and `burnMember()` functions. These functions will call the MemberToken contract directly and create a transaction.
+
+```js
+const pod = await getPod(podAddress);
+
+// This signer must be the admin of the pod.
+await pod.mintMember(newMember, signer);
+await pod.burnMember(memberToBurn, signer);
+```
+
+Pod members can instead create proposals to mint/burn members:
+
+```js
+const pod = await getPod(podAddress);
+
+// Signer must be a member of the pod.
+await pod.proposeMintMember(newMember, signer);
+await pod.proposeBurnMember(memberToBurn, signer);
+```
+
+Pod members can also be managed by admin and subpods (i.e., pods who are members of a given pod);
+
+```js
+const ourPod = await getPod(podAddress);
+// This is the admin of our pod
+const adminPod = await getPod(adminPodAddress);
+// This is a member of our pod.
+const subPod = await getPod(subPodAddress);
+
+// This will create a proposal on the admin pod to mint a new member to our pod.
+// Signer must be a member of adminPod
+await ourPod.proposeMintFromPod(adminPod, newMember, signer);
+// This will create a proposal on the subpod to mint a new member to our pod.
+// Signer must be a member of subPod
+await ourPod.proposeMintFromPod(subPod, newMember, signer);
 ```
