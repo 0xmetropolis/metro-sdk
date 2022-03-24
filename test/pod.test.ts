@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import axios from 'axios';
 import * as ENS from '@ensdomains/ensjs';
 import { init, getPod, config } from '../src';
-import { gqlGetUsers, orcanautAddress, orcanautPod, userAddress, userAddress2, gqlGetMembersPartial } from './fixtures';
+import { gqlGetUsers, orcanautAddress, orcanautPod, userAddress, userAddress2, constructGqlGetUsers } from './fixtures';
 import * as fetchers from '../src/fetchers';
 import Pod from '../src/Pod';
 
@@ -149,7 +149,10 @@ test('getPod should be able to fetch members via async call', async () => {
 
 test('Pod object should be able to fetch member pods via async call', async () => {
   mockGetPodFetchersByAddress();
-  jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetMembersPartial);
+  jest.spyOn(axios, 'post').mockResolvedValueOnce(constructGqlGetUsers([
+    '0x25F55d2e577a937433686A01439E5fFdffe62218',
+    '0x094A473985464098b59660B37162a284b5132753',
+  ]));
 
   // This one doesn't mock the getMemberPods call.
   const rootPod = await getPod(orcanautAddress);
@@ -164,8 +167,10 @@ test('Pod object should be able to fetch member pods via async call', async () =
 
 test('Pod.getMembers() should include member pods in its list', async () => {
   mockGetPodFetchersByAddress();
-  jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetMembersPartial);
-
+  jest.spyOn(axios, 'post').mockResolvedValueOnce(constructGqlGetUsers([
+    '0x25F55d2e577a937433686A01439E5fFdffe62218',
+    '0x094A473985464098b59660B37162a284b5132753',
+  ]));
   // No mock on getMemberPods
   const rootPod = await getPod(orcanautAddress);
   const [artNaut] = await rootPod.getMemberPods();

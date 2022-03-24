@@ -97,7 +97,6 @@ export default class Pod {
       variables: { id: this.id },
     });
     const { users } = data.data.pod || { users: [] };
-    // console.log('users', users);
     this.members = users.length > 0 ? users.map(user => ethers.utils.getAddress(user.user.id)) : [];
     return this.members;
   };
@@ -212,6 +211,10 @@ export default class Pod {
    */
   proposeMintMember = async (newMember: string, signer: ethers.Signer) => {
     checkAddress(newMember);
+    if (await this.isMember(newMember)) {
+      throw new Error(`Address ${newMember} is already in this pod`);
+    }
+
     const data = encodeFunctionData('MemberToken', 'mint', [
       ethers.utils.getAddress(newMember),
       this.id,
@@ -236,10 +239,71 @@ export default class Pod {
   };
 
   /**
+   * Creates a proposal on an external pod to mint a new member to this pod.
+   * @param externalPodIdentifier - The Pod object, pod ID or pod safe address of either the admin pod, or a subpod of this pod.
+   * @param newMember - Member to mint
+   * @param signer -
+   */
+  proposeMintMemberFromPod = async (
+    externalPodIdentifier: Pod | string | number,
+    newMember: string,
+    signer: ethers.Signer,
+  ) => {
+    if (await this.isMember(newMember)) {
+      throw new Error(`Address ${newMember} is already in this pod`);
+    }
+
+    let externalPod: Pod;
+    if (externalPodIdentifier instanceof Pod) externalPod = externalPodIdentifier;
+    else {
+      externalPod = await new Pod(externalPodIdentifier);
+    }
+    if (!externalPod)
+      throw new Error(`Could not find a pod with identifier ${externalPodIdentifier}`);
+
+    // External pod must be the admin or a subpod of this pod.
+    if (!(this.isAdmin(externalPod.safe) || (await this.isMember(externalPod.safe)))) {
+      throw new Error(
+        `Pod ${externalPod.safe} must be the admin or a subpod of this pod to make proposals`,
+      );
+    }
+
+    const signerAddress = await signer.getAddress();
+    if (!(await externalPod.isMember(signerAddress)))
+      throw new Error(`Signer ${signerAddress} was not a member of the external pod`);
+
+    // Tells MemberToken to mint a new token for this pod to newMember.
+    const data = encodeFunctionData('MemberToken', 'mint', [
+      ethers.utils.getAddress(newMember),
+      this.id,
+      ethers.constants.HashZero,
+    ]);
+
+    const { address: memberTokenAddress } = getContract('MemberToken', signer);
+    try {
+      // Create a safe transaction on this pod, sent from the admin pod
+      await createSafeTransaction(
+        {
+          sender: externalPod.safe,
+          safe: this.safe,
+          to: memberTokenAddress,
+          data,
+        },
+        signer,
+      );
+    } catch (err) {
+      throw new Error(err);
+    }
+  };
+
+  /**
    * Any member of a pod can call this
    */
   proposeBurnMember = async (memberToBurn: string, signer: ethers.Signer) => {
     checkAddress(memberToBurn);
+    if (!(await this.isMember(memberToBurn))) {
+      throw new Error(`Address ${memberToBurn} is not in this pod`);
+    }
 
     const data = encodeFunctionData('MemberToken', 'burn', [
       ethers.utils.getAddress(memberToBurn),
@@ -253,6 +317,63 @@ export default class Pod {
       await createSafeTransaction(
         {
           sender: memberAddress,
+          safe: this.safe,
+          to: memberTokenAddress,
+          data,
+        },
+        signer,
+      );
+    } catch (err) {
+      throw new Error(err);
+    }
+  };
+
+  /**
+   * Creates a proposal on an external pod to burn a new member from this pod.
+   * @param externalPodIdentifier - The Pod object, pod ID or pod safe address of either the admin pod, or a subpod of this pod.
+   * @param memberToBurn - Member to mint
+   * @param signer -
+   */
+  proposeBurnMemberFromPod = async (
+    externalPodIdentifier: Pod | string | number,
+    memberToBurn: string,
+    signer: ethers.Signer,
+  ) => {
+    if (!(await this.isMember(memberToBurn))) {
+      throw new Error(`Address ${memberToBurn} is not in this pod`);
+    }
+
+    let externalPod: Pod;
+    if (externalPodIdentifier instanceof Pod) externalPod = externalPodIdentifier;
+    else {
+      externalPod = await new Pod(externalPodIdentifier);
+    }
+    if (!externalPod)
+      throw new Error(`Could not find a pod with identifier ${externalPodIdentifier}`);
+
+    // External pod must be the admin or a subpod of this pod.
+    if (!(this.isAdmin(externalPod.safe) || (await this.isMember(externalPod.safe)))) {
+      throw new Error(
+        `Pod ${externalPod.safe} must be the admin or a subpod of this pod to make proposals`,
+      );
+    }
+
+    const signerAddress = await signer.getAddress();
+    if (!(await externalPod.isMember(signerAddress)))
+      throw new Error(`Signer ${signerAddress} was not a member of the external pod`);
+
+    // Tells MemberToken to mint a new token for this pod to newMember.
+    const data = encodeFunctionData('MemberToken', 'burn', [
+      ethers.utils.getAddress(memberToBurn),
+      this.id,
+    ]);
+
+    const { address: memberTokenAddress } = getContract('MemberToken', signer);
+    try {
+      // Create a safe transaction on this pod, sent from the admin pod
+      await createSafeTransaction(
+        {
+          sender: externalPod.safe,
           safe: this.safe,
           to: memberTokenAddress,
           data,
