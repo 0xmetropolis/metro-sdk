@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import axios from 'axios';
 import ENS from '@ensdomains/ensjs';
+import { getControllerByAddress } from '@orcaprotocol/contracts';
 import { config } from './config';
 import { getPodFetchersByAddressOrEns, getPodFetchersById } from './fetchers';
 import { getContract, handleEthersError, encodeFunctionData, checkAddress } from './lib/utils';
@@ -42,6 +43,7 @@ export default class Pod {
       }
 
       const fetchedAdmin = await Controller.podAdmin(podId);
+      this.controller = Controller.address;
       this.admin = fetchedAdmin === ethers.constants.AddressZero ? null : fetchedAdmin;
       this.id = podId;
       this.safe = safe;
@@ -58,6 +60,9 @@ export default class Pod {
       return this;
     })();
   }
+
+  // Address of Controller
+  controller: string;
 
   id: number;
 
@@ -201,6 +206,57 @@ export default class Pod {
     checkAddress(memberToBurn);
     try {
       return getContract('MemberToken', signer).burn(memberToBurn, this.id);
+    } catch (err) {
+      return handleEthersError(err);
+    }
+  };
+
+  /**
+   * Transfers a membership from the signer's account to the memberToTransferTo.
+   * @param addressToTransferTo
+   * @param signer
+   * @returns
+   */
+  transferMembership = async (addressToTransferTo: string, signer: ethers.Signer) => {
+    const checkedAddress = checkAddress(addressToTransferTo);
+    if (await this.isMember(checkedAddress)) {
+      throw new Error(`Address ${checkedAddress} is already a member of this pod`);
+    }
+
+    const signerAddress = await signer.getAddress();
+    if (!(await this.isMember(signerAddress))) {
+      throw new Error(`Signer ${signerAddress} is not a member of this pod`);
+    }
+
+    try {
+      return getContract('MemberToken', signer).safeTransferFrom(
+        signerAddress,
+        checkedAddress,
+        this.id,
+        1,
+        ethers.constants.HashZero,
+      );
+    } catch (err) {
+      return handleEthersError(err);
+    }
+  };
+
+  /**
+   * Transfers admin role from signer's account to addressToTransferTo
+   * @param addressToTransferTo
+   * @param signer
+   * @returns
+   */
+  transferAdmin = async (addressToTransferTo: string, signer: ethers.Signer) => {
+    const checkedAddress = checkAddress(addressToTransferTo);
+    const signerAddress = await signer.getAddress();
+    if (!this.isAdmin(signerAddress)) throw new Error('Signer was not the admin of this pod');
+
+    const { abi: controllerAbi } = getControllerByAddress(this.controller, config.network);
+    const Controller = new ethers.Contract(this.controller, controllerAbi, signer);
+
+    try {
+      return Controller.updatePodAdmin(this.id, checkedAddress);
     } catch (err) {
       return handleEthersError(err);
     }
@@ -376,6 +432,105 @@ export default class Pod {
           sender: externalPod.safe,
           safe: this.safe,
           to: memberTokenAddress,
+          data,
+        },
+        signer,
+      );
+    } catch (err) {
+      throw new Error(err);
+    }
+  };
+
+  proposeTransferMembershipFromSubPod = async (
+    subPodIdentifier: Pod | string | number,
+    addressToTransferTo: string,
+    signer: ethers.Signer,
+  ) => {
+    const checkedAddress = checkAddress(addressToTransferTo);
+    if (await this.isMember(addressToTransferTo)) {
+      throw new Error(`Address ${addressToTransferTo} is already in this pod`);
+    }
+
+    let subPod: Pod;
+    if (subPodIdentifier instanceof Pod) subPod = subPodIdentifier;
+    else {
+      subPod = await new Pod(subPodIdentifier);
+    }
+    if (!subPod) throw new Error(`Could not find a pod with identifier ${subPodIdentifier}`);
+
+    // Sub pod must be the admin or a subpod of this pod.
+    if (!(await this.isMember(subPod.safe))) {
+      throw new Error(`Pod ${subPod.ensName} must be a subpod of this pod to make proposals`);
+    }
+
+    const signerAddress = await signer.getAddress();
+    if (!(await subPod.isMember(signerAddress)))
+      throw new Error(`Signer ${signerAddress} was not a member of sub pod ${subPod.ensName}`);
+
+    // Tells MemberToken to transfer token for this pod from subpod.safe to checkedAddress.
+    const data = encodeFunctionData('MemberToken', 'safeTransferFrom', [
+      subPod.safe,
+      checkedAddress,
+      this.id,
+      1,
+      ethers.constants.HashZero,
+    ]);
+
+    const { address: memberTokenAddress } = getContract('MemberToken', signer);
+    try {
+      // Create a safe transaction on this pod, sent from the admin pod
+      await createSafeTransaction(
+        {
+          sender: subPod.safe,
+          safe: this.safe,
+          to: memberTokenAddress,
+          data,
+        },
+        signer,
+      );
+    } catch (err) {
+      throw new Error(err);
+    }
+  };
+
+  proposeTransferAdminFromAdminPod = async (
+    adminPodIdentifier: Pod | string | number,
+    addressToTransferTo: string,
+    signer: ethers.Signer,
+  ) => {
+    const checkedAddress = checkAddress(addressToTransferTo);
+    if (this.isAdmin(addressToTransferTo)) {
+      throw new Error(`Address ${addressToTransferTo} is already pod admin`);
+    }
+
+    let adminPod: Pod;
+    if (adminPodIdentifier instanceof Pod) adminPod = adminPodIdentifier;
+    else {
+      adminPod = await new Pod(adminPodIdentifier);
+    }
+    if (!adminPod) throw new Error(`Could not find a pod with identifier ${adminPodIdentifier}`);
+
+    if (!this.isAdmin(adminPod.safe)) {
+      throw new Error(`Pod ${adminPod.ensName} must be the admin of this pod`);
+    }
+
+    const signerAddress = await signer.getAddress();
+    if (!(await adminPod.isMember(signerAddress)))
+      throw new Error(`Signer ${signerAddress} was not a member of admin pod ${adminPod.ensName}`);
+
+    const { abi: controllerAbi } = getControllerByAddress(this.controller, config.network);
+    const data = new ethers.utils.Interface(controllerAbi).encodeFunctionData('updatePodAdmin', [
+      this.id,
+      checkedAddress,
+    ]);
+
+    try {
+      // Create a safe transaction on this pod, sent from the admin pod
+      await createSafeTransaction(
+        {
+          sender: adminPod.safe,
+          safe: this.safe,
+          to: this.controller,
           data,
         },
         signer,
