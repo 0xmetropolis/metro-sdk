@@ -148,14 +148,14 @@ export default class Pod {
   };
 
   isMember = async (address: string): Promise<boolean> => {
-    checkAddress(address);
+    const checkedAddress = checkAddress(address);
     if (!this.members) await this.getMembers();
-    return this.members.includes(address);
+    return this.members.includes(checkedAddress);
   };
 
   isAdmin = (address: string): boolean => {
-    checkAddress(address);
-    return address === this.admin;
+    const checkedAddress = checkAddress(address);
+    return checkedAddress === this.admin;
   };
 
   /**
@@ -165,12 +165,12 @@ export default class Pod {
    * @returns
    */
   isSubPodMember = async (address: string): Promise<boolean> => {
-    checkAddress(address);
+    const checkedAddress = checkAddress(address);
     if (!this.memberPods) await this.populateMembers();
     const results = await Promise.all(
       this.memberPods.map(async pod => {
         const members = await pod.getMembers();
-        return members.includes(address);
+        return members.includes(checkedAddress);
       }),
     );
     return results.includes(true);
