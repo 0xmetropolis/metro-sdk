@@ -19,12 +19,11 @@ describe('subgraph URLs', () => {
     );
   });
 
-  test('rinkeby URL', () => {
-    init({ provider, network: 4 });
-    expect(config.subgraphUrl).toBe('https://api.studio.thegraph.com/query/3720/orca-1/v0.1.2');
+  test('init should throw if no subgraphUrl provided for Rinkeby', () => {
+    expect(() => {init({ provider, network: 4 })}).toThrow('Must provide subgraph URL for testnet');
   });
 
-  test('override', () => {
+  test('Testnet init', () => {
     init({ provider, network: 4, subgraphUrl: 'testvalue' });
     expect(config.subgraphUrl).toBe('testvalue');
   });
