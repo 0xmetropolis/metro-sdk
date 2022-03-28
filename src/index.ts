@@ -28,7 +28,7 @@ async function getUserPods(address: string): Promise<Pod[]> {
       }`,
     variables: { id: address.toLowerCase() },
   });
-  const { pods } = data.data.user || { pods: [] };
+  const { pods } = data?.data?.user || { pods: [] };
   // Remove GraphQL nested layer for UserPod
   const unsortedPods = pods.map(({ pod }) => parseInt(pod.id, 10));
   return Promise.all(unsortedPods.map(async pod => new Pod(pod)));
