@@ -25,12 +25,14 @@ export function init({
     throw new Error('Network can only be 1 or 4 (mainnet or rinkeby)');
   }
 
-  if (network === 4) {
-    if (!subgraphUrl) throw new Error('Must provide subgraph URL for testnet');
+  if (subgraphUrl) {
+    if (network !== 4) throw new Error('Can only override subgraphUrl for testnet');
     config.subgraphUrl = subgraphUrl;
   } else if (network === 1) {
     config.subgraphUrl =
       'https://gateway.thegraph.com/api/50ba04ffb3711883f1fd80df4f93242b/subgraphs/id/0x3f4e2cfe11aa607570e0aee7ac74fbff9633fa8e-0';
+  } else if (network === 4) {
+    config.subgraphUrl = 'https://api.thegraph.com/subgraphs/name/orcaprotocol/pod-members';
   }
 
   config.provider = provider;

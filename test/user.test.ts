@@ -74,6 +74,10 @@ describe('user memberships', () => {
 });
 
 test('getAdminPods should fetch Pod objects for all the pods an address is admin of', async () => {
+  const provider = new ethers.providers.InfuraProvider('mainnet', {
+    infura: '69ecf3b10bc24c6a972972666fe950c8',
+  });
+  init({ provider, network: 1 });
   const pods = await getAdminPods(userAddress);
   pods.forEach(pod => {
     expect(pod.admin).toEqual(userAddress);
