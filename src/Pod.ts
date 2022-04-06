@@ -108,6 +108,7 @@ export default class Pod {
       variables: { id: this.id },
     });
     const { users } = data.data.pod || { users: [] };
+    // Checksum all addresses.
     this.members = users.length > 0 ? users.map(user => ethers.utils.getAddress(user.user.id)) : [];
     return this.members;
   };
@@ -167,6 +168,17 @@ export default class Pod {
   isAdmin = (address: string): boolean => {
     const checkedAddress = checkAddress(address);
     return checkedAddress === this.admin;
+  };
+
+  /**
+   * Checks if given address is a member of the admin pod (if there is one)
+   */
+  isAdminPodMember = async (address: string): Promise<boolean> => {
+    const checkedAddress = checkAddress(address);
+    if (!this.admin) return false;
+    const adminPod = await new Pod(this.admin);
+    if (!adminPod) return false;
+    return adminPod.isMember(checkedAddress);
   };
 
   /**
