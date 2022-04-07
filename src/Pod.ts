@@ -159,12 +159,22 @@ export default class Pod {
     return this.memberPods;
   };
 
+  /**
+   * Checks if user is a member of this pod
+   * @param address
+   * @returns
+   */
   isMember = async (address: string): Promise<boolean> => {
     const checkedAddress = checkAddress(address);
     if (!this.members) await this.getMembers();
     return this.members.includes(checkedAddress);
   };
 
+  /**
+   * Checks if user is admin of this pod
+   * @param address
+   * @returns
+   */
   isAdmin = (address: string): boolean => {
     const checkedAddress = checkAddress(address);
     return checkedAddress === this.admin;
@@ -459,6 +469,12 @@ export default class Pod {
     }
   };
 
+  /**
+   * Creates a proposal to transfer membership from a subpod
+   * @param subPodIdentifier - Pod, Pod ID or safe address
+   * @param addressToTransferTo
+   * @param signer
+   */
   proposeTransferMembershipFromSubPod = async (
     subPodIdentifier: Pod | string | number,
     addressToTransferTo: string,
@@ -511,6 +527,12 @@ export default class Pod {
     }
   };
 
+  /**
+   * Creates proposal to transfer the admin role from the admin pod
+   * @param adminPodIdentifier
+   * @param addressToTransferTo
+   * @param signer
+   */
   proposeTransferAdminFromAdminPod = async (
     adminPodIdentifier: Pod | string | number,
     addressToTransferTo: string,
@@ -590,6 +612,11 @@ export default class Pod {
     }
   };
 
+  /**
+   * Migrates the pod to the latest version. Signer must be the admin of pod.
+   * @param signer
+   * @returns
+   */
   migratePodToLatest = async (signer: ethers.Signer) => {
     // forcing to newest controller
     const newController = getDeployment('ControllerLatest', config.network);
@@ -615,6 +642,10 @@ export default class Pod {
     }
   };
 
+  /**
+   * Creates a proposal to migrate the pod to the latest version.
+   * @param signer
+   */
   proposeMigratePodToLatest = async (signer: ethers.Signer) => {
     // forcing to newest controller
     const newController = getDeployment('ControllerLatest', config.network);
