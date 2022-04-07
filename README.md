@@ -72,7 +72,7 @@ const memberEOAs = await pod.getMemberEOAs();
 const memberPods = await pod.getMemberPods();
 ```
 
-You can also check if a user is a member, admin, or member of a subpod with the following functions:
+You can also check if a user is a member, admin, or member of those pods with the following functions:
 
 ```js
 const pod = await getPod(podAddress);
@@ -80,6 +80,8 @@ const pod = await getPod(podAddress);
 const isMember = await pod.isMember(userAddress);
 // Not an async function
 const isAdmin = pod.isAdmin(userAddress);
+
+const isAdminPodMember = await pod.isAdminPodMember(userAddress);
 
 // Includes both pods and users as sub pod members.
 const isSubPodMember = await pod.isSubPodMember(userAddress);
