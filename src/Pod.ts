@@ -11,7 +11,13 @@ import {
   checkAddress,
   getPreviousModule,
 } from './lib/utils';
-import { createSafeTransaction } from './lib/services/transaction-service';
+import {
+  createSafeTransaction,
+  getSafeInfo,
+  getSafeTransactionsBySafe,
+  populateDataDecoded,
+} from './lib/services/transaction-service';
+import Proposal from './Proposal';
 
 export default class Pod {
   /**
@@ -87,6 +93,60 @@ export default class Pod {
   memberEOAs?: string[];
 
   memberPods?: Pod[];
+
+  /**
+   * Returns an array of Proposal objects in reverse chronological order. Defaults to returning 5,
+   * which can be overridden by passing { limit: 10 } for example in the options.
+   *
+   * By default, the first Proposal will be the active proposal. Queued transactions can be fetched
+   * by passing { open: true } in the options. This will return any queued transactions, as well any transactions
+   * that follow
+   *
+   * @param options
+   * @returns
+   */
+  getProposals = async (
+    options: {
+      queued?: boolean;
+      limit?: number;
+    } = {},
+  ): Promise<Proposal[]> => {
+    const { nonce } = await getSafeInfo(this.safe);
+    const { limit = 5 } = options;
+
+    // If looking for queued, then we need to only fetch current nonces.
+    const params = options.queued ? { nonce_gte: nonce, limit } : { limit };
+
+    const safeTransactions = await Promise.all(
+      (await getSafeTransactionsBySafe(this.safe, params)).map(populateDataDecoded),
+    );
+
+    // All non-reject transactions
+    const normalTransactions = [];
+    // All the reject transactions, we need to combine this with the filtered transaction in the Proposal constructor.
+    const rejectTransactions = [];
+
+    safeTransactions.forEach(tx => {
+      if (tx.data === null && tx.to === this.safe) {
+        return rejectTransactions.push(tx);
+      }
+      return normalTransactions.push(tx);
+    });
+    const rejectNonces = rejectTransactions.map(tx => tx.nonce);
+
+    return Promise.all(
+      normalTransactions.map(tx => {
+        // Check to see if there is a corresponding reject nonce.
+        const rejectNonceIndex = rejectNonces.indexOf(tx.nonce);
+        // If there is, we package that together with the regular transaction.
+        if (rejectNonceIndex >= 0) {
+          return new Proposal(tx, nonce, rejectTransactions[rejectNonceIndex]);
+        }
+        // Otherwise, just handle it normally.
+        return new Proposal(tx, nonce);
+      }),
+    );
+  };
 
   /**
    * Returns of list of all member addresses.
