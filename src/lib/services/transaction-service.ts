@@ -242,6 +242,27 @@ export function addConfirmationToSafeTransaction(
 }
 
 /**
+ * Gets transactions for a safe.
+ *
+ * @param address - Address of the Safe.
+ * @param [params] - Query params.
+ * @returns - Array of transactions for the Safe.
+ */
+export async function getSafeTransactionsBySafe(
+  address: string,
+  params?: Record<string, unknown>,
+): Promise<SafeTransaction[]> {
+  // Transaction-service expects a checksum address, but graphql does not checksum its addresses
+  const result = await axios.get(
+    `${config.gnosisUrl}/safes/${getAddress(address)}/multisig-transactions`,
+    {
+      params,
+    },
+  );
+  return result.data.results;
+}
+
+/**
  * Gets a transaction from the transaction service.
  *
  * @param contractTransactionHash
