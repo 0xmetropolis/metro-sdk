@@ -811,6 +811,9 @@ describe('Pod migration', () => {
       migratePodController: mockMigrate,
     });
     jest.spyOn(utils, 'getPreviousModule').mockResolvedValueOnce('0x242e1E6cF6C30d36988D8019d0fE2e187325CCEd');
+    jest
+      .spyOn(ethers, 'Contract')
+      .mockReturnValueOnce({ migratePodController: mockMigrate });
 
     const pod = await sdk.getPod(orcanautAddress);
 

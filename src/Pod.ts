@@ -680,18 +680,25 @@ export default class Pod {
   migratePodToLatest = async (signer: ethers.Signer) => {
     // forcing to newest controller
     const newController = getDeployment('ControllerLatest', config.network);
-    const oldController = getControllerByAddress(this.controller, config.network);
+    // Fetch old controller based on this Pod's controller address.
+    const oldControllerDeployment = getControllerByAddress(this.controller, config.network);
+    // Instantiate Contract object for old controller
+    const OldController = new ethers.Contract(
+      oldControllerDeployment.address,
+      oldControllerDeployment.abi,
+      signer,
+    );
 
     const previousModule = await getPreviousModule(
       this.safe,
-      oldController.address,
+      oldControllerDeployment.address,
       newController.address,
       signer,
     );
 
     // use prev controller
     try {
-      const res = await oldController.migratePodController(
+      const res = await OldController.migratePodController(
         this.id,
         newController.address,
         previousModule,

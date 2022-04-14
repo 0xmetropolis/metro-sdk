@@ -93,13 +93,17 @@ export async function getPreviousModule(
   const AddressOne = '0x0000000000000000000000000000000000000001';
   // TODO: figure out a better way to traverse the safes
   // I'm not sure why but in the SDK, this is nested in some strange object, hence the .array here vs the web version.
-  const safeModules = (await safeContract.getModulesPaginated(AddressOne, 10)).array;
+  const temp = await safeContract.getModulesPaginated(AddressOne, 10);
+  const safeModules = temp.array ? temp.array : temp;
 
-  if (safeModules.includes(newController)) throw new Error('Pod is already on latest version');
+  if (safeModules.includes(ethers.utils.getAddress(newController)))
+    throw new Error('Pod is already on latest version');
 
-  const oldIndex = safeModules.indexOf(oldController);
+  const oldIndex = safeModules.indexOf(ethers.utils.getAddress(oldController));
   const previousModule =
     safeModules.length === 1 || oldIndex === 0 ? newController : safeModules[oldIndex - 1];
+
+  if (!previousModule) throw new Error('Error parsing old modules');
 
   return previousModule;
 }
