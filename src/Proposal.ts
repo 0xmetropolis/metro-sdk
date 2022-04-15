@@ -1,15 +1,27 @@
+export type ProposalStatus = 'active' | 'executed' | 'queued';
+
+export type ProposalType = InstanceType<typeof Proposal>;
+
 export default class Proposal {
+  // Pod object. Not declaring type because of circular dependencies.
+  pod;
+
   // I.e., the Gnosis nonce of this tx
   id: number;
 
-  // Can be active, executed, or queued
-  status: string;
+  status: ProposalStatus;
 
   // Array of Ethereum addresses that approved
   approvals: string[];
 
   // Array of Ethereum addresses that rejected
   challenges: string[];
+
+  threshold: number;
+
+  safeTransaction;
+
+  rejectTransaction;
 
   // Name of smart contract function being called, if there is one
   method: string;
@@ -27,10 +39,14 @@ export default class Proposal {
    * @param safeTransaction
    * @param rejectTransaction - Optional reject transaction
    */
-  constructor(safeTransaction, podNonce, rejectTransaction?) {
+  constructor(Pod, podNonce, safeTransaction, rejectTransaction?) {
+    this.pod = Pod;
     this.id = safeTransaction.nonce;
     this.timestamp = new Date(safeTransaction.submissionDate);
     this.value = safeTransaction.value;
+    this.threshold = safeTransaction.confirmationsRequired;
+    this.safeTransaction = safeTransaction;
+    this.rejectTransaction = rejectTransaction;
 
     if (podNonce === this.id) this.status = 'active';
     if (podNonce > this.id) this.status = 'executed';
