@@ -111,14 +111,18 @@ export default class Pod {
       limit?: number;
     } = {},
   ): Promise<Proposal[]> => {
-    const { nonce } = await getSafeInfo(this.safe);
+    const { nonce, threshold } = await getSafeInfo(this.safe);
     const { limit = 5 } = options;
 
     // If looking for queued, then we need to only fetch current nonces.
     const params = options.queued ? { nonce_gte: nonce, limit } : { limit };
 
     const safeTransactions = await Promise.all(
-      (await getSafeTransactionsBySafe(this.safe, params)).map(populateDataDecoded),
+      (
+        await getSafeTransactionsBySafe(this.safe, params)
+      ).map(tx => {
+        return populateDataDecoded({ ...tx, confirmationsRequired: threshold });
+      }),
     );
 
     // All non-reject transactions
@@ -140,10 +144,10 @@ export default class Pod {
         const rejectNonceIndex = rejectNonces.indexOf(tx.nonce);
         // If there is, we package that together with the regular transaction.
         if (rejectNonceIndex >= 0) {
-          return new Proposal(tx, nonce, rejectTransactions[rejectNonceIndex]);
+          return new Proposal(this, nonce, tx, rejectTransactions[rejectNonceIndex]);
         }
         // Otherwise, just handle it normally.
-        return new Proposal(tx, nonce);
+        return new Proposal(this, nonce, tx);
       }),
     );
   };

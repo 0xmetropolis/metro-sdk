@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { ethers } from 'ethers';
 import Pod from './Pod';
-import { Pod as PodType, Proposal } from './types';
+import { Pod as PodType, Proposal as ProposalType, ProposalStatus } from './types';
 import { init, config } from './config';
 import { checkAddress } from './lib/utils';
 
@@ -49,4 +49,13 @@ async function getAdminPods(address: string): Promise<Pod[]> {
   return Promise.all(adminPods.map(async pod => new Pod(parseInt(pod, 10))));
 }
 
-export { init, config, getPod, getUserPods, getAdminPods, PodType as Pod, Proposal };
+export {
+  init,
+  config,
+  getPod,
+  getUserPods,
+  getAdminPods,
+  PodType as Pod,
+  ProposalType as Proposal,
+  ProposalStatus,
+};

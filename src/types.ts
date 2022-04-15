@@ -1,13 +1,7 @@
 import type Pod from './Pod';
 
-interface Proposal {
-  nonce: number;
-  title: string;
-  state: string;
-  approvalsRequired: number;
-  approvals: string[]; // Address of approver
-  type: string;
-  pod: Pod;
-}
+import type Proposal from './Proposal';
 
-export { Proposal, Pod };
+import { ProposalStatus } from './Proposal';
+
+export { Proposal, Pod, ProposalStatus };
