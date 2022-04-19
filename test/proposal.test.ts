@@ -71,7 +71,7 @@ describe('Proposal details', () => {
     expect(proposal.id).toBe(1);
     expect(proposal.status).toBe('active');
     expect(proposal.approvals).toEqual(['0x1cC62cE7cb56ed99513823064295761f9b7C856e']);
-    expect(proposal.challenges).toEqual(['0x1cC62cE7cb56ed99513823064295761f9b7C856e']);
+    expect(proposal.rejections).toEqual(['0x1cC62cE7cb56ed99513823064295761f9b7C856e']);
     expect(proposal.method).toBe(null);
     expect(proposal.parameters).toBe(null);
     expect(proposal.value).toBe('125000000000000000');

@@ -284,22 +284,12 @@ export async function getSafeTransactionByHash(
 export async function approveSafeTransaction(
   safeTransaction: SafeTransaction,
   signer: ethers.Signer,
-): Promise<SafeTransaction> {
-  const { safeTxHash, safe } = safeTransaction;
+) {
+  const { safeTxHash } = safeTransaction;
 
-  const [{ threshold }, signedHash] = await Promise.all([
-    getSafeInfo(safe),
-    signMessage(safeTxHash, signer),
-  ]);
+  const signedHash = await signMessage(safeTxHash, signer);
 
   await addConfirmationToSafeTransaction(safeTxHash, signedHash);
-
-  const approvedSafeTransaction = await getSafeTransactionByHash(safeTxHash);
-
-  return populateDataDecoded({
-    ...approvedSafeTransaction,
-    confirmationsRequired: threshold,
-  });
 }
 
 /**
@@ -320,7 +310,7 @@ export async function createSafeTransaction(
     sender: string;
   },
   signer: ethers.Signer,
-): Promise<SafeTransaction> {
+) {
   const [{ threshold }, [{ nonce }], safeTxGas] = await Promise.all([
     getSafeInfo(input.safe),
     getSafeTransactionsBySafe(input.safe, { limit: 1 }),
@@ -342,16 +332,11 @@ export async function createSafeTransaction(
   };
 
   // The input doesn't have a contractTransactionHash,
-  // We need to get one from the transaction-service.
+  // We need to generate one from the transaction-service.
   const safeTxHash = await getSafeTxHash(data);
 
   const createdSafeTransaction = await submitSafeTransactionToService({ safeTxHash, ...data });
-  const approvedSafeTransaction = await approveSafeTransaction(createdSafeTransaction, signer);
-
-  return populateDataDecoded({
-    ...approvedSafeTransaction,
-    confirmationsRequired: threshold,
-  });
+  await approveSafeTransaction(createdSafeTransaction, signer);
 }
 
 /**
@@ -361,26 +346,30 @@ export async function createSafeTransaction(
  */
 export async function executeSafeTransaction(
   safeTransaction: SafeTransaction,
-  provider: ethers.providers.Web3Provider,
+  signer: ethers.Signer,
 ) {
-  const signatures = safeTransaction.confirmations
+  // Refetch here to get all the confirmations.
+  let refetched;
+  try {
+    refetched = await getSafeTransactionByHash(safeTransaction.safeTxHash);
+  } catch (err) {
+    throw new Error(`Error when fetching safe transaction from Gnosis: ${err}`);
+  }
+  // Format confirmations to something the smart contract will accept.
+  const signatures = refetched.confirmations
     .sort((a, b) => (a.owner.toLowerCase() > b.owner.toLowerCase() ? 1 : -1))
     // eslint-disable-next-line
     .reduce((acc, cur) => (acc += cur.signature.replace('0x', '')), '0x');
 
-  const safeContract = new ethers.Contract(
-    safeTransaction.safe,
-    GnosisSafe.abi,
-    provider.getSigner(),
-  );
+  const safeContract = new ethers.Contract(safeTransaction.safe, GnosisSafe.abi, signer);
   return safeContract.execTransaction(
-    safeTransaction.to,
-    safeTransaction.value,
-    safeTransaction.data ? safeTransaction.data : '0x',
-    safeTransaction.operation,
-    safeTransaction.safeTxGas,
-    safeTransaction.baseGas,
-    Number(safeTransaction.gasPrice),
+    refetched.to,
+    refetched.value,
+    refetched.data ? refetched.data : '0x',
+    refetched.operation,
+    refetched.safeTxGas,
+    refetched.baseGas,
+    Number(refetched.gasPrice),
     ethers.constants.AddressZero, // gasToken
     ethers.constants.AddressZero, // refundReceiver
     signatures,
