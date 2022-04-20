@@ -321,8 +321,9 @@ export async function createSafeTransaction(
   },
   signer: ethers.Signer,
 ): Promise<SafeTransaction> {
-  const [{ nonce, threshold }, safeTxGas] = await Promise.all([
+  const [{ threshold }, [{ nonce }], safeTxGas] = await Promise.all([
     getSafeInfo(input.safe),
+    getSafeTransactionsBySafe(input.safe, { limit: 1 }),
     getGasEstimation(input),
   ]);
 
@@ -334,7 +335,7 @@ export async function createSafeTransaction(
     sender: ethers.utils.getAddress(input.sender), // Get the checksummed address
     confirmationsRequired: threshold,
     safeTxGas,
-    nonce,
+    nonce: nonce + 1, // We got the latest transaction, so add 1 to it.
     operation: 0,
     baseGas: 0,
     gasPrice: '0',
