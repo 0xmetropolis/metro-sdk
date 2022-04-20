@@ -29,6 +29,7 @@ export interface SafeTransaction {
   nonce?: number;
   safeTxGas?: number;
   safeTxHash?: string; // Generated transaction hash from safe contract
+  transactionHash?: string; // Blockchain transaction hash
   baseGas?: number;
   confirmations?: Array<Confirmation>;
   confirmationsRequired?: number;
