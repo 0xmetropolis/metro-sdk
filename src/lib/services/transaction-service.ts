@@ -234,12 +234,13 @@ export async function submitSafeTransactionToService(
  * @param signedMessage - ...
  * @returns - Confirmed transaction.
  */
-export function addConfirmationToSafeTransaction(
+export async function addConfirmationToSafeTransaction(
   contractTransactionHash: string,
   signedMessage: string,
 ) {
   const url = `${config.gnosisUrl}/multisig-transactions/${contractTransactionHash}/confirmations/`;
-  return axios.post(url, { signature: signedMessage });
+  const response = await axios.post(url, { signature: signedMessage });
+  return response.data;
 }
 
 /**
@@ -290,7 +291,8 @@ export async function approveSafeTransaction(
 
   const signedHash = await signMessage(safeTxHash, signer);
 
-  await addConfirmationToSafeTransaction(safeTxHash, signedHash);
+  const confirmationInApprove = await addConfirmationToSafeTransaction(safeTxHash, signedHash);
+  return confirmationInApprove;
 }
 
 /**
@@ -338,6 +340,38 @@ export async function createSafeTransaction(
 
   const createdSafeTransaction = await submitSafeTransactionToService({ safeTxHash, ...data });
   await approveSafeTransaction(createdSafeTransaction, signer);
+}
+
+/**
+ * Creates a reject transaction on Gnosis
+ */
+export async function createRejectTransaction(
+  safeTransaction: SafeTransaction,
+  signer: ethers.Signer,
+) {
+  const signerAddress = await signer.getAddress();
+  const data = {
+    safe: safeTransaction.safe,
+    to: safeTransaction.safe,
+    value: '0',
+    data: null,
+    operation: 0,
+    nonce: safeTransaction.nonce, // Same nonce
+    sender: ethers.utils.getAddress(signerAddress), // Get the checksummed address
+    confirmationsRequired: safeTransaction.confirmationsRequired,
+    safeTxGas: 0,
+    baseGas: 0,
+    gasPrice: '0',
+  };
+
+  // The input doesn't have a contractTransactionHash,
+  // We need to generate one from the transaction-service.
+  const safeTxHash = await getSafeTxHash(data);
+
+  const createdSafeTransaction = await submitSafeTransactionToService({ safeTxHash, ...data });
+  await approveSafeTransaction(createdSafeTransaction, signer);
+
+  return createdSafeTransaction;
 }
 
 /**

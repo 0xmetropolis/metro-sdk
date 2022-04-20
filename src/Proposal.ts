@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import type Pod from './Pod';
 import {
   approveSafeTransaction,
+  createRejectTransaction,
   executeSafeTransaction,
   SafeTransaction,
 } from './lib/services/transaction-service';
@@ -107,10 +108,6 @@ export default class Proposal {
    * @param signer
    */
   reject = async (signer: ethers.Signer) => {
-    // TODO: Create a rejectTransaction if none exists.
-    if (!this.rejectTransaction) {
-      throw new Error('No reject transaction exists (this is not implemented yet)');
-    }
     const signerAddress = checkAddress(await signer.getAddress());
     if (this.rejections.includes(signerAddress)) {
       throw new Error('Signer has already rejected this proposal');
@@ -118,10 +115,15 @@ export default class Proposal {
     if (!this.pod.isMember(signerAddress)) {
       throw new Error('Signer was not part of this pod');
     }
-    try {
-      await approveSafeTransaction(this.rejectTransaction, signer);
-    } catch (err) {
-      throw new Error(`Error approving Proposal: ${err.message}`);
+
+    if (!this.rejectTransaction) {
+      this.rejectTransaction = await createRejectTransaction(this.safeTransaction, signer);
+    } else {
+      try {
+        await approveSafeTransaction(this.rejectTransaction, signer);
+      } catch (err) {
+        throw new Error(`Error rejecting Proposal: ${err.message}`);
+      }
     }
 
     this.rejections.push(signerAddress);

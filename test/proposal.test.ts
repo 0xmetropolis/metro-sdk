@@ -97,3 +97,4 @@ describe('Proposal details', () => {
     ]))
   });
 });
+
