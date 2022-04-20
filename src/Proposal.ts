@@ -1,10 +1,18 @@
+import { ethers } from 'ethers';
+import type Pod from './Pod';
+import {
+  approveSafeTransaction,
+  executeSafeTransaction,
+  SafeTransaction,
+} from './lib/services/transaction-service';
+import { checkAddress } from './lib/utils';
+
 export type ProposalStatus = 'active' | 'executed' | 'queued';
 
 export type ProposalType = InstanceType<typeof Proposal>;
 
 export default class Proposal {
-  // Pod object. Not declaring type because of circular dependencies.
-  pod;
+  pod: Pod;
 
   // I.e., the Gnosis nonce of this tx
   id: number;
@@ -15,19 +23,19 @@ export default class Proposal {
   approvals: string[];
 
   // Array of Ethereum addresses that rejected
-  challenges: string[];
+  rejections: string[];
 
   threshold: number;
 
-  safeTransaction;
+  safeTransaction: SafeTransaction;
 
-  rejectTransaction;
+  rejectTransaction: SafeTransaction;
 
   // Name of smart contract function being called, if there is one
   method: string;
 
   // Parameters for the smart contract function being called, if there is one
-  parameters: string[];
+  parameters: { name: string; type: string; value: string }[];
 
   // Eth value of transfer
   value: string;
@@ -39,7 +47,12 @@ export default class Proposal {
    * @param safeTransaction
    * @param rejectTransaction - Optional reject transaction
    */
-  constructor(Pod, podNonce, safeTransaction, rejectTransaction?) {
+  constructor(
+    Pod: Pod,
+    podNonce: number,
+    safeTransaction: SafeTransaction,
+    rejectTransaction?: SafeTransaction,
+  ) {
     this.pod = Pod;
     this.id = safeTransaction.nonce;
     this.timestamp = new Date(safeTransaction.submissionDate);
@@ -54,9 +67,9 @@ export default class Proposal {
 
     this.approvals = safeTransaction.confirmations.map(confirmation => confirmation.owner);
     if (rejectTransaction) {
-      this.challenges = rejectTransaction.confirmations.map(confirmation => confirmation.owner);
+      this.rejections = rejectTransaction.confirmations.map(confirmation => confirmation.owner);
     } else {
-      this.challenges = [];
+      this.rejections = [];
     }
 
     if (safeTransaction.dataDecoded) {
@@ -67,4 +80,64 @@ export default class Proposal {
       this.parameters = null;
     }
   }
+
+  /**
+   * Votes to approve the proposal
+   * @param signer
+   */
+  approve = async (signer: ethers.Signer) => {
+    const signerAddress = checkAddress(await signer.getAddress());
+    if (this.approvals.includes(signerAddress)) {
+      throw new Error('Signer has already approved this proposal');
+    }
+    if (!this.pod.isMember(signerAddress)) {
+      throw new Error('Signer was not part of this pod');
+    }
+    try {
+      await approveSafeTransaction(this.safeTransaction, signer);
+    } catch (err) {
+      throw new Error(`Error approving Proposal: ${err.message}`);
+    }
+
+    this.approvals.push(signerAddress);
+  };
+
+  /**
+   * Votes to reject the proposal
+   * @param signer
+   */
+  reject = async (signer: ethers.Signer) => {
+    // TODO: Create a rejectTransaction if none exists.
+    if (!this.rejectTransaction) {
+      throw new Error('No reject transaction exists (this is not implemented yet)');
+    }
+    const signerAddress = checkAddress(await signer.getAddress());
+    if (this.rejections.includes(signerAddress)) {
+      throw new Error('Signer has already rejected this proposal');
+    }
+    if (!this.pod.isMember(signerAddress)) {
+      throw new Error('Signer was not part of this pod');
+    }
+    try {
+      await approveSafeTransaction(this.rejectTransaction, signer);
+    } catch (err) {
+      throw new Error(`Error approving Proposal: ${err.message}`);
+    }
+
+    this.rejections.push(signerAddress);
+  };
+
+  /**
+   * Executes proposal
+   */
+  executeApprove = async (signer: ethers.Signer) => {
+    const signerAddress = checkAddress(await signer.getAddress());
+    if (this.approvals.length !== this.threshold) {
+      throw new Error('Not enough approvals to execute');
+    }
+    if (!this.pod.isMember(signerAddress)) {
+      throw new Error('Signer was not part of this pod');
+    }
+    return executeSafeTransaction(this.safeTransaction, signer);
+  };
 }
