@@ -58,7 +58,9 @@ export default class Proposal {
     this.id = safeTransaction.nonce;
     this.timestamp = new Date(safeTransaction.submissionDate);
     this.value = safeTransaction.value;
-    this.threshold = safeTransaction.confirmationsRequired;
+    this.threshold = safeTransaction.confirmationsRequired
+      ? safeTransaction.confirmationsRequired
+      : this.pod.threshold;
     this.safeTransaction = safeTransaction;
     this.rejectTransaction = rejectTransaction;
 
@@ -91,7 +93,7 @@ export default class Proposal {
     if (this.approvals.includes(signerAddress)) {
       throw new Error('Signer has already approved this proposal');
     }
-    if (!this.pod.isMember(signerAddress)) {
+    if (!(await this.pod.isMember(signerAddress))) {
       throw new Error('Signer was not part of this pod');
     }
     try {
@@ -112,7 +114,7 @@ export default class Proposal {
     if (this.rejections.includes(signerAddress)) {
       throw new Error('Signer has already rejected this proposal');
     }
-    if (!this.pod.isMember(signerAddress)) {
+    if (!(await this.pod.isMember(signerAddress))) {
       throw new Error('Signer was not part of this pod');
     }
 
@@ -137,7 +139,7 @@ export default class Proposal {
     if (this.approvals.length !== this.threshold) {
       throw new Error('Not enough approvals to execute');
     }
-    if (!this.pod.isMember(signerAddress)) {
+    if (!(await this.pod.isMember(signerAddress))) {
       throw new Error('Signer was not part of this pod');
     }
     return executeSafeTransaction(this.safeTransaction, signer);
