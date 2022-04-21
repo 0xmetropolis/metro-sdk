@@ -10,7 +10,8 @@
     "format": "cod-scripts format",
     "lint": "cod-scripts lint",
     "compile": "tsc --build .",
-    "test": "jest"
+    "test": "jest",
+    "docs": "typedoc src"
   },
   "repository": {
     "type": "git",
@@ -29,7 +30,8 @@
     "@types/jest": "^27.4.0",
     "babel-jest": "^27.4.6",
     "cod-scripts": "^10.0.0",
-    "jest": "^27.4.7"
+    "jest": "^27.4.7",
+    "typedoc": "^0.22.15"
   },
   "dependencies": {
     "@ensdomains/ensjs": "^2.0.1",

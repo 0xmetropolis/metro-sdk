@@ -21,12 +21,13 @@ jobs:
         with:
           node-version: 16.12.0
 
-      - name: Lint, test and compile
+      - name: Lint, test, compile, and generate documentation
         run: |
           npm ci
           npm run lint
           npm run test
           npm run compile
+          npm run docs
         env:
           CI: true
           ALCHEMY_TOKEN: ${{ secrets.ALCHEMY_TOKEN }}
