@@ -80,6 +80,8 @@ export default class Pod {
 
   safe: string;
 
+  threshold: number;
+
   ensName: string;
 
   admin: string;
@@ -112,6 +114,7 @@ export default class Pod {
     } = {},
   ): Promise<Proposal[]> => {
     const { nonce, threshold } = await getSafeInfo(this.safe);
+    this.threshold = threshold;
     const { limit = 5 } = options;
 
     // If looking for queued, then we need to only fetch current nonces.

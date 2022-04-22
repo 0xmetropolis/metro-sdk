@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import type Pod from './Pod';
 import {
   approveSafeTransaction,
+  createRejectTransaction,
   executeSafeTransaction,
   SafeTransaction,
 } from './lib/services/transaction-service';
@@ -57,7 +58,9 @@ export default class Proposal {
     this.id = safeTransaction.nonce;
     this.timestamp = new Date(safeTransaction.submissionDate);
     this.value = safeTransaction.value;
-    this.threshold = safeTransaction.confirmationsRequired;
+    this.threshold = safeTransaction.confirmationsRequired
+      ? safeTransaction.confirmationsRequired
+      : this.pod.threshold;
     this.safeTransaction = safeTransaction;
     this.rejectTransaction = rejectTransaction;
 
@@ -90,7 +93,7 @@ export default class Proposal {
     if (this.approvals.includes(signerAddress)) {
       throw new Error('Signer has already approved this proposal');
     }
-    if (!this.pod.isMember(signerAddress)) {
+    if (!(await this.pod.isMember(signerAddress))) {
       throw new Error('Signer was not part of this pod');
     }
     try {
@@ -107,21 +110,22 @@ export default class Proposal {
    * @param signer
    */
   reject = async (signer: ethers.Signer) => {
-    // TODO: Create a rejectTransaction if none exists.
-    if (!this.rejectTransaction) {
-      throw new Error('No reject transaction exists (this is not implemented yet)');
-    }
     const signerAddress = checkAddress(await signer.getAddress());
     if (this.rejections.includes(signerAddress)) {
       throw new Error('Signer has already rejected this proposal');
     }
-    if (!this.pod.isMember(signerAddress)) {
+    if (!(await this.pod.isMember(signerAddress))) {
       throw new Error('Signer was not part of this pod');
     }
-    try {
-      await approveSafeTransaction(this.rejectTransaction, signer);
-    } catch (err) {
-      throw new Error(`Error approving Proposal: ${err.message}`);
+
+    if (!this.rejectTransaction) {
+      this.rejectTransaction = await createRejectTransaction(this.safeTransaction, signer);
+    } else {
+      try {
+        await approveSafeTransaction(this.rejectTransaction, signer);
+      } catch (err) {
+        throw new Error(`Error rejecting Proposal: ${err.message}`);
+      }
     }
 
     this.rejections.push(signerAddress);
@@ -135,7 +139,7 @@ export default class Proposal {
     if (this.approvals.length !== this.threshold) {
       throw new Error('Not enough approvals to execute');
     }
-    if (!this.pod.isMember(signerAddress)) {
+    if (!(await this.pod.isMember(signerAddress))) {
       throw new Error('Signer was not part of this pod');
     }
     return executeSafeTransaction(this.safeTransaction, signer);
