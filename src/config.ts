@@ -1,5 +1,9 @@
 import { ethers } from 'ethers';
 
+/**
+ * The config object.
+ * This object should not be manipulated directly, and is exported mostly for debug purposes.
+ */
 export const config = {
   provider: null,
   network: null,
@@ -9,15 +13,17 @@ export const config = {
   etherscanApiKey: null,
 };
 
-export function init({
-  provider,
-  network,
-  subgraphUrl,
-}: {
+/**
+ * Initializes the SDK. This should be called on app startup.
+ * @param input.network - Network ID. Currently supporting Mainnet (id 1) and Rinkeby (id 4)
+ * @param input.subgraphUrl - Optional override for development/debug purposes.
+ */
+export function init(input: {
   provider: ethers.providers.Provider;
   network: number;
   subgraphUrl?: string;
 }) {
+  const { provider, network, subgraphUrl } = input;
   config.network = network;
 
   // Only accept 1 or 4 for network values.

@@ -12,33 +12,48 @@ export type ProposalStatus = 'active' | 'executed' | 'queued';
 
 export type ProposalType = InstanceType<typeof Proposal>;
 
+/**
+ * The Proposal object is the interface for interacting with any Proposals.
+ * Can be gotten via the Pod object, through {@link Pod.getProposals}.
+ */
 export default class Proposal {
+  /** @property Pod object this Proposal is associated with */
   pod: Pod;
 
-  // I.e., the Gnosis nonce of this tx
+  /** @property Proposal ID, i.e., the Gnosis nonce. This is not necessarily a unique number */
   id: number;
 
+  /** @property Proposal status, i.e., 'active', 'executed', or 'queued',  */
   status: ProposalStatus;
 
-  // Array of Ethereum addresses that approved
+  /** @property Array of addresses that approved */
   approvals: string[];
 
-  // Array of Ethereum addresses that rejected
+  /** @property Array of addresses that rejected */
   rejections: string[];
 
+  /** @property Number of votes required to pass/reject a proposal */
   threshold: number;
 
+  /**
+   * @ignore
+   * @property SafeTransaction object, used mostly internally
+   */
   safeTransaction: SafeTransaction;
 
-  rejectTransaction: SafeTransaction;
+  /**
+   * @ignore
+   * @property The associated reject SafeTransaction, if there is one. Used internally.
+   */
+  rejectTransaction?: SafeTransaction;
 
-  // Name of smart contract function being called, if there is one
-  method: string;
+  /** @property Name of smart contract method being called, if there is one */
+  method?: string;
 
-  // Parameters for the smart contract function being called, if there is one
-  parameters: { name: string; type: string; value: string }[];
+  /** @property Parameters for the smart contract function being called, if there is one */
+  parameters?: { name: string; type: string; value: string }[];
 
-  // Eth value of transfer
+  /** @property Eth value of transfer in Wei, if there is one */
   value: string;
 
   timestamp: Date;
@@ -86,7 +101,10 @@ export default class Proposal {
 
   /**
    * Votes to approve the proposal
-   * @param signer
+   * @param signer - Signer of pod member
+   * @throws If signer already approved proposal
+   * @throws If signer is not a pod member
+   * @throws If there was an error approving Proposal
    */
   approve = async (signer: ethers.Signer) => {
     const signerAddress = checkAddress(await signer.getAddress());
@@ -107,7 +125,10 @@ export default class Proposal {
 
   /**
    * Votes to reject the proposal
-   * @param signer
+   * @param signer - Signer of pod member
+   * @throws If signer has already rejected proposal
+   * @throws If signer was not pod member
+   * @throws If error rejecting proposal
    */
   reject = async (signer: ethers.Signer) => {
     const signerAddress = checkAddress(await signer.getAddress());
@@ -133,6 +154,9 @@ export default class Proposal {
 
   /**
    * Executes proposal
+   * @param signer - Signer of pod member
+   * @throws If not enough approvals to execute
+   * @throws If signer was not part of the pod
    */
   executeApprove = async (signer: ethers.Signer) => {
     const signerAddress = checkAddress(await signer.getAddress());

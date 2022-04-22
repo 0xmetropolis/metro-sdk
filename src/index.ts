@@ -5,10 +5,20 @@ import { Pod as PodType, Proposal as ProposalType, ProposalStatus } from './type
 import { init, config } from './config';
 import { checkAddress } from './lib/utils';
 
+/**
+ * Gets a pod object.
+ *
+ * @param identifier - Pod ID (as number), safe address, or ENS name
+ */
 async function getPod(identifier: string | number): Promise<Pod> {
   return new Pod(identifier);
 }
 
+/**
+ * Fetches an array of Pod objects that a user is a member of
+ *
+ * @param address - user address
+ */
 async function getUserPods(address: string): Promise<Pod[]> {
   try {
     ethers.utils.getAddress(address);
@@ -34,6 +44,10 @@ async function getUserPods(address: string): Promise<Pod[]> {
   return Promise.all(unsortedPods.map(async pod => new Pod(pod)));
 }
 
+/**
+ * Gets an array of Pod objects that a user is the admin of
+ * @param address - user address
+ */
 async function getAdminPods(address: string): Promise<Pod[]> {
   checkAddress(address);
 

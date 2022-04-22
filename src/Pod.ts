@@ -19,11 +19,58 @@ import {
 } from './lib/services/transaction-service';
 import Proposal from './Proposal';
 
+/**
+ * The `Pod` object is the interface for fetching pod data.
+ *
+ * The Pod object should not be instantiated directly, use {@link getPod} instead.
+ *
+ * The following properties are on the object itself:
+ *
+ * ```js
+ * const {
+ *   id, // Pod ID
+ *   safe, // Gnosis safe address, aka the Pod address
+ *   ensName, // E.g., orcanauts.pod.xyz
+ *   admin, // Address of pod admin
+ *   imageUrl, // Source of NFT image
+ *   imageNoTextUrl, // Source of NFT image without text (used for avatars)
+ * } = await getPod();
+ * ```
+ *
+ * Members, EOAs and member Pods can be fetched with the following functions:
+ *
+ * ```js
+ * const pod = await getPod(podAddress);
+ * // Fetches list of all members from the pod, as an array of Ethereum addresses.
+ * // This includes any pods that may be members of the original pods.
+ * const members = await pod.getMembers();
+ *
+ * // Fetches any member EOAs (externally owned accounts). That is, any member that is not a smart contract or pod.
+ * const memberEOAs = await pod.getMemberEOAs();
+ *
+ * // Fetches Pod objects for any member pods.
+ * const memberPods = await pod.getMemberPods();
+ * ```
+ *
+ * You can also check if a user is a member, admin, or member of those pods with the following functions:
+ *
+ * ```js
+ * const pod = await getPod(podAddress);
+ *
+ * const isMember = await pod.isMember(userAddress);
+ * // Not an async function
+ * const isAdmin = pod.isAdmin(userAddress);
+ *
+ * const isAdminPodMember = await pod.isAdminPodMember(userAddress);
+ *
+ * // Includes both pods and users as sub pod members.
+ * const isSubPodMember = await pod.isSubPodMember(userAddress);
+ * ```
+ */
 export default class Pod {
   /**
-   *
+   *  Note this constructor should not be called directly. Use `getPod()` instead.
    * @param identifier Can be either podId or safe address
-   * @returns
    */
   constructor(identifier: string | number) {
     const { network } = config;
@@ -76,33 +123,54 @@ export default class Pod {
   // Address of Controller
   controller: string;
 
+  /** @property Pod ID */
   id: number;
 
+  /** @property Gnosis Safe address */
   safe: string;
 
+  /** @property Number of votes required to pass a proposal */
   threshold: number;
 
+  /** @property ENS name */
   ensName: string;
 
+  /** @property Admin address */
   admin: string;
 
+  /** @property Link to Pod NFT image */
   imageUrl: string;
 
+  /** @property Link to Pod NFT image with no text */
   imageNoTextUrl: string;
 
+  /**
+   * @ignore
+   * @property Array of members of pod.
+   * Do not call this property directly, use `Pod.getMembers()` */
   members?: string[];
 
+  /**
+   * @ignore
+   * @property Array of member EOAs
+   * Do not call this property directly, use `Pod.getMemberEOAs()`
+   */
   memberEOAs?: string[];
 
+  /**
+   * @ignore
+   * @property Array of Pod objects for any member pods
+   * Do not call this property directly, use `Pod.getMemberPods()`
+   */
   memberPods?: Pod[];
 
   /**
    * Returns an array of Proposal objects in reverse chronological order. Defaults to returning 5,
    * which can be overridden by passing { limit: 10 } for example in the options.
    *
-   * By default, the first Proposal will be the active proposal. Queued transactions can be fetched
-   * by passing { open: true } in the options. This will return any queued transactions, as well any transactions
-   * that follow
+   * By default, the first Proposal will be the active proposal. Queued proposals can be fetched
+   * by passing { queued: true } in the options. This will return any queued proposals, as well any proposals
+   * that follow (such as active or executed proposals)
    *
    * @param options
    * @returns
@@ -157,7 +225,7 @@ export default class Pod {
 
   /**
    * Returns of list of all member addresses.
-   * @returns string[]
+   * Members include member pods and member EOAs
    */
   getMembers = async (): Promise<string[]> => {
     const { subgraphUrl } = config;
@@ -181,6 +249,7 @@ export default class Pod {
   };
 
   /**
+   * @ignore
    * Populates the memberEOAs and memberPods fields.
    * The process for fetching either of these fields is the same.
    */
@@ -208,7 +277,6 @@ export default class Pod {
 
   /**
    * Returns list of all member EOAs, not including any smart contract/pod members.
-   * @returns
    */
   getMemberEOAs = async (): Promise<string[]> => {
     if (this.memberEOAs) return this.memberEOAs;
@@ -218,7 +286,6 @@ export default class Pod {
 
   /**
    * Returns Pod objects of all member pods.
-   * @returns Pod[]
    */
   getMemberPods = async (): Promise<Pod[]> => {
     if (this.memberPods) return this.memberPods;
@@ -229,7 +296,6 @@ export default class Pod {
   /**
    * Checks if user is a member of this pod
    * @param address
-   * @returns
    */
   isMember = async (address: string): Promise<boolean> => {
     const checkedAddress = checkAddress(address);
@@ -240,7 +306,6 @@ export default class Pod {
   /**
    * Checks if user is admin of this pod
    * @param address
-   * @returns
    */
   isAdmin = (address: string): boolean => {
     const checkedAddress = checkAddress(address);
@@ -249,6 +314,7 @@ export default class Pod {
 
   /**
    * Checks if given address is a member of the admin pod (if there is one)
+   * Returns false if there is no admin pod.
    */
   isAdminPodMember = async (address: string): Promise<boolean> => {
     const checkedAddress = checkAddress(address);
@@ -260,9 +326,10 @@ export default class Pod {
 
   /**
    * Checks if given address is a member of any subpods.
-   * This includes EOAs and other pods (or smart contracts).
+   *
+   * Returns false if the user is a member of **this** pod, but not any sub pods
+   *
    * @param address
-   * @returns
    */
   isSubPodMember = async (address: string): Promise<boolean> => {
     const checkedAddress = checkAddress(address);
@@ -277,7 +344,8 @@ export default class Pod {
   };
 
   /**
-   * Checks if the user is the admin of the pod, and then mints a member.
+   * Mints member to this pod.
+   * @throws if signer is not admin TODO
    */
   mintMember = async (
     newMember: string,
@@ -292,7 +360,8 @@ export default class Pod {
   };
 
   /**
-   * Checks if the user is the admin of the pod, and then burns a member.
+   * Burns member from this pod.
+   * @throws If signer is not admin TODO
    */
   burnMember = async (
     memberToBurn: string,
@@ -308,9 +377,11 @@ export default class Pod {
 
   /**
    * Transfers a membership from the signer's account to the memberToTransferTo.
-   * @param addressToTransferTo
-   * @param signer
-   * @returns
+   *
+   * @param addressToTransferTo - Address that will receive new membership
+   * @param signer - Signer of the address that is giving up membership
+   * @throws If addressToTransferTo is already a member TODO
+   * @throws If signer is not admin TODO
    */
   transferMembership = async (addressToTransferTo: string, signer: ethers.Signer) => {
     const checkedAddress = checkAddress(addressToTransferTo);
@@ -338,9 +409,9 @@ export default class Pod {
 
   /**
    * Transfers admin role from signer's account to addressToTransferTo
-   * @param addressToTransferTo
-   * @param signer
-   * @returns
+   * @param addressToTransferTo - Address that will receive admin role
+   * @param signer - Signer of admin
+   * @throws If signer is not admin
    */
   transferAdmin = async (addressToTransferTo: string, signer: ethers.Signer) => {
     const checkedAddress = checkAddress(addressToTransferTo);
@@ -358,7 +429,11 @@ export default class Pod {
   };
 
   /**
-   * Any member of a pod can call this
+   * Creates a proposal to mint a member to this pod
+   * @param newMember
+   * @param signer - Signer of pod member
+   * @throws If new member is part of this pod.
+   * @throws If signer is not part of this pod. TODO
    */
   proposeMintMember = async (newMember: string, signer: ethers.Signer) => {
     checkAddress(newMember);
@@ -393,7 +468,11 @@ export default class Pod {
    * Creates a proposal on an external pod to mint a new member to this pod.
    * @param externalPodIdentifier - The Pod object, pod ID or pod safe address of either the admin pod, or a subpod of this pod.
    * @param newMember - Member to mint
-   * @param signer -
+   * @param signer - Signer of external pod member
+   * @throws If newMember is already part of this pod
+   * @throws If externalPodIdentifier does not correlate to existing pod
+   * @throws If externalPodIdentifier is not the admin or subpod of this pod
+   * @throws If signer is not a member of external pod
    */
   proposeMintMemberFromPod = async (
     externalPodIdentifier: Pod | string | number,
@@ -448,7 +527,10 @@ export default class Pod {
   };
 
   /**
-   * Any member of a pod can call this
+   * Creates a proposal to burn a member from this pod
+   * @param memberToBurn - Member to remove from this pod
+   * @param signer - Signer of pod member
+   * @throws If memberToBurn is not part of this pod
    */
   proposeBurnMember = async (memberToBurn: string, signer: ethers.Signer) => {
     checkAddress(memberToBurn);
@@ -482,8 +564,12 @@ export default class Pod {
   /**
    * Creates a proposal on an external pod to burn a new member from this pod.
    * @param externalPodIdentifier - The Pod object, pod ID or pod safe address of either the admin pod, or a subpod of this pod.
-   * @param memberToBurn - Member to mint
-   * @param signer -
+   * @param memberToBurn - Member to burn
+   * @param signer - Signer of external pod member
+   * @throws If memberToBurn is not part of this pod
+   * @throws If externalPodIdentifier is not an existing pod
+   * @throws If externalPodIdentifier is not the admin or subpod of this pod
+   * @throws If Signer is not a member of the external pod
    */
   proposeBurnMemberFromPod = async (
     externalPodIdentifier: Pod | string | number,
@@ -539,8 +625,11 @@ export default class Pod {
   /**
    * Creates a proposal to transfer membership from a subpod
    * @param subPodIdentifier - Pod, Pod ID or safe address
-   * @param addressToTransferTo
-   * @param signer
+   * @param addressToTransferTo - Address that will receive the membership
+   * @param signer - Signer of subpod member
+   * @throws If addressToTransferTo is already a member of this pod
+   * @throws If subPodIdentifier does not exist
+   * @throws If Signer is not a member of this sub pod
    */
   proposeTransferMembershipFromSubPod = async (
     subPodIdentifier: Pod | string | number,
@@ -596,9 +685,13 @@ export default class Pod {
 
   /**
    * Creates proposal to transfer the admin role from the admin pod
-   * @param adminPodIdentifier
-   * @param addressToTransferTo
-   * @param signer
+   * @param adminPodIdentifier - Pod ID, safe address, or ENS name of admin pod
+   * @param addressToTransferTo - Address that will receive admin roll
+   * @param signer - Signer of admin pod member
+   * @throws If addressToTransferTo is already the pod admin
+   * @throws If adminPodIdentifier does not exist
+   * @throws If adminPodIdentifier is not the admin of this pod
+   * @throws If Signer is not a member of the admin pod
    */
   proposeTransferAdminFromAdminPod = async (
     adminPodIdentifier: Pod | string | number,
@@ -649,8 +742,9 @@ export default class Pod {
 
   /**
    * Adds newAdminAddress as the admin of this pod, if this pod does not currently have an admin.
-   * @param newAdminAddress
-   * @param signer
+   * @param newAdminAddress - Address of new admin
+   * @param signer - Signer of pod member
+   * @throws If pod already has an admin
    */
   proposeAddAdmin = async (newAdminAddress: string, signer: ethers.Signer) => {
     const checkedAddress = checkAddress(newAdminAddress);
@@ -681,8 +775,8 @@ export default class Pod {
 
   /**
    * Migrates the pod to the latest version. Signer must be the admin of pod.
-   * @param signer
-   * @returns
+   * @param signer - Signer of pod admin
+   * @throws If signer is not pod admin TODO
    */
   migratePodToLatest = async (signer: ethers.Signer) => {
     // forcing to newest controller
@@ -718,7 +812,8 @@ export default class Pod {
 
   /**
    * Creates a proposal to migrate the pod to the latest version.
-   * @param signer
+   * @param signer - Signer of pod member
+   * @throws If signer is not a pod member TODO
    */
   proposeMigratePodToLatest = async (signer: ethers.Signer) => {
     // forcing to newest controller
