@@ -42,4 +42,4 @@ import { Pod, Proposal } from '@orcaprotocol/orca-sdk';
 
 ### Additional Documentation
 
-Additional documentation can be found [here](https://orcaprotocol.github.io/docs)
+Additional documentation can be found [here](https://orcaprotocol.github.io/orca-sdk/)
