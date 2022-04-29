@@ -16,7 +16,10 @@ import {
   getSafeTransactionsBySafe,
   populateDataDecoded,
 } from './lib/services/transaction-service';
-import { createSafeTransaction } from './lib/services/create-safe-transaction';
+import {
+  createSafeTransaction,
+  createNestedProposal,
+} from './lib/services/create-safe-transaction';
 import Proposal from './Proposal';
 
 /**
@@ -200,27 +203,55 @@ export default class Pod {
     const normalTransactions = [];
     // All the reject transactions, we need to combine this with the filtered transaction in the Proposal constructor.
     const rejectTransactions = [];
+    // Sub proposal transactions need to be handled differently.
+    const pairedSubTxs = {};
 
     safeTransactions.forEach(tx => {
       if (tx.data === null && tx.to === this.safe) {
-        return rejectTransactions.push(tx);
+        rejectTransactions.push(tx);
+        return;
       }
-      return normalTransactions.push(tx);
+      if (tx.dataDecoded?.method === 'approveHash') {
+        // Pair approve/reject sub transactions together
+        // Sub transactions always have an approve, but do not always have a reject
+        if (Array.isArray(pairedSubTxs[tx.nonce])) {
+          pairedSubTxs[tx.nonce].push(tx);
+          return;
+        }
+        pairedSubTxs[tx.nonce] = [tx];
+        return;
+      }
+      normalTransactions.push(tx);
     });
     const rejectNonces = rejectTransactions.map(tx => tx.nonce);
 
-    return Promise.all(
-      normalTransactions.map(tx => {
-        // Check to see if there is a corresponding reject nonce.
-        const rejectNonceIndex = rejectNonces.indexOf(tx.nonce);
-        // If there is, we package that together with the regular transaction.
-        if (rejectNonceIndex >= 0) {
-          return new Proposal(this, nonce, tx, rejectTransactions[rejectNonceIndex]);
-        }
-        // Otherwise, just handle it normally.
-        return new Proposal(this, nonce, tx);
-      }),
-    );
+    const subProposals = Object.keys(pairedSubTxs).map(subTxNonce => {
+      // subTxPair is an array of length 1 or 2, depending on if there's a reject or not
+      const subTxPair = pairedSubTxs[subTxNonce];
+      if (subTxPair.length === 1) {
+        return new Proposal(this, nonce, subTxPair[0]);
+      }
+      // If the length is 2, that means there is a paired reject transaction.
+      // The reject transaction is always created after the approve transaction
+      // Because safeTx comes in reverse chron order, subTxPair[1] is the approve, [0] is the reject
+      return new Proposal(this, nonce, subTxPair[1], subTxPair[0]);
+    });
+
+    const normalProposals = normalTransactions.map(tx => {
+      // Check to see if there is a corresponding reject nonce.
+      const rejectNonceIndex = rejectNonces.indexOf(tx.nonce);
+      // If there is, we package that together with the regular transaction.
+      if (rejectNonceIndex >= 0) {
+        return new Proposal(this, nonce, tx, rejectTransactions[rejectNonceIndex]);
+      }
+      // Otherwise, just handle it normally.
+      return new Proposal(this, nonce, tx);
+    });
+
+    return subProposals.concat(normalProposals).sort((a, b) => {
+      // Sort in descending order/reverse chron based on nonce/id.
+      return b.id - a.id;
+    });
   };
 
   /**
@@ -511,14 +542,15 @@ export default class Pod {
 
     const { address: memberTokenAddress } = getContract('MemberToken', signer);
     try {
-      // Create a safe transaction on this pod, sent from the admin pod
-      await createSafeTransaction(
+      // Create a safe transaction on this pod, sent from the signer
+      await createNestedProposal(
         {
           sender: externalPod.safe,
           safe: this.safe,
           to: memberTokenAddress,
           data,
         },
+        externalPod,
         signer,
       );
     } catch (err) {
@@ -608,13 +640,14 @@ export default class Pod {
     const { address: memberTokenAddress } = getContract('MemberToken', signer);
     try {
       // Create a safe transaction on this pod, sent from the admin pod
-      await createSafeTransaction(
+      await createNestedProposal(
         {
           sender: externalPod.safe,
           safe: this.safe,
           to: memberTokenAddress,
           data,
         },
+        externalPod,
         signer,
       );
     } catch (err) {

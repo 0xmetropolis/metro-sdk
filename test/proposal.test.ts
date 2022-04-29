@@ -75,6 +75,18 @@ describe('Pod.getProposals', () => {
     expect(proposals.length).toBe(3);
     expect(mockGetSafeTransactions).toHaveBeenCalledWith('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41', { nonce_gte: 1, limit: 5 })
   });
+
+  test('Pod.getProposals pairs sub proposal approve/rejects properly', async () => {
+    standardMock('subProposal');
+    const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
+    const proposals = await pod.getProposals();
+
+    // Expect reverse chronological
+    expect(proposals[0].id).toBeGreaterThan(proposals[1].id);
+    expect(proposals[0].timestamp.getTime()).toBeGreaterThan(proposals[1].timestamp.getTime());
+    // We're taking in 4 safe transactions that should condense down to 2 Proposals (with approve + rejects)
+    expect(proposals.length).toBe(2);
+  });
 });
 
 describe('Proposal details', () => {
@@ -128,7 +140,7 @@ describe('Proposal approve/reject', () => {
     const proposal = (await pod.getProposals())[0];
 
     await proposal.approve(mockSigner);
-    console.log('proposal.safeTransaction', proposal.safeTransaction);
+
     expect(mockApprove).toHaveBeenCalledWith(proposal.safeTransaction, mockSigner);
     expect(proposal.approvals).toEqual(expect.arrayContaining([userAddress]));
   });

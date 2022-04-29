@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { ethers, BigNumber } from 'ethers';
 import { getSafeSingletonDeployment } from '@gnosis.pm/safe-deployments';
+import type Proposal from '../../Proposal';
 import { config } from '../../config';
 import { lookupContractAbi } from './etherscan';
 import { signMessage } from '../utils';
@@ -221,6 +222,7 @@ export async function submitSafeTransactionToService(
       ...transaction,
     });
   } catch (err) {
+    throw new Error(err.response.data);
     // do nothing?
     return null;
   }
@@ -297,12 +299,14 @@ export async function approveSafeTransaction(
 
 /**
  * Creates a reject transaction on Gnosis
+ * If provided a Signer, then this will auto-approve the tx.
  */
 export async function createRejectTransaction(
   safeTransaction: SafeTransaction,
-  signer: ethers.Signer,
+  signerOrAddress: ethers.Signer | string,
 ) {
-  const signerAddress = await signer.getAddress();
+  const signerAddress =
+    typeof signerOrAddress === 'string' ? signerOrAddress : await signerOrAddress.getAddress();
   const data = {
     safe: safeTransaction.safe,
     to: safeTransaction.safe,
@@ -322,7 +326,10 @@ export async function createRejectTransaction(
   const safeTxHash = await getSafeTxHash(data);
 
   const createdSafeTransaction = await submitSafeTransactionToService({ safeTxHash, ...data });
-  await approveSafeTransaction(createdSafeTransaction, signer);
+  // Approve only if it's a signer.
+  if (typeof signerOrAddress !== 'string') {
+    await approveSafeTransaction(createdSafeTransaction, signerOrAddress);
+  }
 
   return createdSafeTransaction;
 }
@@ -365,4 +372,35 @@ export async function executeSafeTransaction(
       gasLimit: 2000000,
     },
   );
+}
+
+export async function executeRejectSuperProposal(
+  superProposalTxHash: string,
+  subProposal: Proposal,
+  signer: ethers.Signer,
+) {
+  const subPod = subProposal.pod;
+  // Fetch the superProposal
+  const superProposal = await getSafeTransactionByHash(superProposalTxHash);
+  const superPodTransactions = await getSafeTransactionsBySafe(superProposal.safe, {
+    nonce: superProposal.nonce,
+  });
+
+  // The super reject, i.e., the transaction that rejects the super proposal
+  const superReject = superPodTransactions.find(
+    safeTx => safeTx.data === null && safeTx.to === superProposal.safe,
+  );
+  if (!superReject) throw new Error('Could not find corresponding superReject');
+
+  // The sub reject, i.e., the transaction that approves the super reject
+  const subPodTransactions = await getSafeTransactionsBySafe(subPod.safe, {
+    nonce: subProposal.id,
+  });
+  const subReject = subPodTransactions.find(
+    safeTx =>
+      safeTx.dataDecoded.method === 'approveHash' &&
+      safeTx.dataDecoded.parameters[0].value === superReject.safeTxHash,
+  );
+
+  await executeSafeTransaction(subReject, signer);
 }

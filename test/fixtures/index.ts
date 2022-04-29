@@ -171,6 +171,7 @@ export const erc20TransferTransaction = {
 
 export function getSafeTransactionFixture(fetchType?: string) {
   if (fetchType === 'queued') return safeTransactions;
+  if (fetchType === 'subProposal') return subProposalFixture;
   // Skip first unqueued transaction.
   return safeTransactions.slice(1);
 }
@@ -342,4 +343,207 @@ const safeTransactions = [
     trusted: true,
     signatures: '0x0000000000000000000000001cc62ce7cb56ed99513823064295761f9b7c856e000000000000000000000000000000000000000000000000000000000000000001'
   }
+];
+
+const subProposalFixture = [
+  {
+    safe: '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
+    to: '0xBe71ECaA104645ab78ed62A52763b2854e6DaD2E',
+    value: '0',
+    data: '0xd4d9bdcdbc9840f7f81374dd6b1f8015d1fb7a3a7c2327c23196628348a31abd968cf99c',
+    operation: 0,
+    gasToken: null,
+    safeTxGas: 109160,
+    baseGas: 0,
+    gasPrice: '0',
+    refundReceiver: null,
+    nonce: 38,
+    executionDate: '2022-04-29T17:10:59Z',
+    submissionDate: '2022-04-29T17:10:50.185340Z',
+    modified: '2022-04-29T17:11:17.390292Z',
+    blockNumber: 10589857,
+    transactionHash: '0x3ee16adba254e93315d04ef1d17db51bc8f321c2be819ce6bcf8e341dcd9b5eb',
+    safeTxHash: '0x3789c6928fbb0c335919c56cde2a3b4ff9a7ee8e343b514a04ddadb7a1b6e9b1',
+    executor: '0xf0C7d25c942264D6F21871c05d3dB3b98344b499',
+    isExecuted: true,
+    isSuccessful: true,
+    ethGasPrice: '7975823969',
+    maxFeePerGas: '14145029526',
+    maxPriorityFeePerGas: '1500000000',
+    gasUsed: 90603,
+    fee: '722633579063307',
+    origin: null,
+    dataDecoded: {
+      method: 'approveHash',
+      parameters: [
+        {
+          name: 'hashToApprove',
+          type: 'bytes32',
+          value: '0xbc9840f7f81374dd6b1f8015d1fb7a3a7c2327c23196628348a31abd968cf99c'
+        }
+      ]
+    },
+    confirmationsRequired: 1,
+    confirmations: [
+      {
+        owner: '0xf0C7d25c942264D6F21871c05d3dB3b98344b499',
+        submissionDate: '2022-04-29T17:10:50.590010Z',
+        transactionHash: null,
+        signature: '0xd07dd94098fe82c053d18d6b22c8666817f388bfe58034d023f58b6ff6ab958f1fd5561a7ea733c9076e692a8b87247308a4175477525f0057d5997ac808fe3420',
+        signatureType: 'ETH_SIGN'
+      }
+    ],
+    trusted: true,
+    signatures: '0xd07dd94098fe82c053d18d6b22c8666817f388bfe58034d023f58b6ff6ab958f1fd5561a7ea733c9076e692a8b87247308a4175477525f0057d5997ac808fe3420'
+  },
+  {
+    safe: '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
+    to: '0xBe71ECaA104645ab78ed62A52763b2854e6DaD2E',
+    value: '0',
+    data: '0xd4d9bdcd2e25c70fbb536eb1f64746dd0bdda89d72576dc05910053dae9afd76e481f98d',
+    operation: 0,
+    gasToken: null,
+    safeTxGas: 109160,
+    baseGas: 0,
+    gasPrice: '0',
+    refundReceiver: null,
+    nonce: 38,
+    executionDate: null,
+    submissionDate: '2022-04-29T17:10:42.848580Z',
+    modified: '2022-04-29T17:10:43.494865Z',
+    blockNumber: null,
+    transactionHash: null,
+    safeTxHash: '0xd7c095b5bc6a9d34295b4c620be5adef3acacd0a20c9cd45099d0ae38a27d556',
+    executor: null,
+    isExecuted: false,
+    isSuccessful: null,
+    ethGasPrice: null,
+    maxFeePerGas: null,
+    maxPriorityFeePerGas: null,
+    gasUsed: null,
+    fee: null,
+    origin: null,
+    dataDecoded: {
+      method: 'approveHash',
+      parameters: [
+        {
+          name: 'hashToApprove',
+          type: 'bytes32',
+          value: '0x2e25c70fbb536eb1f64746dd0bdda89d72576dc05910053dae9afd76e481f98d'
+        }
+      ]
+    },
+    confirmationsRequired: 1,
+    confirmations: [
+      {
+        owner: '0xf0C7d25c942264D6F21871c05d3dB3b98344b499',
+        submissionDate: '2022-04-29T17:10:43.494865Z',
+        transactionHash: null,
+        signature: '0xfbcc82bf8b9fe4c708ec01f3d72f7cc9efbfade483f2fd5f9630b94fe4669c3b5696e03d2ea0b69d2b3f9ebbc2689a8891c8a267331d53eaee6b57809576c7261f',
+        signatureType: 'ETH_SIGN'
+      }
+    ],
+    trusted: true,
+    signatures: null
+  },
+  {
+    safe: '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
+    to: '0xBe71ECaA104645ab78ed62A52763b2854e6DaD2E',
+    value: '0',
+    data: '0xd4d9bdcd2734e0ad044c85994633c20675336aa75b626e4ec6f466c95c7fa90ae2bfef00',
+    operation: 0,
+    gasToken: null,
+    safeTxGas: 109148,
+    baseGas: 0,
+    gasPrice: '0',
+    refundReceiver: null,
+    nonce: 37,
+    executionDate: '2022-04-29T16:04:16Z',
+    submissionDate: '2022-04-29T16:04:01.703511Z',
+    modified: '2022-04-29T16:05:05.938327Z',
+    blockNumber: 10589591,
+    transactionHash: '0x2c8593c35c448b3921bfc786b99b9eaace22cad064bf6e772762b9f58e6168e4',
+    safeTxHash: '0x12d3e2f358ae76d87726fc79aa3df4f0a51f31d19f0ef647f6cf1e7e09819884',
+    executor: '0xf0C7d25c942264D6F21871c05d3dB3b98344b499',
+    isExecuted: true,
+    isSuccessful: true,
+    ethGasPrice: '28492731350',
+    maxFeePerGas: '54072306826',
+    maxPriorityFeePerGas: '1500000000',
+    gasUsed: 90603,
+    fee: '2581526938504050',
+    origin: null,
+    dataDecoded: {
+      method: 'approveHash',
+      parameters: [
+        {
+          name: 'hashToApprove',
+          type: 'bytes32',
+          value: '0x2734e0ad044c85994633c20675336aa75b626e4ec6f466c95c7fa90ae2bfef00'
+        }
+      ]
+    },
+    confirmationsRequired: 1,
+    confirmations: [
+      {
+        owner: '0xf0C7d25c942264D6F21871c05d3dB3b98344b499',
+        submissionDate: '2022-04-29T16:04:02.191133Z',
+        transactionHash: null,
+        signature: '0x0bcaf8c819b5f8ebff8cf490776e7fdff523b1c118ee9a7799ab39332e7f1e872cafb05aa829faa8012a93a62125ba0afe53f8a701a1c8f8e0de2636d362201e1f',
+        signatureType: 'ETH_SIGN'
+      }
+    ],
+    trusted: true,
+    signatures: '0x0bcaf8c819b5f8ebff8cf490776e7fdff523b1c118ee9a7799ab39332e7f1e872cafb05aa829faa8012a93a62125ba0afe53f8a701a1c8f8e0de2636d362201e1f'
+  },
+  {
+    safe: '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
+    to: '0xBe71ECaA104645ab78ed62A52763b2854e6DaD2E',
+    value: '0',
+    data: '0xd4d9bdcdd4eb322d9d2c4dfeedc4e55a7e254a17bc46a65412adf4f69b23e251f7cce017',
+    operation: 0,
+    gasToken: null,
+    safeTxGas: 109160,
+    baseGas: 0,
+    gasPrice: '0',
+    refundReceiver: null,
+    nonce: 37,
+    executionDate: null,
+    submissionDate: '2022-04-29T16:02:49.935460Z',
+    modified: '2022-04-29T16:02:50.685863Z',
+    blockNumber: null,
+    transactionHash: null,
+    safeTxHash: '0x9ac037441a387edd1a25a127e538f2efb526458647297225bd0febbbc5a777e7',
+    executor: null,
+    isExecuted: false,
+    isSuccessful: null,
+    ethGasPrice: null,
+    maxFeePerGas: null,
+    maxPriorityFeePerGas: null,
+    gasUsed: null,
+    fee: null,
+    origin: null,
+    dataDecoded: {
+      method: 'approveHash',
+      parameters: [
+        {
+          name: 'hashToApprove',
+          type: 'bytes32',
+          value: '0xd4eb322d9d2c4dfeedc4e55a7e254a17bc46a65412adf4f69b23e251f7cce017'
+        }
+      ]
+    },
+    confirmationsRequired: 1,
+    confirmations: [
+      {
+        owner: '0xf0C7d25c942264D6F21871c05d3dB3b98344b499',
+        submissionDate: '2022-04-29T16:02:50.685863Z',
+        transactionHash: null,
+        signature: '0x670f320e8bf16fd71ae98bd612006c5d980d010ff51e1b226adb344a7f3531050f97600858ac0ed3c4cbfc0689f2d1c989a83a8a8ac0e27675dd7fe2e0ae68d01f',
+        signatureType: 'ETH_SIGN'
+      }
+    ],
+    trusted: true,
+    signatures: null
+  },
 ];

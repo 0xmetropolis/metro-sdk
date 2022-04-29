@@ -4,6 +4,7 @@ import {
   approveSafeTransaction,
   createRejectTransaction,
   executeSafeTransaction,
+  rejectSuperProposal,
   SafeTransaction,
 } from './lib/services/transaction-service';
 import { checkAddress } from './lib/utils';
@@ -25,6 +26,11 @@ export default class Proposal {
 
   /** @property Proposal status, i.e., 'active', 'executed', or 'queued',  */
   status: ProposalStatus;
+
+  /**
+   * @property Whether or not this proposal corresponds to a superproposal
+   */
+  isSubProposal: boolean;
 
   /** @property Array of addresses that approved */
   approvals: string[];
@@ -97,6 +103,10 @@ export default class Proposal {
       this.method = null;
       this.parameters = null;
     }
+
+    if (this.method === 'approveHash') {
+      this.isSubProposal = true;
+    }
   }
 
   /**
@@ -132,6 +142,13 @@ export default class Proposal {
    */
   reject = async (signer: ethers.Signer) => {
     const signerAddress = checkAddress(await signer.getAddress());
+
+    if (this.isSubProposal) {
+      // parameters[0].value is the superProposalTxHash
+      await rejectSuperProposal(this.parameters[0].value, this, signer);
+      return;
+    }
+
     if (this.rejections.includes(signerAddress)) {
       throw new Error('Signer has already rejected this proposal');
     }
@@ -160,12 +177,34 @@ export default class Proposal {
    */
   executeApprove = async (signer: ethers.Signer) => {
     const signerAddress = checkAddress(await signer.getAddress());
-    if (this.approvals.length !== this.threshold) {
+    if (this.approvals.length < this.threshold) {
       throw new Error('Not enough approvals to execute');
     }
     if (!(await this.pod.isMember(signerAddress))) {
       throw new Error('Signer was not part of this pod');
     }
+    this.status = 'executed';
     return executeSafeTransaction(this.safeTransaction, signer);
+  };
+
+  /**
+   * Executes the rejection of proposal
+   * @param signer - Signer of pod member
+   * @throws If not enough rejections to execute
+   * @throws If signer was not part of the pod
+   */
+  executeReject = async (signer: ethers.Signer) => {
+    const signerAddress = checkAddress(await signer.getAddress());
+    if (this.isSubProposal) {
+      return executeRejectSuperProposal(this.parameters[0].value, this, signer);
+    }
+    if (this.rejections.length < this.threshold) {
+      throw new Error('Not enough rejections to execute');
+    }
+    if (!(await this.pod.isMember(signerAddress))) {
+      throw new Error('Signer was not part of this pod');
+    }
+    this.status = 'executed';
+    return executeSafeTransaction(this.rejectTransaction, signer);
   };
 }

@@ -1,0 +1,9 @@
+{
+  "accountOne": "0xf0C7d25c942264D6F21871c05d3dB3b98344b499",
+  "accountOnePrivateKey": "",
+  "accountTwo": "0xA56b297065D814988080b8E765D953651059539c",
+  "accountTwoPrivateKey": "",
+  "dummyAccount": "0x1cC62cE7cb56ed99513823064295761f9b7C856e",
+  "adminPodAddress": "0xBe71ECaA104645ab78ed62A52763b2854e6DaD2E",
+  "subPodAddress": "0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41"
+}
