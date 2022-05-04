@@ -300,6 +300,8 @@ export async function approveSafeTransaction(
 /**
  * Creates a reject transaction on Gnosis
  * If provided a Signer, then this will auto-approve the tx.
+ * @param safeTransaction
+ * @param signerOrAddress - If provided a signer, it will approve. Address or signer must be safe owner.
  */
 export async function createRejectTransaction(
   safeTransaction: SafeTransaction,
@@ -374,32 +376,42 @@ export async function executeSafeTransaction(
   );
 }
 
+/**
+ * Executes a super proposal rejection
+ * @param superProposalTxHash - Transaction hash of the original super proposal (not the reject super proposal)
+ * @param subProposal - Proposal related to the superProposalTxHash
+ * @param signer - Signer of sub proposal member
+ */
 export async function executeRejectSuperProposal(
   superProposalTxHash: string,
   subProposal: Proposal,
   signer: ethers.Signer,
 ) {
-  const subPod = subProposal.pod;
-  // Fetch the superProposal
   const superProposal = await getSafeTransactionByHash(superProposalTxHash);
-  const superPodTransactions = await getSafeTransactionsBySafe(superProposal.safe, {
-    nonce: superProposal.nonce,
-  });
+  const subPod = subProposal.pod;
 
-  // The super reject, i.e., the transaction that rejects the super proposal
-  const superReject = superPodTransactions.find(
+  const [superPodTransactions, subPodTransactions] = await Promise.all([
+    getSafeTransactionsBySafe(superProposal.safe, {
+      nonce: superProposal.nonce,
+    }),
+    getSafeTransactionsBySafe(subPod.safe, {
+      nonce: subProposal.id,
+    }),
+  ]);
+
+  // The super reject, i.e., the standard gnosis reject that rejects the super proposal
+  let superReject = superPodTransactions.find(
     safeTx => safeTx.data === null && safeTx.to === superProposal.safe,
   );
-  if (!superReject) throw new Error('Could not find corresponding superReject');
+  if (!superReject) {
+    superReject = await createRejectTransaction(superProposal, subProposal.pod.safe);
+  }
 
-  // The sub reject, i.e., the transaction that approves the super reject
-  const subPodTransactions = await getSafeTransactionsBySafe(subPod.safe, {
-    nonce: subProposal.id,
-  });
+  // The sub reject, i.e., the sub pod transaction that approves the super reject
   const subReject = subPodTransactions.find(
     safeTx =>
-      safeTx.dataDecoded.method === 'approveHash' &&
-      safeTx.dataDecoded.parameters[0].value === superReject.safeTxHash,
+      safeTx?.dataDecoded?.method === 'approveHash' &&
+      safeTx?.dataDecoded?.parameters[0].value === superReject.safeTxHash,
   );
 
   await executeSafeTransaction(subReject, signer);

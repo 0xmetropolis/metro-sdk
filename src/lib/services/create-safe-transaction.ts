@@ -1,14 +1,13 @@
 import { ethers } from 'ethers';
 import type Pod from '../../Pod';
-import type Proposal from '../../Proposal';
 import {
+  SafeTransaction,
   getSafeInfo,
   getGasEstimation,
   getSafeTxHash,
   submitSafeTransactionToService,
   getSafeTransactionsBySafe,
   approveSafeTransaction,
-  getSafeTransactionByHash,
   createRejectTransaction,
 } from './transaction-service';
 import { encodeFunctionData } from '../utils';
@@ -75,58 +74,6 @@ export async function createSafeTransaction(
   await approveSafeTransaction(createdSafeTransaction, signer);
 
   return createdSafeTransaction;
-}
-
-export async function rejectSuperProposal(
-  superProposalTxHash: string,
-  subProposal: Proposal,
-  signer: ethers.Signer,
-) {
-  const subPod = subProposal.pod;
-  // Fetch the superProposal
-  const superProposal = await getSafeTransactionByHash(superProposalTxHash);
-  const superPodTransactions = await getSafeTransactionsBySafe(superProposal.safe, {
-    nonce: superProposal.nonce,
-  });
-
-  // The super reject, i.e., the transaction that rejects the super proposal
-  let superReject = superPodTransactions.find(
-    safeTx => safeTx.data === null && safeTx.to === superProposal.safe,
-  );
-  // Need to create a super reject ourselves. This is a standard Gnosis reject.
-  if (!superReject) {
-    // This will not sign the transaction because we're just passing the pod safe.
-    superReject = await createRejectTransaction(superProposal, subPod.safe);
-  }
-
-  // The sub reject, i.e., the transaction that approves the super reject
-  const subPodTransactions = await getSafeTransactionsBySafe(subPod.safe, {
-    nonce: subProposal.id,
-  });
-  let subReject = subPodTransactions.find(
-    safeTx =>
-      safeTx.dataDecoded.method === 'approveHash' &&
-      safeTx.dataDecoded.parameters[0].value === superReject.safeTxHash,
-  );
-
-  // Need to create the sub reject. This is _not_ a standard Gnosis reject
-  // Instead, we need to approve the super reject proposal.
-  if (!subReject) {
-    // This will create + approve the sub reject
-    subReject = await createSafeTransaction(
-      {
-        safe: subPod.safe,
-        to: superProposal.safe,
-        data: encodeFunctionData('GnosisSafe', 'approveHash', [superReject.safeTxHash]),
-        sender: await signer.getAddress(),
-        nonce: subProposal.id,
-      },
-      signer,
-    );
-  } else {
-    // Just need to approve subReject
-    await approveSafeTransaction(subReject, signer);
-  }
 }
 
 /**
@@ -199,4 +146,142 @@ export async function createNestedProposal(
   } catch (err) {
     throw new Error(`Error when creating superproposal: ${err.response.data}`);
   }
+}
+
+/**
+ * Creates and approves a sub proposal to approve a super proposal
+ * @param superProposal
+ * @param subPod
+ * @param signer
+ */
+export async function approveSuperProposal(
+  superProposal: SafeTransaction,
+  subPod: Pod,
+  signer: ethers.Signer,
+) {
+  const signerAddress = await signer.getAddress();
+  if (!(await subPod.isMember(signerAddress))) {
+    throw new Error(`Signer was not a member of subpod ${subPod.ensName}`);
+  }
+
+  // TODO: There's an (unlikely) chance that we might fail to get all queued/active proposals
+  // Need to handle that down the line.
+  const subPodProposals = await subPod.getProposals({ queued: true, limit: 10 });
+
+  // Look for existing sub proposal
+  const subProposal = subPodProposals.find(
+    proposal =>
+      proposal.method === 'approveHash' &&
+      proposal.parameters[0].value === superProposal.safeTxHash &&
+      proposal.status !== 'executed',
+  );
+  if (subProposal) {
+    if (subProposal.approvals.includes(signerAddress))
+      throw new Error('Signer already approved sub proposal');
+    try {
+      // Approve the existing sub proposal
+      await approveSafeTransaction(subProposal.safeTransaction, signer);
+    } catch (err) {
+      throw new Error(`Error when approving sub proposal: ${err}`);
+    }
+    return;
+  }
+
+  // Otherwise, we have to create the sub proposal
+  try {
+    // createSafeTransaction also approves the transaction.
+    await createSafeTransaction(
+      {
+        safe: subPod.safe,
+        to: superProposal.safe,
+        data: encodeFunctionData('GnosisSafe', 'approveHash', [superProposal.safeTxHash]),
+        sender: signerAddress,
+      },
+      signer,
+    );
+  } catch (err) {
+    throw new Error(`Error when creating sub proposal: ${err.response.data}`);
+  }
+}
+
+/**
+ * Rejects a super proposal
+ *
+ * Super proposal rejections, from the sub proposal point of view, are separate approveHash calls that approve
+ * a rejection transaction on the super pod
+ *
+ * @param superProposalTxHash - The transaction hash that identifies the original super proposal (i.e., not the rejection super proposal)
+ * @param subProposal - The sub proposal related to the superProposalTxHash
+ * @param signer - Signer of sub pod member
+ */
+export async function rejectSuperProposal(
+  superProposal: SafeTransaction,
+  subPod: Pod,
+  signer: ethers.Signer,
+) {
+  const superPodTransactions = await getSafeTransactionsBySafe(superProposal.safe, {
+    nonce: superProposal.nonce,
+  });
+
+  // The super reject, i.e., the transaction that rejects the super proposal
+  let superReject = superPodTransactions.find(
+    safeTx => safeTx.data === null && safeTx.to === superProposal.safe,
+  );
+  if (!superReject) {
+    // No such tx, we have to create ourselves. This is a standard Gnosis reject
+    // This will not sign the transaction because we're just passing the pod safe.
+    superReject = await createRejectTransaction(superProposal, subPod.safe);
+  }
+
+  const signerAddress = await signer.getAddress();
+
+  // TODO: There's an (unlikely) chance that we might fail to get all queued/active proposals
+  // Need to handle that down the line.
+  const subPodProposals = await subPod.getProposals({ queued: true, limit: 10 });
+  const subReject = subPodProposals.find(
+    proposal =>
+      proposal.method === 'approveHash' &&
+      // Looking for an approveHash that is NOT for the super proposal we have, that should be the reject
+      // TODO: This theoretically fails if there are two unrelated super proposals being voted on simultaneously.
+      proposal.parameters[0].value !== superProposal.safeTxHash &&
+      proposal.status !== 'executed',
+  );
+  // If subReject exists, we can just approve it and end the call.
+  if (subReject) {
+    if (subReject.approvals.includes(signerAddress))
+      throw new Error('Signer already approved sub proposal');
+    try {
+      // Approve the existing sub proposal
+      await approveSafeTransaction(subReject.safeTransaction, signer);
+      return;
+    } catch (err) {
+      throw new Error(`Error when approving sub proposal: ${err}`);
+    }
+  }
+
+  // If sub reject does not exist, we need to create it.
+  // Find the matching sub approve so we know what nonce to use.
+  const subApprove = subPodProposals.find(
+    proposal =>
+      proposal.method === 'approveHash' &&
+      // Looking for an approveHash that is NOT for the super proposal we have, that should be the reject
+      // TODO: This theoretically fails if there are two unrelated super proposals being voted on simultaneously.
+      proposal.parameters[0].value === superProposal.safeTxHash &&
+      proposal.status !== 'executed',
+  );
+
+  // Create the sub reject. This is _not_ a standard Gnosis reject
+  // Instead, we need to create a sub proposal that approves the super reject proposal.
+  await createSafeTransaction(
+    {
+      safe: subPod.safe,
+      to: superProposal.safe,
+      data: encodeFunctionData('GnosisSafe', 'approveHash', [superReject.safeTxHash]),
+      sender: await signer.getAddress(),
+      // If the sub approve exists, use the same nonce. Otherwise createSafeTransaction will auto-populate
+      // the appropriate nonce if we pass null.
+      nonce: subApprove ? subApprove.id : null,
+    },
+    signer,
+  );
 }

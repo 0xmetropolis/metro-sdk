@@ -1,21 +1,27 @@
 import { getPod } from '../src';
-import { adminTestPod } from '../env.json';
+import { adminPodAddress, dummyAccount } from '../env.json';
 import { setup, sleep } from './utils';
 
 async function main() {
   const { walletOne, walletTwo } = setup();
 
-  const adminTest = await getPod(adminTestPod);
+  const superPod = await getPod(adminPodAddress);
 
-  // We mint/burn the dummy account based on whether its a member or not.
-  const isMember = await adminTest.isMember(dummyAccount);
-  if (isMember) {
-    await adminTest.proposeBurnMember(dummyAccount, walletOne);
-  } else {
-    await adminTest.proposeMintMember(dummyAccount, walletOne);
+  if ((await superPod.getProposals({ queued: true }))[0].status !== 'executed') {
+    throw new Error(
+      'Super pod had an active/queued transaction. This script expects no enqueued transactions',
+    );
   }
 
-  const proposal = (await adminTest.getProposals())[0];
+  // We mint/burn the dummy account based on whether its a member or not.
+  const isMember = await superPod.isMember(dummyAccount);
+  if (isMember) {
+    await superPod.proposeBurnMember(dummyAccount, walletOne);
+  } else {
+    await superPod.proposeMintMember(dummyAccount, walletOne);
+  }
+
+  const proposal = (await superPod.getProposals())[0];
 
   // await proposal.reject(walletOne);
   // await proposal.reject(walletTwo);
@@ -25,7 +31,7 @@ async function main() {
   await sleep(5000);
 
   if (proposal.status !== 'executed') throw new Error('Proposal status not right');
-  const refetchProposal = (await adminTest.getProposals())[0];
+  const refetchProposal = (await superPod.getProposals())[0];
   if (!refetchProposal.safeTransaction.isExecuted)
     throw new Error('Proposal not executed according to gnosis');
 }

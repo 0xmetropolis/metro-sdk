@@ -12,6 +12,7 @@ import {
   getPreviousModule,
 } from './lib/utils';
 import {
+  createRejectTransaction,
   getSafeInfo,
   getSafeTransactionsBySafe,
   populateDataDecoded,
@@ -172,8 +173,8 @@ export default class Pod {
    * which can be overridden by passing { limit: 10 } for example in the options.
    *
    * By default, the first Proposal will be the active proposal. Queued proposals can be fetched
-   * by passing { queued: true } in the options. This will return any queued proposals, as well any proposals
-   * that follow (such as active or executed proposals)
+   * by passing { queued: true } in the options. This will return all queued and active proposals (but not
+   * executed proposals)
    *
    * @param options
    * @returns
@@ -189,6 +190,7 @@ export default class Pod {
     const { limit = 5 } = options;
 
     // If looking for queued, then we need to only fetch current nonces.
+    // TODO: This is not working as intended, or, uh idk. I'm not sure what intended should be here.
     const params = options.queued ? { nonce_gte: nonce, limit } : { limit };
 
     const safeTransactions = await Promise.all(
@@ -702,6 +704,7 @@ export default class Pod {
     const { address: memberTokenAddress } = getContract('MemberToken', signer);
     try {
       // Create a safe transaction on this pod, sent from the admin pod
+      // TODO: Gotta update to make this work.
       await createSafeTransaction(
         {
           sender: subPod.safe,
@@ -879,5 +882,22 @@ export default class Pod {
     } catch (err) {
       throw new Error(err);
     }
+  };
+
+  /**
+   * Creates a reject proposal at a given nonce, mostly used to un-stuck the transaction queue
+   * @param nonce - nonce to create the reject transaction at
+   * @param signer - Signer or address of pod member
+   */
+  createRejectProposal = async (nonce: number, signer: ethers.Signer | string) => {
+    await createRejectTransaction(
+      {
+        safe: this.safe,
+        to: this.safe,
+        nonce,
+        confirmationsRequired: this.threshold,
+      },
+      signer,
+    );
   };
 }

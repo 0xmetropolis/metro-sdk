@@ -4,9 +4,10 @@ import {
   approveSafeTransaction,
   createRejectTransaction,
   executeSafeTransaction,
-  rejectSuperProposal,
+  executeRejectSuperProposal,
   SafeTransaction,
 } from './lib/services/transaction-service';
+import { approveSuperProposal, rejectSuperProposal } from './lib/services/create-safe-transaction';
 import { checkAddress } from './lib/utils';
 
 export type ProposalStatus = 'active' | 'executed' | 'queued';
@@ -143,12 +144,6 @@ export default class Proposal {
   reject = async (signer: ethers.Signer) => {
     const signerAddress = checkAddress(await signer.getAddress());
 
-    if (this.isSubProposal) {
-      // parameters[0].value is the superProposalTxHash
-      await rejectSuperProposal(this.parameters[0].value, this, signer);
-      return;
-    }
-
     if (this.rejections.includes(signerAddress)) {
       throw new Error('Signer has already rejected this proposal');
     }
@@ -167,6 +162,32 @@ export default class Proposal {
     }
 
     this.rejections.push(signerAddress);
+  };
+
+  /**
+   * Approves a super proposal from a sub pod. This creates a sub proposal if one does not exist.
+   * @param subPod - Pod to approve from
+   * @param signer - Signer of sub pod member
+   */
+  approveFromSubPod = async (subPod: Pod, signer: ethers.Signer) => {
+    const sender = await signer.getAddress();
+    if (!(await this.pod.isMember(subPod.safe))) {
+      throw new Error(`${subPod.ensName} is not a sub pod of ${this.pod.ensName}`);
+    }
+    await approveSuperProposal({ sender, ...this.safeTransaction }, subPod, signer);
+  };
+
+  /**
+   * Rejects a super proposal from a sub pod. This creates a sub proposal if one does not exist.
+   * @param subPod - Pod to reject from
+   * @param signer - Signer of sub pod member
+   */
+  rejectFromSubPod = async (subPod: Pod, signer: ethers.Signer) => {
+    const sender = await signer.getAddress();
+    if (!(await this.pod.isMember(subPod.safe))) {
+      throw new Error(`${subPod.ensName} is not a sub pod of ${this.pod.ensName}`);
+    }
+    await rejectSuperProposal({ sender, ...this.safeTransaction }, subPod, signer);
   };
 
   /**

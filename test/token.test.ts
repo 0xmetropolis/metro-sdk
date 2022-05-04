@@ -211,7 +211,11 @@ describe('proposeMintMemberFromPod', () => {
       // This should be a member of admin pod.
       getAddress: jest.fn().mockResolvedValueOnce(orcanautPod.members[0]),
     };
+<<<<<<< HEAD
     const createSafeTx = jest.spyOn(createSafe, 'createSafeTransaction').mockReturnValueOnce({});
+=======
+    const createSafeTx = jest.spyOn(txService, 'createNestedProposal').mockReturnValueOnce({});
+>>>>>>> fc47577 (fix: update scripts to actually work)
   
     const adminPod = await sdk.getPod(orcanautAddress);
     // subPod is member of adminPod
@@ -226,6 +230,7 @@ describe('proposeMintMemberFromPod', () => {
         to: memberTokenAddress,
         data: '0x94d008ef0000000000000000000000001cc62ce7cb56ed99513823064295761f9b7c856e0000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000',
       },
+<<<<<<< HEAD
       mockSigner,
     );
   });
@@ -270,6 +275,9 @@ describe('proposeMintMemberFromPod', () => {
         to: memberTokenAddress,
         data: '0x94d008ef0000000000000000000000001cc62ce7cb56ed99513823064295761f9b7c856e0000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000',
       },
+=======
+      adminPod,
+>>>>>>> fc47577 (fix: update scripts to actually work)
       mockSigner,
     );
   });
@@ -280,7 +288,11 @@ describe('proposeMintMemberFromPod', () => {
       // This should be a member of admin pod.
       getAddress: jest.fn().mockResolvedValueOnce(orcanautPod.members[0]),
     };
+<<<<<<< HEAD
     const createSafeTx = jest.spyOn(createSafe, 'createSafeTransaction').mockReturnValueOnce({});
+=======
+    const createSafeTx = jest.spyOn(txService, 'createNestedProposal').mockReturnValueOnce({});
+>>>>>>> fc47577 (fix: update scripts to actually work)
   
     const parentPod = await sdk.getPod(orcanautAddress);
     // subPod is member of adminPod
@@ -295,6 +307,7 @@ describe('proposeMintMemberFromPod', () => {
         to: memberTokenAddress,
         data: '0x94d008ef0000000000000000000000001cc62ce7cb56ed99513823064295761f9b7c856e0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000',
       },
+      subPod,
       mockSigner,
     );
   });
@@ -390,7 +403,11 @@ describe('proposeBurnMemberFromPod', () => {
       // This should be a member of admin pod.
       getAddress: jest.fn().mockResolvedValueOnce(orcanautPod.members[0]),
     };
+<<<<<<< HEAD
     const createSafeTx = jest.spyOn(createSafe, 'createSafeTransaction').mockReturnValueOnce({});
+=======
+    const createSafeTx = jest.spyOn(txService, 'createNestedProposal').mockReturnValueOnce({});
+>>>>>>> fc47577 (fix: update scripts to actually work)
   
     const adminPod = await sdk.getPod(orcanautAddress);
     // subPod is member of adminPod
@@ -405,6 +422,7 @@ describe('proposeBurnMemberFromPod', () => {
         to: memberTokenAddress,
         data: '0x9dc29fac000000000000000000000000094a473985464098b59660b37162a284b51327530000000000000000000000000000000000000000000000000000000000000006',
       },
+<<<<<<< HEAD
       mockSigner,
     );
   });
@@ -446,6 +464,9 @@ describe('proposeBurnMemberFromPod', () => {
         to: memberTokenAddress,
         data: '0x9dc29fac000000000000000000000000094a473985464098b59660b37162a284b51327530000000000000000000000000000000000000000000000000000000000000006',
       },
+=======
+      adminPod,
+>>>>>>> fc47577 (fix: update scripts to actually work)
       mockSigner,
     );
   });
@@ -456,7 +477,11 @@ describe('proposeBurnMemberFromPod', () => {
       // This should be a member of admin pod.
       getAddress: jest.fn().mockResolvedValueOnce(orcanautPod.members[0]),
     };
+<<<<<<< HEAD
     const createSafeTx = jest.spyOn(createSafe, 'createSafeTransaction').mockReturnValueOnce({});
+=======
+    const createSafeTx = jest.spyOn(txService, 'createNestedProposal').mockReturnValueOnce({});
+>>>>>>> fc47577 (fix: update scripts to actually work)
   
     const parentPod = await sdk.getPod(orcanautAddress);
     // subPod is member of adminPod
@@ -471,6 +496,7 @@ describe('proposeBurnMemberFromPod', () => {
         to: memberTokenAddress,
         data: '0x9dc29fac000000000000000000000000094a473985464098b59660b37162a284b51327530000000000000000000000000000000000000000000000000000000000000001',
       },
+      subPod,
       mockSigner,
     );
   });
