@@ -314,11 +314,18 @@ export async function createSafeTransaction(
   },
   signer: ethers.Signer,
 ) {
-  const [{ threshold }, [{ nonce }], safeTxGas] = await Promise.all([
+  const [{ threshold }, safeTransaction, safeTxGas] = await Promise.all([
     getSafeInfo(input.safe),
     getSafeTransactionsBySafe(input.safe, { limit: 1 }),
     getGasEstimation(input),
   ]);
+
+  let nonce;
+  if (!safeTransaction[0]) {
+    nonce = 0;
+  } else {
+    nonce = safeTransaction[0].nonce;
+  }
 
   const data = {
     safe: input.safe,
