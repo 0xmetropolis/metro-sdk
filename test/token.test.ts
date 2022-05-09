@@ -6,6 +6,7 @@ import * as sdk from '../src';
 import * as utils from '../src/lib/utils';
 import * as fetchers from '../src/fetchers';
 import * as txService from '../src/lib/services/transaction-service';
+import * as createSafe from '../src/lib/services/create-safe-transaction';
 import {
   artNautPod,
   orcaCorePod,
@@ -134,7 +135,7 @@ describe('member actions', () => {
     jest.spyOn(utils, 'getContract').mockReturnValueOnce({
       address: memberTokenAddress,
     });
-    const createSafeTx = jest.spyOn(txService, 'createSafeTransaction').mockReturnValueOnce({});
+    const createSafeTx = jest.spyOn(createSafe, 'createSafeTransaction').mockReturnValueOnce({});
     const mockSigner = {
       getAddress: jest.fn().mockResolvedValueOnce(userAddress2),
     };
@@ -210,7 +211,7 @@ describe('proposeMintMemberFromPod', () => {
       // This should be a member of admin pod.
       getAddress: jest.fn().mockResolvedValueOnce(orcanautPod.members[0]),
     };
-    const createSafeTx = jest.spyOn(txService, 'createSafeTransaction').mockReturnValueOnce({});
+    const createSafeTx = jest.spyOn(createSafe, 'createSafeTransaction').mockReturnValueOnce({});
   
     const adminPod = await sdk.getPod(orcanautAddress);
     // subPod is member of adminPod
@@ -255,7 +256,7 @@ describe('proposeMintMemberFromPod', () => {
       // This should be a member of admin pod.
       getAddress: jest.fn().mockResolvedValueOnce(orcanautPod.members[0]),
     };
-    const createSafeTx = jest.spyOn(txService, 'createSafeTransaction').mockReturnValueOnce({});
+    const createSafeTx = jest.spyOn(createSafe, 'createSafeTransaction').mockReturnValueOnce({});
 
     // subPod is member of adminPod
     const subPod = await sdk.getPod('art-naut.pod.xyz');
@@ -279,7 +280,7 @@ describe('proposeMintMemberFromPod', () => {
       // This should be a member of admin pod.
       getAddress: jest.fn().mockResolvedValueOnce(orcanautPod.members[0]),
     };
-    const createSafeTx = jest.spyOn(txService, 'createSafeTransaction').mockReturnValueOnce({});
+    const createSafeTx = jest.spyOn(createSafe, 'createSafeTransaction').mockReturnValueOnce({});
   
     const parentPod = await sdk.getPod(orcanautAddress);
     // subPod is member of adminPod
@@ -389,7 +390,7 @@ describe('proposeBurnMemberFromPod', () => {
       // This should be a member of admin pod.
       getAddress: jest.fn().mockResolvedValueOnce(orcanautPod.members[0]),
     };
-    const createSafeTx = jest.spyOn(txService, 'createSafeTransaction').mockReturnValueOnce({});
+    const createSafeTx = jest.spyOn(createSafe, 'createSafeTransaction').mockReturnValueOnce({});
   
     const adminPod = await sdk.getPod(orcanautAddress);
     // subPod is member of adminPod
@@ -431,7 +432,7 @@ describe('proposeBurnMemberFromPod', () => {
       // This should be a member of admin pod.
       getAddress: jest.fn().mockResolvedValueOnce(orcanautPod.members[0]),
     };
-    const createSafeTx = jest.spyOn(txService, 'createSafeTransaction').mockReturnValueOnce({});
+    const createSafeTx = jest.spyOn(createSafe, 'createSafeTransaction').mockReturnValueOnce({});
 
     // subPod is member of adminPod
     const subPod = await sdk.getPod('art-naut.pod.xyz');
@@ -455,7 +456,7 @@ describe('proposeBurnMemberFromPod', () => {
       // This should be a member of admin pod.
       getAddress: jest.fn().mockResolvedValueOnce(orcanautPod.members[0]),
     };
-    const createSafeTx = jest.spyOn(txService, 'createSafeTransaction').mockReturnValueOnce({});
+    const createSafeTx = jest.spyOn(createSafe, 'createSafeTransaction').mockReturnValueOnce({});
   
     const parentPod = await sdk.getPod(orcanautAddress);
     // subPod is member of adminPod
@@ -565,7 +566,7 @@ describe('proposeTransferMembershipFromSubPod', () => {
       // This should be a member of admin pod.
       getAddress: jest.fn().mockResolvedValueOnce(artNautPod.members[0]),
     };
-    const createSafeTx = jest.spyOn(txService, 'createSafeTransaction').mockReturnValueOnce({});
+    const createSafeTx = jest.spyOn(createSafe, 'createSafeTransaction').mockReturnValueOnce({});
   
     const adminPod = await sdk.getPod(orcanautAddress);
     // subPod is member of adminPod
@@ -676,7 +677,7 @@ describe('proposeTransferAdminFromAdminPod', () => {
       // This should be a member of admin pod.
       getAddress: jest.fn().mockResolvedValueOnce(artNautPod.members[0]),
     };
-    const createSafeTx = jest.spyOn(txService, 'createSafeTransaction').mockReturnValueOnce({});
+    const createSafeTx = jest.spyOn(createSafe, 'createSafeTransaction').mockReturnValueOnce({});
   
     const adminPod = await sdk.getPod(orcanautAddress);
     // subPod is member of adminPod
@@ -763,7 +764,7 @@ describe('proposeAddAdmin', () => {
     jest.spyOn(utils, 'getContract').mockReturnValueOnce({
       address: memberTokenAddress,
     });
-    const createSafeTx = jest.spyOn(txService, 'createSafeTransaction').mockReturnValueOnce({});
+    const createSafeTx = jest.spyOn(createSafe, 'createSafeTransaction').mockReturnValueOnce({});
     const mockSigner = {
       getAddress: jest.fn().mockResolvedValueOnce(userAddress2),
     };
@@ -786,7 +787,7 @@ describe('proposeAddAdmin', () => {
     jest.spyOn(utils, 'getContract').mockReturnValueOnce({
       address: memberTokenAddress,
     });
-    const createSafeTx = jest.spyOn(txService, 'createSafeTransaction').mockReturnValueOnce({});
+    const createSafeTx = jest.spyOn(createSafe, 'createSafeTransaction').mockReturnValueOnce({});
     const mockSigner = {
       getAddress: jest.fn().mockResolvedValueOnce(userAddress2),
     };
@@ -833,7 +834,7 @@ describe('Pod migration', () => {
       address: '0x242e1E6cF6C30d36988D8019d0fE2e187325CCEd',
     });
     jest.spyOn(utils, 'getPreviousModule').mockResolvedValueOnce('0x242e1E6cF6C30d36988D8019d0fE2e187325CCEd');
-    const createSafeTx = jest.spyOn(txService, 'createSafeTransaction').mockReturnValueOnce({});
+    const createSafeTx = jest.spyOn(createSafe, 'createSafeTransaction').mockReturnValueOnce({});
 
     const pod = await sdk.getPod(orcanautAddress);
 
