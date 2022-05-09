@@ -296,60 +296,6 @@ export async function approveSafeTransaction(
 }
 
 /**
- * Creates safe transaction
- * @param input.safe - Address of Gnosis safe
- * @param input.to - Smart contract address (i.e., MemberToken)
- * @param input.value - Value to send
- * @param input.data - Transaction data
- * @param input.sender - Address that is initiating the transaction
- * @returns {SafeTransaction}
- */
-export async function createSafeTransaction(
-  input: {
-    safe: string;
-    to: string;
-    value?: string;
-    data?: string;
-    sender: string;
-  },
-  signer: ethers.Signer,
-) {
-  const [{ threshold }, safeTransaction, safeTxGas] = await Promise.all([
-    getSafeInfo(input.safe),
-    getSafeTransactionsBySafe(input.safe, { limit: 1 }),
-    getGasEstimation(input),
-  ]);
-
-  let nonce;
-  if (!safeTransaction[0]) {
-    nonce = 0;
-  } else {
-    nonce = safeTransaction[0].nonce;
-  }
-
-  const data = {
-    safe: input.safe,
-    to: input.to,
-    value: input.value || '0',
-    data: input.data || ethers.constants.HashZero,
-    sender: ethers.utils.getAddress(input.sender), // Get the checksummed address
-    confirmationsRequired: threshold,
-    safeTxGas,
-    nonce: nonce + 1, // We got the latest transaction, so add 1 to it.
-    operation: 0,
-    baseGas: 0,
-    gasPrice: '0',
-  };
-
-  // The input doesn't have a contractTransactionHash,
-  // We need to generate one from the transaction-service.
-  const safeTxHash = await getSafeTxHash(data);
-
-  const createdSafeTransaction = await submitSafeTransactionToService({ safeTxHash, ...data });
-  await approveSafeTransaction(createdSafeTransaction, signer);
-}
-
-/**
  * Creates a reject transaction on Gnosis
  */
 export async function createRejectTransaction(

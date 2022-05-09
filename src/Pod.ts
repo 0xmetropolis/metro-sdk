@@ -12,11 +12,11 @@ import {
   getPreviousModule,
 } from './lib/utils';
 import {
-  createSafeTransaction,
   getSafeInfo,
   getSafeTransactionsBySafe,
   populateDataDecoded,
 } from './lib/services/transaction-service';
+import { createSafeTransaction } from './lib/services/create-safe-transaction';
 import Proposal from './Proposal';
 
 /**
