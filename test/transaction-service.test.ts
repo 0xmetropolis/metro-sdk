@@ -2,7 +2,7 @@ import { erc20TransferTransaction } from './fixtures';
 import * as etherscan from '../src/lib/services/etherscan';
 import * as txService from '../src/lib/services/transaction-service';
 import { populateDataDecoded } from '../src/lib/services/transaction-service';
-import { createSafeTransaction } from '../src/lib/services/create-safe-transaction';
+import { getNextNonce } from '../src/lib/services/create-safe-transaction';
 import { userAddress } from '../test/fixtures';
 
 test('populateDataDecoded should be able to decode an erc20 transfer function', async () => {
@@ -34,42 +34,16 @@ test('populateDataDecoded should be able to decode an erc20 transfer function', 
   expect(dataDecodedPopulated).toMatchObject(dataDecoded);
 });
 
-describe('createSafeTransaction', () => {
-  test('createSafeTransaction sets nonce to 0 for a safes first tx', async () => {
-    jest.spyOn(txService, 'getSafeInfo').mockImplementation(() => [{ threshold: 1 }]);
+describe('getNextNonce', () => {
+  test('getNextNonce sets nonce to 0 for a safes first tx', async () => {
     jest.spyOn(txService, 'getSafeTransactionsBySafe').mockResolvedValueOnce([]);
-    jest.spyOn(txService, 'getGasEstimation').mockResolvedValueOnce(5);
-    jest.spyOn(txService, 'submitSafeTransactionToService').mockImplementation();
-    jest.spyOn(txService, 'approveSafeTransaction').mockImplementation();
-    const getHash = jest.spyOn(txService, 'getSafeTxHash').mockResolvedValueOnce('0x1234');
 
-    const mockSigner = jest.fn();
+    const nonce = await getNextNonce(userAddress);
 
-    await createSafeTransaction({
-      safe: 'safe',
-      to: 'to',
-      value: '0',
-      data: '0x',
-      sender: userAddress,
-    }, mockSigner);
-
-    expect(getHash).toHaveBeenCalledWith({
-      "baseGas": 0,
-      "confirmationsRequired": undefined,
-      "data": "0x",
-      "gasPrice": "0",
-      "nonce": 0,
-      "operation": 0,
-      "safe": "safe",
-      "safeTxGas": 5,
-      "sender": "0x4B4C43F66ec007D1dBE28f03dAC975AAB5fbb888",
-      "to": "to",
-      "value": "0",
-    });
+    expect(nonce).toBe(0);
   });
 
-  test('createSafeTransaction increments nonce if transactions already exist', async () => {
-    jest.spyOn(txService, 'getSafeInfo').mockImplementation(() => [{ threshold: 1 }]);
+  test('getNextNonce increments nonce if transactions already exist', async () => {
     jest.spyOn(txService, 'getSafeTransactionsBySafe').mockResolvedValueOnce([
         {
           "safe": "0xdab0d648a2a771e6952916A822dddf738b535f5A",
@@ -135,34 +109,9 @@ describe('createSafeTransaction', () => {
         }
       ]
     );
-    jest.spyOn(txService, 'getGasEstimation').mockResolvedValueOnce(5);
-    jest.spyOn(txService, 'submitSafeTransactionToService').mockImplementation();
-    jest.spyOn(txService, 'approveSafeTransaction').mockImplementation();
-    const getHash = jest.spyOn(txService, 'getSafeTxHash').mockResolvedValueOnce('0x1234');
 
+    const nonce = await getNextNonce(userAddress);
 
-    const mockSigner = jest.fn();
-
-    await createSafeTransaction({
-      safe: 'safe',
-      to: 'to',
-      value: '0',
-      data: '0x',
-      sender: userAddress,
-    }, mockSigner);
-
-    expect(getHash).toHaveBeenCalledWith({
-      "baseGas": 0,
-      "confirmationsRequired": undefined,
-      "data": "0x",
-      "gasPrice": "0",
-      "nonce": 3,
-      "operation": 0,
-      "safe": "safe",
-      "safeTxGas": 5,
-      "sender": "0x4B4C43F66ec007D1dBE28f03dAC975AAB5fbb888",
-      "to": "to",
-      "value": "0",
-    });
+    expect(nonce).toBe(3);
   });
 });

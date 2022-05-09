@@ -1,13 +1,25 @@
-// This module has helper functions for the transaction service
 import { ethers } from 'ethers';
 import {
   getSafeInfo,
-  getSafeTransactionsBySafe,
   getGasEstimation,
   getSafeTxHash,
   submitSafeTransactionToService,
+  getSafeTransactionsBySafe,
   approveSafeTransaction,
 } from './transaction-service';
+
+/**
+ * Gets the nonce of the next transaction for a safe
+ * @param safeAddress - safe address
+ * @returns Nonce of next transaction
+ */
+export async function getNextNonce(safeAddress: string): Promise<number> {
+  const txs = await getSafeTransactionsBySafe(safeAddress, { limit: 1 });
+  // If the length is 0, that means this is the first transaction, so nonce is 0.
+  // otherwise, txs[0] is the latest nonce, including queued transactions.
+  const nonce = txs.length === 0 ? 0 : txs[0].nonce + 1;
+  return nonce;
+}
 
 /**
  * Creates safe transaction
@@ -29,17 +41,11 @@ export async function createSafeTransaction(
   },
   signer: ethers.Signer,
 ) {
-  const [{ threshold }, safeTransaction, safeTxGas] = await Promise.all([
+  const [{ threshold }, nonce, safeTxGas] = await Promise.all([
     getSafeInfo(input.safe),
-    getSafeTransactionsBySafe(input.safe, { limit: 1 }),
+    getNextNonce(input.safe),
     getGasEstimation(input),
   ]);
-
-  // If safeTransaction is an empty array, then this is the first tx on the safe.
-  const isFirst = safeTransaction.length === 0;
-
-  // If it's the first one, set it to 0. Otherwise we need to increment to avoid collision.
-  const nonce = isFirst ? 0 : safeTransaction[0].nonce + 1;
 
   const data = {
     safe: input.safe,
