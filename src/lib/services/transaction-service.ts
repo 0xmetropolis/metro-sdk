@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { ethers, BigNumber } from 'ethers';
 import { getSafeSingletonDeployment } from '@gnosis.pm/safe-deployments';
+import type Proposal from '../../Proposal';
 import { config } from '../../config';
 import { lookupContractAbi } from './etherscan';
 import { signMessage } from '../utils';
@@ -221,6 +222,7 @@ export async function submitSafeTransactionToService(
       ...transaction,
     });
   } catch (err) {
+    throw new Error(err.response.data);
     // do nothing?
     return null;
   }
@@ -297,12 +299,16 @@ export async function approveSafeTransaction(
 
 /**
  * Creates a reject transaction on Gnosis
+ * If provided a Signer, then this will auto-approve the tx.
+ * @param safeTransaction
+ * @param signerOrAddress - If provided a signer, it will approve. Address or signer must be safe owner.
  */
 export async function createRejectTransaction(
   safeTransaction: SafeTransaction,
-  signer: ethers.Signer,
+  signerOrAddress: ethers.Signer | string,
 ) {
-  const signerAddress = await signer.getAddress();
+  const signerAddress =
+    typeof signerOrAddress === 'string' ? signerOrAddress : await signerOrAddress.getAddress();
   const data = {
     safe: safeTransaction.safe,
     to: safeTransaction.safe,
@@ -322,7 +328,10 @@ export async function createRejectTransaction(
   const safeTxHash = await getSafeTxHash(data);
 
   const createdSafeTransaction = await submitSafeTransactionToService({ safeTxHash, ...data });
-  await approveSafeTransaction(createdSafeTransaction, signer);
+  // Approve only if it's a signer.
+  if (typeof signerOrAddress !== 'string') {
+    await approveSafeTransaction(createdSafeTransaction, signerOrAddress);
+  }
 
   return createdSafeTransaction;
 }
@@ -365,4 +374,45 @@ export async function executeSafeTransaction(
       gasLimit: 2000000,
     },
   );
+}
+
+/**
+ * Executes a super proposal rejection
+ * @param superProposalTxHash - Transaction hash of the original super proposal (not the reject super proposal)
+ * @param subProposal - Proposal related to the superProposalTxHash
+ * @param signer - Signer of sub proposal member
+ */
+export async function executeRejectSuperProposal(
+  superProposalTxHash: string,
+  subProposal: Proposal,
+  signer: ethers.Signer,
+) {
+  const superProposal = await getSafeTransactionByHash(superProposalTxHash);
+  const subPod = subProposal.pod;
+
+  const [superPodTransactions, subPodTransactions] = await Promise.all([
+    getSafeTransactionsBySafe(superProposal.safe, {
+      nonce: superProposal.nonce,
+    }),
+    getSafeTransactionsBySafe(subPod.safe, {
+      nonce: subProposal.id,
+    }),
+  ]);
+
+  // The super reject, i.e., the standard gnosis reject that rejects the super proposal
+  let superReject = superPodTransactions.find(
+    safeTx => safeTx.data === null && safeTx.to === superProposal.safe,
+  );
+  if (!superReject) {
+    superReject = await createRejectTransaction(superProposal, subProposal.pod.safe);
+  }
+
+  // The sub reject, i.e., the sub pod transaction that approves the super reject
+  const subReject = subPodTransactions.find(
+    safeTx =>
+      safeTx?.dataDecoded?.method === 'approveHash' &&
+      safeTx?.dataDecoded?.parameters[0].value === superReject.safeTxHash,
+  );
+
+  await executeSafeTransaction(subReject, signer);
 }

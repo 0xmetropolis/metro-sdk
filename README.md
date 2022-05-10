@@ -43,3 +43,7 @@ import { Pod, Proposal } from '@orcaprotocol/orca-sdk';
 ### Additional Documentation
 
 Additional documentation can be found [here](https://orcaprotocol.github.io/orca-sdk/)
+
+## Test Scripts
+
+We have some test scripts to test approve/reject proposals and super proposals. They can be executed by duplicating the `env-examples.json` with private keys in `env.json`, and executing the transactions with `npx ts-node ./scripts/reject-superproposal.ts`. 

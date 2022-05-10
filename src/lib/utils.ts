@@ -5,12 +5,13 @@ import MemberToken from '@orcaprotocol/contracts/deployments/rinkeby/MemberToken
 import { getSafeSingletonDeployment } from '@gnosis.pm/safe-deployments';
 import { config } from '../config';
 
+const GnosisSafe = getSafeSingletonDeployment({ version: '1.3.0' });
+
 // Mapping contractNames to JSONs
 const contractJsons = {
   MemberToken,
+  GnosisSafe,
 };
-
-const GnosisSafe = getSafeSingletonDeployment({ version: '1.3.0' });
 
 /**
  * Returns ethers contract based on name
