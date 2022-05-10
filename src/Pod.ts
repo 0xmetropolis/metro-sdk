@@ -359,7 +359,6 @@ export default class Pod {
 
   /**
    * Checks if given address is a member of any subpods.
-   *
    * Returns false if the user is a member of **this** pod, but not any sub pods
    *
    * @param address
@@ -378,13 +377,15 @@ export default class Pod {
 
   /**
    * Mints member to this pod.
-   * @throws if signer is not admin TODO
+   * @throws if signer is not admin
    */
   mintMember = async (
     newMember: string,
     signer: ethers.Signer,
   ): Promise<ethers.providers.TransactionResponse> => {
     checkAddress(newMember);
+    const signerAddress = await signer.getAddress();
+    if (!this.isAdmin(signerAddress)) throw new Error('Signer was not admin');
     try {
       return getContract('MemberToken', signer).mint(newMember, this.id, ethers.constants.HashZero);
     } catch (err) {
@@ -394,13 +395,15 @@ export default class Pod {
 
   /**
    * Burns member from this pod.
-   * @throws If signer is not admin TODO
+   * @throws If signer is not admin
    */
   burnMember = async (
     memberToBurn: string,
     signer: ethers.Signer,
   ): Promise<ethers.providers.TransactionResponse> => {
     checkAddress(memberToBurn);
+    const signerAddress = await signer.getAddress();
+    if (!this.isAdmin(signerAddress)) throw new Error('Signer was not admin');
     try {
       return getContract('MemberToken', signer).burn(memberToBurn, this.id);
     } catch (err) {
@@ -498,17 +501,23 @@ export default class Pod {
   };
 
   /**
-   * Creates a proposal on an external pod to mint a new member to this pod.
-   * @param externalPodIdentifier - The Pod object, pod ID or pod safe address of either the admin pod, or a subpod of this pod.
+   * Creates a proposal on this pod to mint a new member. Also creates + approves a corresponding
+   * sub proposal on the sub pod.
+   *
+   * After the proposal is created, other sub pods can interact with the super proposal
+   * by fetching the super proposal object from the super pod and calling
+   * Proposal.approveFromSubPod/rejectFromSubPod
+   *
+   * @param subPodIdentifier - The Pod object, pod ID or pod safe address of either the admin pod, or a subpod of this pod.
    * @param newMember - Member to mint
    * @param signer - Signer of external pod member
    * @throws If newMember is already part of this pod
-   * @throws If externalPodIdentifier does not correlate to existing pod
-   * @throws If externalPodIdentifier is not the admin or subpod of this pod
+   * @throws If subPodIdentifier does not correlate to existing pod
+   * @throws If subPodIdentifier is not the admin or subpod of this pod
    * @throws If signer is not a member of external pod
    */
-  proposeMintMemberFromPod = async (
-    externalPodIdentifier: Pod | string | number,
+  mintMemberFromSubPod = async (
+    subPodIdentifier: Pod | string | number,
     newMember: string,
     signer: ethers.Signer,
   ) => {
@@ -516,23 +525,20 @@ export default class Pod {
       throw new Error(`Address ${newMember} is already in this pod`);
     }
 
-    let externalPod: Pod;
-    if (externalPodIdentifier instanceof Pod) externalPod = externalPodIdentifier;
+    let subPod: Pod;
+    if (subPodIdentifier instanceof Pod) subPod = subPodIdentifier;
     else {
-      externalPod = await new Pod(externalPodIdentifier);
+      subPod = await new Pod(subPodIdentifier);
     }
-    if (!externalPod)
-      throw new Error(`Could not find a pod with identifier ${externalPodIdentifier}`);
+    if (!subPod) throw new Error(`Could not find a pod with identifier ${subPodIdentifier}`);
 
-    // External pod must be the admin or a subpod of this pod.
-    if (!(this.isAdmin(externalPod.safe) || (await this.isMember(externalPod.safe)))) {
-      throw new Error(
-        `Pod ${externalPod.safe} must be the admin or a subpod of this pod to make proposals`,
-      );
+    // External pod must be the subpod of this pod.
+    if (!(await this.isMember(subPod.safe))) {
+      throw new Error(`Pod ${subPod.safe} must be a subpod of this pod to make proposals`);
     }
 
     const signerAddress = await signer.getAddress();
-    if (!(await externalPod.isMember(signerAddress)))
+    if (!(await subPod.isMember(signerAddress)))
       throw new Error(`Signer ${signerAddress} was not a member of the external pod`);
 
     // Tells MemberToken to mint a new token for this pod to newMember.
@@ -547,12 +553,72 @@ export default class Pod {
       // Create a safe transaction on this pod, sent from the signer
       await createNestedProposal(
         {
-          sender: externalPod.safe,
+          sender: subPod.safe,
           safe: this.safe,
           to: memberTokenAddress,
           data,
         },
-        externalPod,
+        subPod,
+        signer,
+      );
+    } catch (err) {
+      throw new Error(err);
+    }
+  };
+
+  /**
+   * Creates a proposal on the admin pod to mint a new member to this pod.
+   *
+   * @param adminPodIdentifier - The Pod object, pod ID or pod safe address of the admin pod of this pod
+   * @param newMember - Member to mint
+   * @param signer - Signer of external pod member
+   * @throws If newMember is already part of this pod
+   * @throws If adminPodIdentifier does not correlate to existing pod
+   * @throws If adminPodIdentifier is not the admin of this pod
+   * @throws If signer is not a member of external pod
+   */
+  mintMemberFromAdminPod = async (
+    adminPodIdentifier: Pod | string | number,
+    newMember: string,
+    signer: ethers.Signer,
+  ) => {
+    if (await this.isMember(newMember)) {
+      throw new Error(`Address ${newMember} is already in this pod`);
+    }
+
+    let adminPod: Pod;
+    if (adminPodIdentifier instanceof Pod) adminPod = adminPodIdentifier;
+    else {
+      adminPod = await new Pod(adminPodIdentifier);
+    }
+    if (!adminPod) throw new Error(`Could not find a pod with identifier ${adminPodIdentifier}`);
+
+    // External pod must be the admin of this pod
+    if (!this.isAdmin(adminPod.safe)) {
+      throw new Error(`Pod ${adminPod.safe} must be the admin of this pod to make proposals`);
+    }
+
+    const signerAddress = await signer.getAddress();
+    if (!(await adminPod.isMember(signerAddress)))
+      throw new Error(`Signer ${signerAddress} was not a member of the admin pod`);
+
+    // Tells MemberToken to mint a new token for this pod to newMember.
+    const data = encodeFunctionData('MemberToken', 'mint', [
+      ethers.utils.getAddress(newMember),
+      this.id,
+      ethers.constants.HashZero,
+    ]);
+
+    const { address: memberTokenAddress } = getContract('MemberToken', signer);
+    try {
+      // Create a safe transaction on the admin pod
+      await createSafeTransaction(
+        {
+          sender: signerAddress,
+          safe: adminPod.safe,
+          to: memberTokenAddress,
+          data,
+        },
         signer,
       );
     } catch (err) {
@@ -596,17 +662,22 @@ export default class Pod {
   };
 
   /**
-   * Creates a proposal on an external pod to burn a new member from this pod.
-   * @param externalPodIdentifier - The Pod object, pod ID or pod safe address of either the admin pod, or a subpod of this pod.
+   * Creates a proposal on this pod to burn an existing member. Also creates + approves a corresponding
+   * sub proposal on the sub pod.
+   *
+   * After the proposal is created, other sub pods can interact with the super proposal
+   * by fetching the Proposal object and calling Proposal.approveFromSubPod/rejectFromSubPod
+   *
+   * @param subPodIdentifier - The Pod object, pod ID or pod safe address of either the admin pod, or a subpod of this pod.
    * @param memberToBurn - Member to burn
    * @param signer - Signer of external pod member
    * @throws If memberToBurn is not part of this pod
-   * @throws If externalPodIdentifier is not an existing pod
-   * @throws If externalPodIdentifier is not the admin or subpod of this pod
+   * @throws If subPodIdentifier is not an existing pod
+   * @throws If subPodIdentifier is not the admin or subpod of this pod
    * @throws If Signer is not a member of the external pod
    */
-  proposeBurnMemberFromPod = async (
-    externalPodIdentifier: Pod | string | number,
+  burnMemberFromSubPod = async (
+    subPodIdentifier: Pod | string | number,
     memberToBurn: string,
     signer: ethers.Signer,
   ) => {
@@ -614,24 +685,23 @@ export default class Pod {
       throw new Error(`Address ${memberToBurn} is not in this pod`);
     }
 
-    let externalPod: Pod;
-    if (externalPodIdentifier instanceof Pod) externalPod = externalPodIdentifier;
+    let subPod: Pod;
+    if (subPodIdentifier instanceof Pod) subPod = subPodIdentifier;
     else {
-      externalPod = await new Pod(externalPodIdentifier);
+      subPod = await new Pod(subPodIdentifier);
     }
-    if (!externalPod)
-      throw new Error(`Could not find a pod with identifier ${externalPodIdentifier}`);
+    if (!subPod) throw new Error(`Could not find a pod with identifier ${subPodIdentifier}`);
 
     // External pod must be the admin or a subpod of this pod.
-    if (!(this.isAdmin(externalPod.safe) || (await this.isMember(externalPod.safe)))) {
+    if (!(await this.isMember(subPod.safe))) {
       throw new Error(
-        `Pod ${externalPod.safe} must be the admin or a subpod of this pod to make proposals`,
+        `Pod ${subPod.safe} must be the admin or a subpod of this pod to make proposals`,
       );
     }
 
     const signerAddress = await signer.getAddress();
-    if (!(await externalPod.isMember(signerAddress)))
-      throw new Error(`Signer ${signerAddress} was not a member of the external pod`);
+    if (!(await subPod.isMember(signerAddress)))
+      throw new Error(`Signer ${signerAddress} was not a member of the sub pod`);
 
     // Tells MemberToken to mint a new token for this pod to newMember.
     const data = encodeFunctionData('MemberToken', 'burn', [
@@ -644,16 +714,76 @@ export default class Pod {
       // Create a safe transaction on this pod, sent from the admin pod
       await createNestedProposal(
         {
-          sender: externalPod.safe,
+          sender: subPod.safe,
           safe: this.safe,
           to: memberTokenAddress,
           data,
         },
-        externalPod,
+        subPod,
         signer,
       );
     } catch (err) {
       throw new Error(err);
+    }
+  };
+
+  /**
+   * Creates a proposal on the admin pod to burn a member from this pod
+   * @param adminPodIdentifier - The Pod object, pod ID or pod safe address of either the admin pod, or a subpod of this pod.
+   * @param memberToBurn - Member to burn
+   * @param signer - Signer of external pod member
+   * @throws If memberToBurn is not part of this pod
+   * @throws If adminPodIdentifier is not an existing pod
+   * @throws If adminPodIdentifier is not the admin or subpod of this pod
+   * @throws If Signer is not a member of the external pod
+   */
+  burnMemberFromAdminPod = async (
+    adminPodIdentifier: Pod | string | number,
+    memberToBurn: string,
+    signer: ethers.Signer,
+  ) => {
+    if (!(await this.isMember(memberToBurn))) {
+      throw new Error(`Address ${memberToBurn} is not in this pod`);
+    }
+
+    let adminPod: Pod;
+    if (adminPodIdentifier instanceof Pod) adminPod = adminPodIdentifier;
+    else {
+      adminPod = await new Pod(adminPodIdentifier);
+    }
+    if (!adminPod) throw new Error(`Could not find a pod with identifier ${adminPodIdentifier}`);
+
+    // External pod must be the admin or a subpod of this pod.
+    if (!this.isAdmin(adminPod.safe)) {
+      throw new Error(
+        `Pod ${adminPod.safe} must be the admin or a subpod of this pod to make proposals`,
+      );
+    }
+
+    const signerAddress = await signer.getAddress();
+    if (!(await adminPod.isMember(signerAddress)))
+      throw new Error(`Signer ${signerAddress} was not a member of the external pod`);
+
+    // Tells MemberToken to mint a new token for this pod to newMember.
+    const data = encodeFunctionData('MemberToken', 'burn', [
+      ethers.utils.getAddress(memberToBurn),
+      this.id,
+    ]);
+
+    const { address: memberTokenAddress } = getContract('MemberToken', signer);
+    try {
+      // Create a safe transaction on the admin pod, sent from the signer
+      await createSafeTransaction(
+        {
+          sender: signerAddress,
+          safe: adminPod.safe,
+          to: memberTokenAddress,
+          data,
+        },
+        signer,
+      );
+    } catch (err) {
+      throw new Error(err.message);
     }
   };
 
@@ -666,7 +796,7 @@ export default class Pod {
    * @throws If subPodIdentifier does not exist
    * @throws If Signer is not a member of this sub pod
    */
-  proposeTransferMembershipFromSubPod = async (
+  transferMembershipFromSubPod = async (
     subPodIdentifier: Pod | string | number,
     addressToTransferTo: string,
     signer: ethers.Signer,
@@ -703,15 +833,14 @@ export default class Pod {
 
     const { address: memberTokenAddress } = getContract('MemberToken', signer);
     try {
-      // Create a safe transaction on this pod, sent from the admin pod
-      // TODO: Gotta update to make this work.
-      await createSafeTransaction(
+      await createNestedProposal(
         {
           sender: subPod.safe,
           safe: this.safe,
           to: memberTokenAddress,
           data,
         },
+        subPod,
         signer,
       );
     } catch (err) {
@@ -721,8 +850,9 @@ export default class Pod {
 
   /**
    * Creates proposal to transfer the admin role from the admin pod
+   *
    * @param adminPodIdentifier - Pod ID, safe address, or ENS name of admin pod
-   * @param addressToTransferTo - Address that will receive admin roll
+   * @param addressToTransferTo - Address that will receive admin role
    * @param signer - Signer of admin pod member
    * @throws If addressToTransferTo is already the pod admin
    * @throws If adminPodIdentifier does not exist

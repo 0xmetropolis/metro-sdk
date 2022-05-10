@@ -222,9 +222,7 @@ export async function submitSafeTransactionToService(
       ...transaction,
     });
   } catch (err) {
-    throw new Error(err.response.data);
-    // do nothing?
-    return null;
+    throw new Error(err.response.data.nonFieldErrors);
   }
   return JSON.parse(result.config.data);
 }

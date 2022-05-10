@@ -40,7 +40,9 @@ beforeAll(async () => {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   provider.getSigner = () => {
-    return userAddress2;
+    return {
+      getAddress: jest.fn().mockResolvedValue(userAddress)
+    }
   };
   sdk.init({ provider, network: 1 });
 });
@@ -61,6 +63,17 @@ describe('admin actions', () => {
   });
   
   test('As an admin, I should be able to mint a member to a pod', async () => {
+    provider = new ethers.providers.InfuraProvider('mainnet', {
+      infura: '69ecf3b10bc24c6a972972666fe950c8',
+    });
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    provider.getSigner = () => {
+      return {
+        getAddress: jest.fn().mockResolvedValue(orcanautPod.admin)
+      }
+    };
+
     mockGetPodFetchersByAddress();
     const mockMint = jest.fn();
     jest.spyOn(utils, 'getContract').mockReturnValueOnce({
@@ -210,22 +223,21 @@ describe('proposeMintMemberFromPod', () => {
       // This should be a member of admin pod.
       getAddress: jest.fn().mockResolvedValueOnce(orcanautPod.members[0]),
     };
-    const createSafeTx = jest.spyOn(createSafe, 'createNestedProposal').mockReturnValueOnce({});
+    const createSafeTx = jest.spyOn(createSafe, 'createSafeTransaction').mockReturnValueOnce({});
   
     const adminPod = await sdk.getPod(orcanautAddress);
     // subPod is member of adminPod
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
     // Creates a proposal on the admin pod to mint a new member to subPod using admin privileges.
-    await subPod.proposeMintMemberFromPod(adminPod, userAddress2, mockSigner);
+    await subPod.mintMemberFromAdminPod(adminPod, userAddress2, mockSigner);
     expect(createSafeTx).toHaveBeenCalledWith(
       {
-        sender: adminPod.safe,
-        safe: subPod.safe,
+        sender: orcanautPod.members[0],
+        safe: adminPod.safe,
         to: memberTokenAddress,
         data: '0x94d008ef0000000000000000000000001cc62ce7cb56ed99513823064295761f9b7c856e0000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000',
       },
-      adminPod,
       mockSigner,
     );
   });
@@ -233,8 +245,8 @@ describe('proposeMintMemberFromPod', () => {
   test('As a member of a subpod, I should be able to create a proposal on the parent pod to mint a member to the parent', async () => {
     setupAdminAndSubPod();
     const mockSigner = {
-      // This should be a member of admin pod.
-      getAddress: jest.fn().mockResolvedValueOnce(orcanautPod.members[0]),
+      // This should be a member of sub pod.
+      getAddress: jest.fn().mockResolvedValueOnce(artNautPod.members[0]),
     };
     const createSafeTx = jest.spyOn(createSafe, 'createNestedProposal').mockReturnValueOnce({});
   
@@ -243,7 +255,7 @@ describe('proposeMintMemberFromPod', () => {
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
     // Creates a proposal on the admin pod to mint a new member to subPod using admin privileges.
-    await parentPod.proposeMintMemberFromPod(subPod, userAddress2, mockSigner);
+    await parentPod.mintMemberFromSubPod(subPod, userAddress2, mockSigner);
     expect(createSafeTx).toHaveBeenCalledWith(
       {
         sender: subPod.safe,
@@ -254,38 +266,6 @@ describe('proposeMintMemberFromPod', () => {
       subPod,
       mockSigner,
     );
-  });
-
-  test("Should throw if the adminPod is neither the admin, nor a subpod of the Pod you're trying to mint to", async () => {
-    jest.spyOn(fetchers, 'getPodFetchersByAddressOrEns').mockResolvedValueOnce({
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      Controller: { podAdmin: jest.fn().mockResolvedValue(orcaCorePod.admin) },
-      safe: orcaCorePod.safe,
-      podId: orcaCorePod.id,
-      Name: { name: orcaCorePod.ensName },
-    }).mockResolvedValueOnce({
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      Controller: { podAdmin: jest.fn().mockResolvedValue(artNautPod.admin) },
-      safe: artNautPod.safe,
-      podId: artNautPod.id,
-      Name: { name: artNautPod.ensName },
-    });
-    jest.spyOn(utils, 'getContract').mockReturnValueOnce({
-      address: memberTokenAddress,
-    });
-
-    const mockSigner = {
-      // This is a member of orca core.
-      getAddress: jest.fn().mockResolvedValueOnce(userAddress2),
-    };
-  
-    const adminPod = await sdk.getPod(orcanautAddress);
-    // subPod is member of adminPod
-    const subPod = await sdk.getPod('art-naut.pod.xyz');
-  
-    await expect(subPod.proposeMintMemberFromPod(adminPod, userAddress2, mockSigner)).rejects.toThrow('must be the admin or a subpod of this pod to make proposals');
   });
 
   test('Should throw if the signer of proposeMintMemberFromPod is not a member of the external pod', async () => {
@@ -299,7 +279,7 @@ describe('proposeMintMemberFromPod', () => {
     // subPod is member of adminPod
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
-    await expect(subPod.proposeMintMemberFromPod(adminPod, userAddress2, mockSigner)).rejects.toThrow('was not a member of the external pod');
+    await expect(subPod.mintMemberFromAdminPod(adminPod, userAddress2, mockSigner)).rejects.toThrow('was not a member of the admin pod');
   });
 
   test('Cannot mint a member that already exists on the sub pod', async () => {
@@ -313,7 +293,7 @@ describe('proposeMintMemberFromPod', () => {
     // subPod is member of adminPod
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
-    await expect(subPod.proposeMintMemberFromPod(adminPod, artNautPod.members[0], mockSigner)).rejects.toThrow('is already in this pod');
+    await expect(subPod.mintMemberFromAdminPod(adminPod, artNautPod.members[0], mockSigner)).rejects.toThrow('is already in this pod');
   });
 });
 
@@ -347,22 +327,21 @@ describe('proposeBurnMemberFromPod', () => {
       // This should be a member of admin pod.
       getAddress: jest.fn().mockResolvedValueOnce(orcanautPod.members[0]),
     };
-    const createSafeTx = jest.spyOn(createSafe, 'createNestedProposal').mockReturnValueOnce({});
+    const createSafeTx = jest.spyOn(createSafe, 'createSafeTransaction').mockReturnValueOnce({});
   
     const adminPod = await sdk.getPod(orcanautAddress);
     // subPod is member of adminPod
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
     // Creates a proposal on the admin pod to mint a new member to subPod using admin privileges.
-    await subPod.proposeBurnMemberFromPod(adminPod, artNautPod.members[0], mockSigner);
+    await subPod.burnMemberFromAdminPod(adminPod, artNautPod.members[0], mockSigner);
     expect(createSafeTx).toHaveBeenCalledWith(
       {
-        sender: adminPod.safe,
-        safe: subPod.safe,
+        sender: orcanautPod.members[0],
+        safe: adminPod.safe,
         to: memberTokenAddress,
         data: '0x9dc29fac000000000000000000000000094a473985464098b59660b37162a284b51327530000000000000000000000000000000000000000000000000000000000000006',
       },
-      adminPod,
       mockSigner,
     );
   });
@@ -380,7 +359,7 @@ describe('proposeBurnMemberFromPod', () => {
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
     // Creates a proposal on the admin pod to mint a new member to subPod using admin privileges.
-    await parentPod.proposeBurnMemberFromPod(subPod, orcanautPod.members[0], mockSigner);
+    await parentPod.burnMemberFromSubPod(subPod, orcanautPod.members[0], mockSigner);
     expect(createSafeTx).toHaveBeenCalledWith(
       {
         sender: subPod.safe,
@@ -422,21 +401,21 @@ describe('proposeBurnMemberFromPod', () => {
     // subPod is member of adminPod
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
-    await expect(subPod.proposeBurnMemberFromPod(adminPod, artNautPod.members[0], mockSigner)).rejects.toThrow('must be the admin or a subpod of this pod to make proposals');
+    await expect(subPod.burnMemberFromAdminPod(adminPod, artNautPod.members[0], mockSigner)).rejects.toThrow('must be the admin or a subpod of this pod to make proposals');
   });
 
-  test('Should throw if the signer of proposeMintMemberFromPod is not a member of the external pod', async () => {
+  test('Should throw if the signer of burnMemberFromSubPod is not a member of the sub pod', async () => {
     setupAdminAndSubPod();
     const mockSigner = {
       // Not a member.
-      getAddress: jest.fn().mockResolvedValueOnce(userAddress2),
+      getAddress: jest.fn().mockResolvedValueOnce(userAddress),
     };
   
     const adminPod = await sdk.getPod(orcanautAddress);
     // subPod is member of adminPod
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
-    await expect(subPod.proposeBurnMemberFromPod(adminPod, artNautPod.members[0], mockSigner)).rejects.toThrow('was not a member of the external pod');
+    await expect(adminPod.burnMemberFromSubPod(subPod, artNautPod.members[0], mockSigner)).rejects.toThrow('was not a member of the sub pod');
   });
 
   test('Cannot mint a member that does not exist on the sub pod', async () => {
@@ -450,11 +429,11 @@ describe('proposeBurnMemberFromPod', () => {
     // subPod is member of adminPod
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
-    await expect(subPod.proposeBurnMemberFromPod(adminPod, userAddress2, mockSigner)).rejects.toThrow('is not in this pod');
+    await expect(subPod.burnMemberFromAdminPod(adminPod, userAddress2, mockSigner)).rejects.toThrow('is not in this pod');
   });
 });
 
-describe('proposeTransferMembershipFromSubPod', () => {
+describe('transferMembershipFromSubPod', () => {
   function setupAdminAndSubPod() {
     jest.spyOn(fetchers, 'getPodFetchersByAddressOrEns').mockResolvedValueOnce({
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -484,14 +463,14 @@ describe('proposeTransferMembershipFromSubPod', () => {
       // This should be a member of admin pod.
       getAddress: jest.fn().mockResolvedValueOnce(artNautPod.members[0]),
     };
-    const createSafeTx = jest.spyOn(createSafe, 'createSafeTransaction').mockReturnValueOnce({});
+    const createSafeTx = jest.spyOn(createSafe, 'createNestedProposal').mockReturnValueOnce({});
   
     const adminPod = await sdk.getPod(orcanautAddress);
     // subPod is member of adminPod
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
     // Creates a proposal on the admin pod to mint a new member to subPod using admin privileges.
-    await adminPod.proposeTransferMembershipFromSubPod(subPod, userAddress2, mockSigner);
+    await adminPod.transferMembershipFromSubPod(subPod, userAddress2, mockSigner);
     expect(createSafeTx).toHaveBeenCalledWith(
       {
         sender: subPod.safe,
@@ -499,6 +478,7 @@ describe('proposeTransferMembershipFromSubPod', () => {
         to: memberTokenAddress,
         data: '0xf242432a00000000000000000000000025f55d2e577a937433686a01439e5ffdffe622180000000000000000000000001cc62ce7cb56ed99513823064295761f9b7c856e0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000',
       },
+      subPod,
       mockSigner,
     );
   });
@@ -533,7 +513,7 @@ describe('proposeTransferMembershipFromSubPod', () => {
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
     // Recipient address doesn't matter.
-    await expect(adminPod.proposeTransferMembershipFromSubPod(subPod, ethers.constants.AddressZero, mockSigner)).rejects.toThrow('must be a subpod of this pod to make proposals');
+    await expect(adminPod.transferMembershipFromSubPod(subPod, ethers.constants.AddressZero, mockSigner)).rejects.toThrow('must be a subpod of this pod to make proposals');
   });
 
   test('Should throw if attempting to transfer membership to existing member', async () => {
@@ -547,7 +527,7 @@ describe('proposeTransferMembershipFromSubPod', () => {
     // subPod is member of adminPod
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
-    await expect(adminPod.proposeTransferMembershipFromSubPod(subPod, artNautPod.members[0], mockSigner)).rejects.toThrow('is already in this pod');
+    await expect(adminPod.transferMembershipFromSubPod(subPod, artNautPod.members[0], mockSigner)).rejects.toThrow('is already in this pod');
   });
 
   test('Should throw if the signer of proposeTransferMembershipFromSubPod is not a member of the external pod', async () => {
@@ -561,7 +541,7 @@ describe('proposeTransferMembershipFromSubPod', () => {
     // subPod is member of adminPod
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
-    await expect(adminPod.proposeTransferMembershipFromSubPod(subPod, userAddress2, mockSigner)).rejects.toThrow('was not a member of sub pod');
+    await expect(adminPod.transferMembershipFromSubPod(subPod, userAddress2, mockSigner)).rejects.toThrow('was not a member of sub pod');
   });
 });
 

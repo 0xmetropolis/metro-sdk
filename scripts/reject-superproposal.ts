@@ -26,10 +26,10 @@ async function main() {
   try {
     if (isMember) {
       console.log('Burning');
-      await superPod.proposeBurnMemberFromPod(subPod, dummyAccount, walletOne);
+      await superPod.burnMemberFromSubPod(subPod, dummyAccount, walletOne);
     } else {
       console.log('Minting');
-      await superPod.proposeMintMemberFromPod(subPod, dummyAccount, walletOne);
+      await superPod.mintMemberFromSubPod(subPod, dummyAccount, walletOne);
     }
   } catch (err) {
     console.log(err);
