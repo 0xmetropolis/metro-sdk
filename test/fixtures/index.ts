@@ -172,6 +172,7 @@ export const erc20TransferTransaction = {
 export function getSafeTransactionFixture(fetchType?: string) {
   if (fetchType === 'queued') return safeTransactions;
   if (fetchType === 'subProposal') return subProposalFixture;
+  if (fetchType === 'empty') return [];
   // Skip first unqueued transaction.
   return safeTransactions.slice(1);
 }

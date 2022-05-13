@@ -166,7 +166,7 @@ export async function approveSuperProposal(
 
   // TODO: There's an (unlikely) chance that we might fail to get all queued/active proposals
   // Need to handle that down the line.
-  const subPodProposals = await subPod.getProposals({ queued: true, limit: 10 });
+  const subPodProposals = await subPod.getProposals({ status: 'queued', limit: 10 });
 
   // Look for existing sub proposal
   const subProposal = subPodProposals.find(
@@ -237,7 +237,7 @@ export async function rejectSuperProposal(
 
   // TODO: There's an (unlikely) chance that we might fail to get all queued/active proposals
   // Need to handle that down the line.
-  const subPodProposals = await subPod.getProposals({ queued: true, limit: 10 });
+  const subPodProposals = await subPod.getProposals({ status: 'queued', limit: 10 });
   const subReject = subPodProposals.find(
     proposal =>
       proposal.method === 'approveHash' &&

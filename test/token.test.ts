@@ -254,8 +254,8 @@ describe('proposeMintMemberFromPod', () => {
     // subPod is member of adminPod
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
-    // Creates a proposal on the admin pod to mint a new member to subPod using admin privileges.
-    await parentPod.mintMemberFromSubPod(subPod, userAddress2, mockSigner);
+    // Creates a proposal on the sub pod to mint a new member to subPod using admin privileges.
+    await parentPod.proposeMintMemberFromSubPod(subPod, userAddress2, mockSigner);
     expect(createSafeTx).toHaveBeenCalledWith(
       {
         sender: subPod.safe,
@@ -359,7 +359,7 @@ describe('proposeBurnMemberFromPod', () => {
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
     // Creates a proposal on the admin pod to mint a new member to subPod using admin privileges.
-    await parentPod.burnMemberFromSubPod(subPod, orcanautPod.members[0], mockSigner);
+    await parentPod.proposeBurnMemberFromSubPod(subPod, orcanautPod.members[0], mockSigner);
     expect(createSafeTx).toHaveBeenCalledWith(
       {
         sender: subPod.safe,
@@ -404,7 +404,7 @@ describe('proposeBurnMemberFromPod', () => {
     await expect(subPod.burnMemberFromAdminPod(adminPod, artNautPod.members[0], mockSigner)).rejects.toThrow('must be the admin or a subpod of this pod to make proposals');
   });
 
-  test('Should throw if the signer of burnMemberFromSubPod is not a member of the sub pod', async () => {
+  test('Should throw if the signer of proposeBurnMemberFromSubPod is not a member of the sub pod', async () => {
     setupAdminAndSubPod();
     const mockSigner = {
       // Not a member.
@@ -415,7 +415,7 @@ describe('proposeBurnMemberFromPod', () => {
     // subPod is member of adminPod
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
-    await expect(adminPod.burnMemberFromSubPod(subPod, artNautPod.members[0], mockSigner)).rejects.toThrow('was not a member of the sub pod');
+    await expect(adminPod.proposeBurnMemberFromSubPod(subPod, artNautPod.members[0], mockSigner)).rejects.toThrow('was not a member of the sub pod');
   });
 
   test('Cannot mint a member that does not exist on the sub pod', async () => {
@@ -433,7 +433,7 @@ describe('proposeBurnMemberFromPod', () => {
   });
 });
 
-describe('transferMembershipFromSubPod', () => {
+describe('proposeTransferMembershipFromSubPod', () => {
   function setupAdminAndSubPod() {
     jest.spyOn(fetchers, 'getPodFetchersByAddressOrEns').mockResolvedValueOnce({
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -470,7 +470,7 @@ describe('transferMembershipFromSubPod', () => {
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
     // Creates a proposal on the admin pod to mint a new member to subPod using admin privileges.
-    await adminPod.transferMembershipFromSubPod(subPod, userAddress2, mockSigner);
+    await adminPod.proposeTransferMembershipFromSubPod(subPod, userAddress2, mockSigner);
     expect(createSafeTx).toHaveBeenCalledWith(
       {
         sender: subPod.safe,
@@ -513,7 +513,7 @@ describe('transferMembershipFromSubPod', () => {
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
     // Recipient address doesn't matter.
-    await expect(adminPod.transferMembershipFromSubPod(subPod, ethers.constants.AddressZero, mockSigner)).rejects.toThrow('must be a subpod of this pod to make proposals');
+    await expect(adminPod.proposeTransferMembershipFromSubPod(subPod, ethers.constants.AddressZero, mockSigner)).rejects.toThrow('must be a subpod of this pod to make proposals');
   });
 
   test('Should throw if attempting to transfer membership to existing member', async () => {
@@ -527,10 +527,10 @@ describe('transferMembershipFromSubPod', () => {
     // subPod is member of adminPod
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
-    await expect(adminPod.transferMembershipFromSubPod(subPod, artNautPod.members[0], mockSigner)).rejects.toThrow('is already in this pod');
+    await expect(adminPod.proposeTransferMembershipFromSubPod(subPod, artNautPod.members[0], mockSigner)).rejects.toThrow('is already in this pod');
   });
 
-  test('Should throw if the signer of proposeTransferMembershipFromSubPod is not a member of the external pod', async () => {
+  test('Should throw if the signer of proposeproposeTransferMembershipFromSubPod is not a member of the external pod', async () => {
     setupAdminAndSubPod();
     const mockSigner = {
       // Not a member.
@@ -541,7 +541,7 @@ describe('transferMembershipFromSubPod', () => {
     // subPod is member of adminPod
     const subPod = await sdk.getPod('art-naut.pod.xyz');
   
-    await expect(adminPod.transferMembershipFromSubPod(subPod, userAddress2, mockSigner)).rejects.toThrow('was not a member of sub pod');
+    await expect(adminPod.proposeTransferMembershipFromSubPod(subPod, userAddress2, mockSigner)).rejects.toThrow('was not a member of sub pod');
   });
 });
 
