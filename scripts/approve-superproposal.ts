@@ -25,9 +25,9 @@ async function main() {
   console.log('Creating super proposal + sub proposal on subPod');
   try {
     if (isMember) {
-      await superPod.proposeBurnMemberFromPod(subPod, dummyAccount, walletOne);
+      await superPod.proposeBurnMemberFromSubPod(subPod, dummyAccount, walletOne);
     } else {
-      await superPod.proposeMintMemberFromPod(subPod, dummyAccount, walletOne);
+      await superPod.proposeMintMemberFromSubPod(subPod, dummyAccount, walletOne);
     }
   } catch (err) {
     console.log(err);
