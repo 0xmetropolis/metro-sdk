@@ -516,7 +516,7 @@ export default class Pod {
    * @throws If subPodIdentifier is not the admin or subpod of this pod
    * @throws If signer is not a member of external pod
    */
-  mintMemberFromSubPod = async (
+  proposeMintMemberFromSubPod = async (
     subPodIdentifier: Pod | string | number,
     newMember: string,
     signer: ethers.Signer,
@@ -676,7 +676,7 @@ export default class Pod {
    * @throws If subPodIdentifier is not the admin or subpod of this pod
    * @throws If Signer is not a member of the external pod
    */
-  burnMemberFromSubPod = async (
+  proposeBurnMemberFromSubPod = async (
     subPodIdentifier: Pod | string | number,
     memberToBurn: string,
     signer: ethers.Signer,
@@ -796,7 +796,7 @@ export default class Pod {
    * @throws If subPodIdentifier does not exist
    * @throws If Signer is not a member of this sub pod
    */
-  transferMembershipFromSubPod = async (
+  proposeTransferMembershipFromSubPod = async (
     subPodIdentifier: Pod | string | number,
     addressToTransferTo: string,
     signer: ethers.Signer,

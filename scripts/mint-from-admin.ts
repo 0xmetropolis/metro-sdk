@@ -6,7 +6,6 @@ async function main() {
   const { walletOne, walletTwo } = setup();
 
   // Get the pod we're working with
-
   const adminPod = await getPod(adminPodAddress);
   const subPod = await getPod(subPodAddress)
 
@@ -30,14 +29,6 @@ async function main() {
 
   await proposal.approve(walletTwo);
   await proposal.executeApprove(walletTwo);
-
-  // // Let gnosis catch up.
-  // await sleep(5000);
-
-  // if (proposal.status !== 'executed') throw new Error('Proposal status not right');
-  // const refetchProposal = (await adminPod.getProposals())[0];
-  // if (!refetchProposal.safeTransaction.isExecuted)
-  //   throw new Error('Proposal not executed according to gnosis');
 }
 
 main();
