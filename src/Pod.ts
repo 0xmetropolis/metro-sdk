@@ -22,6 +22,7 @@ import {
   createNestedProposal,
 } from './lib/services/create-safe-transaction';
 import Proposal from './Proposal';
+import type { ProposalStatus } from './Proposal';
 
 /**
  * The `Pod` object is the interface for fetching pod data.
@@ -172,26 +173,47 @@ export default class Pod {
    * Returns an array of Proposal objects in reverse chronological order. Defaults to returning 5,
    * which can be overridden by passing { limit: 10 } for example in the options.
    *
-   * By default, the first Proposal will be the active proposal. Queued proposals can be fetched
-   * by passing { queued: true } in the options. This will return all queued and active proposals (but not
-   * executed proposals)
+   * By default, the first Proposal will be the active proposal, if there is one, and then any executed proposals.
+   *
+   * Queued proposals can be fetched by passing { status: 'queued' } in the options. This will return queued
+   * proposals, then the active proposal, then executed proposals (up to the requested limit).
+   *
+   * Executed proposals can be fetched by passing { status: 'executed' } in the options. This will return
+   * only executed proposals.
    *
    * @param options
    * @returns
    */
   getProposals = async (
     options: {
-      queued?: boolean;
+      status?: ProposalStatus;
       limit?: number;
     } = {},
   ): Promise<Proposal[]> => {
+    // Nonce here is the current nonce, i.e., the active proposal.
     const { nonce, threshold } = await getSafeInfo(this.safe);
     this.threshold = threshold;
     const { limit = 5 } = options;
 
-    // If looking for queued, then we need to only fetch current nonces.
-    // TODO: This is not working as intended, or, uh idk. I'm not sure what intended should be here.
-    const params = options.queued ? { nonce_gte: nonce, limit } : { limit };
+    // We double the limit here because each Proposal is unique, but there can be two
+    // SafeTransaction with a given nonce. We combine those Safe Txs into a single Proposal
+    let params;
+    switch (options.status) {
+      case 'active':
+        params = { nonce };
+        break;
+      case 'executed':
+        // Need to double limit because some safe Txs are paired.
+        params = { nonce__lt: nonce, limit: limit * 2 };
+        break;
+      case 'queued':
+        // Transaction service returns queued txs by default
+        params = { limit: limit * 2 };
+        break;
+      default:
+        // No status defined, only grab active and below.
+        params = { limit: limit * 2, nonce__lte: nonce };
+    }
 
     const safeTransactions = await Promise.all(
       (
@@ -250,10 +272,13 @@ export default class Pod {
       return new Proposal(this, nonce, tx);
     });
 
-    return subProposals.concat(normalProposals).sort((a, b) => {
-      // Sort in descending order/reverse chron based on nonce/id.
-      return b.id - a.id;
-    });
+    return subProposals
+      .concat(normalProposals)
+      .sort((a, b) => {
+        // Sort in descending order/reverse chron based on nonce/id.
+        return b.id - a.id;
+      })
+      .slice(0, limit); // Slice to return the requested limited Proposals.
   };
 
   /**

@@ -50,7 +50,7 @@ beforeEach(() => {
 describe('Pod.getProposals', () => {
   test('Pod.getProposals should return proposals reverse chronologically', async () => {
     standardMock();
-    const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
+    const pod = await getPod('0x2be14C515c5EE125BA13Bd2F4569Ab8c29B927c0');
     const proposals = await pod.getProposals();
     
     expect(proposals[0].timestamp > proposals[1].timestamp).toBeTruthy();
@@ -65,21 +65,59 @@ describe('Pod.getProposals', () => {
     expect(proposals[0].id).toBe(1);
   });
 
-  test('Pod.getProposals can fetch queued proposals if requested', async () => {
+  test('Pod.getProposals() with no options will return the active proposal, then any queued proposals', async () => {
     const { mockGetSafeTransactions } = standardMock('queued');
 
     const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
-    const proposals = await pod.getProposals({ queued: true });
+    const proposals = await pod.getProposals();
 
     expect(proposals[0].id).toBeGreaterThan(1);
     expect(proposals.length).toBe(3);
-    expect(mockGetSafeTransactions).toHaveBeenCalledWith('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41', { nonce_gte: 1, limit: 5 })
+    expect(mockGetSafeTransactions).toHaveBeenCalledWith('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41', { nonce__lte: 1, limit: 10 })
+  });
+
+  test('Pod.getProposals({ status: active }) will return only the active proposal', async () => {
+    const { mockGetSafeTransactions } = standardMock();
+
+    const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
+    await pod.getProposals({ status: 'active' });
+
+    expect(mockGetSafeTransactions).toHaveBeenCalledWith('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41', { nonce: 1 })
+  });
+
+  test('Pod.getProposals({ status: active }) will return an empty array if there is no active proposal', async () => {
+    const { mockGetSafeTransactions } = standardMock('empty');
+
+    const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
+    const proposals = await pod.getProposals({ status: 'active' });
+    
+    expect(proposals).toEqual([]);
+    expect(mockGetSafeTransactions).toHaveBeenCalledWith('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41', { nonce: 1 })
+  });
+
+  test('Pod.getProposals({ status: executed }) will return only the active proposal', async () => {
+    const { mockGetSafeTransactions } = standardMock();
+
+    const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
+    await pod.getProposals({ status: 'executed' });
+
+    expect(mockGetSafeTransactions).toHaveBeenCalledWith('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41', { nonce__lt: 1, limit: 10 })
+  });
+
+  test('Pod.getProposals({ status: queued }) will return any queued proposals, then active proposals', async () => {
+    const { mockGetSafeTransactions } = standardMock();
+
+    const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
+    await pod.getProposals({ status: 'queued' });
+
+    expect(mockGetSafeTransactions).toHaveBeenCalledWith('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41', { limit: 10 })
   });
 
   test('Pod.getProposals pairs sub proposal approve/rejects properly', async () => {
     standardMock('subProposal');
     const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
-    const proposals = await pod.getProposals();
+    // limit: 2 should still fetch all 4 safe transactions, which should then condense down to 2 Proposals
+    const proposals = await pod.getProposals({ limit: 2 });
 
     // Expect reverse chronological
     expect(proposals[0].id).toBeGreaterThan(proposals[1].id);
@@ -111,7 +149,7 @@ describe('Proposal details', () => {
   test('Proposal populates dataDecoded properly', async () => {
     standardMock('queued');
     const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
-    const proposal = (await pod.getProposals({ queued: true }))[0];
+    const proposal = (await pod.getProposals({ status: 'queued'}))[0];
 
     expect(proposal.method).toBe('transfer');
     expect(proposal.parameters).toEqual(expect.arrayContaining([{

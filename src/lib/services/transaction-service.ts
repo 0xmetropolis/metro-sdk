@@ -133,6 +133,7 @@ export async function populateDataDecoded(
 
 /**
  * Gets safe info from transaction service.
+ * The Nonce we get from this call is the current nonce, i.e., the nonce of the active proposal.
  *
  * @param address - Address of the Safe.
  * @returns - Safe data.
