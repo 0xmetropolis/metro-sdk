@@ -36,44 +36,46 @@ export const orcanautPod = {
     '0x7f33BeaA131a6896B97E27c505c532cE40f88f33',
     '0x88d3767814FDE34891dD84D1A950310aB3D1ca96',
     '0xAfBb354FF03E17b1EffBaF661FFca106ba78b966',
-    '0xc9fef0515d141bB86a13f362e853D7CfabCF29a4'
+    '0xc9fef0515d141bB86a13f362e853D7CfabCF29a4',
   ],
 };
 
 export const artNautPod = {
-    admin: '0x094A473985464098b59660B37162a284b5132753',
-    id: 6,
-    safe: '0x25F55d2e577a937433686A01439E5fFdffe62218',
-    ensName: 'art-naut.pod.xyz',
-    imageUrl: 'https://orcaprotocol-nft.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000006-image',
-    imageNoTextUrl: 'https://orcaprotocol-nft.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000006-image-no-text',
-    members: [
-      '0x094A473985464098b59660B37162a284b5132753',
-      '0x29864e4d1588C4164DEe7cc495147Ec141f9c9d5',
-      '0x2cecb3B75bc8dFb22725ff657062C47d6ddD4629',
-      '0x46E69D6801d4E09360Ab62A638849D72623A2e7E',
-      '0x4846162806B025Dcd0759cACF9ec6F9474274282',
-      '0xb4fbd802d9dc5C0208346c311BCB6B9ECFF468C6'
-    ],
+  admin: '0x094A473985464098b59660B37162a284b5132753',
+  id: 6,
+  safe: '0x25F55d2e577a937433686A01439E5fFdffe62218',
+  ensName: 'art-naut.pod.xyz',
+  imageUrl:
+    'https://orcaprotocol-nft.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000006-image',
+  imageNoTextUrl:
+    'https://orcaprotocol-nft.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000006-image-no-text',
+  members: [
+    '0x094A473985464098b59660B37162a284b5132753',
+    '0x29864e4d1588C4164DEe7cc495147Ec141f9c9d5',
+    '0x2cecb3B75bc8dFb22725ff657062C47d6ddD4629',
+    '0x46E69D6801d4E09360Ab62A638849D72623A2e7E',
+    '0x4846162806B025Dcd0759cACF9ec6F9474274282',
+    '0xb4fbd802d9dc5C0208346c311BCB6B9ECFF468C6',
+  ],
 };
 
-/** 
+/**
  * Turns arrays into the stupid format that GQL returns
  */
 export const constructGqlGetUsers = (input: string[]) => {
   const converted = input.map(element => {
-    return { user: { id: element }};
+    return { user: { id: element } };
   });
   return {
     data: {
       data: {
         pod: {
           users: converted,
-        }
-      }
-    }
-  }
-}
+        },
+      },
+    },
+  };
+};
 
 export const gqlGetUsers = {
   data: {
@@ -209,10 +211,10 @@ const safeTransactions = [
         {
           name: 'to',
           type: 'address',
-          value: '0x1cC62cE7cb56ed99513823064295761f9b7C856e'
+          value: '0x1cC62cE7cb56ed99513823064295761f9b7C856e',
         },
-        { name: 'tokens', type: 'uint256', value: '200' }
-      ]
+        { name: 'tokens', type: 'uint256', value: '200' },
+      ],
     },
     confirmationsRequired: null,
     confirmations: [
@@ -220,12 +222,13 @@ const safeTransactions = [
         owner: '0x1cC62cE7cb56ed99513823064295761f9b7C856e',
         submissionDate: '2022-04-12T19:33:28.910753Z',
         transactionHash: null,
-        signature: '0x2e891bd88745e12f837ed97f2113f71efe044123c1a3f2b102db4115cf95d7585b4916c571ff70044a9701746df6fee34e58c35ae3d73103f78ec3bee87416761b',
-        signatureType: 'EOA'
-      }
+        signature:
+          '0x2e891bd88745e12f837ed97f2113f71efe044123c1a3f2b102db4115cf95d7585b4916c571ff70044a9701746df6fee34e58c35ae3d73103f78ec3bee87416761b',
+        signatureType: 'EOA',
+      },
     ],
     trusted: true,
-    signatures: null
+    signatures: null,
   },
   {
     safe: '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
@@ -259,12 +262,13 @@ const safeTransactions = [
         owner: '0x1cC62cE7cb56ed99513823064295761f9b7C856e',
         submissionDate: '2022-04-12T18:23:50.052840Z',
         transactionHash: null,
-        signature: '0xb0e2093a113e4389489c20c1333db89adeccae2bcca34e6f1e8c2b8c6bd57b8c44a8fed0fb1e95047457ad942b0d9a7b341ddb6719ad131507642e670755cf971c',
-        signatureType: 'EOA'
-      }
+        signature:
+          '0xb0e2093a113e4389489c20c1333db89adeccae2bcca34e6f1e8c2b8c6bd57b8c44a8fed0fb1e95047457ad942b0d9a7b341ddb6719ad131507642e670755cf971c',
+        signatureType: 'EOA',
+      },
     ],
     trusted: true,
-    signatures: null
+    signatures: null,
   },
   {
     safe: '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
@@ -298,12 +302,13 @@ const safeTransactions = [
         owner: '0x1cC62cE7cb56ed99513823064295761f9b7C856e',
         submissionDate: '2022-04-12T18:22:07.034098Z',
         transactionHash: null,
-        signature: '0x77ed4ded93e2d34ed38aaf05033e3efd87a86caf2e5cede37c326b52121e3e8e6c3740e4ab94576062369854e2c44508b397be4bd31efc1a289aa3abafd6e68c1b',
-        signatureType: 'EOA'
-      }
+        signature:
+          '0x77ed4ded93e2d34ed38aaf05033e3efd87a86caf2e5cede37c326b52121e3e8e6c3740e4ab94576062369854e2c44508b397be4bd31efc1a289aa3abafd6e68c1b',
+        signatureType: 'EOA',
+      },
     ],
     trusted: true,
-    signatures: null
+    signatures: null,
   },
   {
     safe: '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
@@ -337,13 +342,15 @@ const safeTransactions = [
         owner: '0x1cC62cE7cb56ed99513823064295761f9b7C856e',
         submissionDate: '2022-04-12T18:17:29Z',
         transactionHash: null,
-        signature: '0x0000000000000000000000001cc62ce7cb56ed99513823064295761f9b7c856e000000000000000000000000000000000000000000000000000000000000000001',
-        signatureType: 'APPROVED_HASH'
-      }
+        signature:
+          '0x0000000000000000000000001cc62ce7cb56ed99513823064295761f9b7c856e000000000000000000000000000000000000000000000000000000000000000001',
+        signatureType: 'APPROVED_HASH',
+      },
     ],
     trusted: true,
-    signatures: '0x0000000000000000000000001cc62ce7cb56ed99513823064295761f9b7c856e000000000000000000000000000000000000000000000000000000000000000001'
-  }
+    signatures:
+      '0x0000000000000000000000001cc62ce7cb56ed99513823064295761f9b7c856e000000000000000000000000000000000000000000000000000000000000000001',
+  },
 ];
 
 const subProposalFixture = [
@@ -380,9 +387,9 @@ const subProposalFixture = [
         {
           name: 'hashToApprove',
           type: 'bytes32',
-          value: '0xbc9840f7f81374dd6b1f8015d1fb7a3a7c2327c23196628348a31abd968cf99c'
-        }
-      ]
+          value: '0xbc9840f7f81374dd6b1f8015d1fb7a3a7c2327c23196628348a31abd968cf99c',
+        },
+      ],
     },
     confirmationsRequired: 1,
     confirmations: [
@@ -390,12 +397,14 @@ const subProposalFixture = [
         owner: '0xf0C7d25c942264D6F21871c05d3dB3b98344b499',
         submissionDate: '2022-04-29T17:10:50.590010Z',
         transactionHash: null,
-        signature: '0xd07dd94098fe82c053d18d6b22c8666817f388bfe58034d023f58b6ff6ab958f1fd5561a7ea733c9076e692a8b87247308a4175477525f0057d5997ac808fe3420',
-        signatureType: 'ETH_SIGN'
-      }
+        signature:
+          '0xd07dd94098fe82c053d18d6b22c8666817f388bfe58034d023f58b6ff6ab958f1fd5561a7ea733c9076e692a8b87247308a4175477525f0057d5997ac808fe3420',
+        signatureType: 'ETH_SIGN',
+      },
     ],
     trusted: true,
-    signatures: '0xd07dd94098fe82c053d18d6b22c8666817f388bfe58034d023f58b6ff6ab958f1fd5561a7ea733c9076e692a8b87247308a4175477525f0057d5997ac808fe3420'
+    signatures:
+      '0xd07dd94098fe82c053d18d6b22c8666817f388bfe58034d023f58b6ff6ab958f1fd5561a7ea733c9076e692a8b87247308a4175477525f0057d5997ac808fe3420',
   },
   {
     safe: '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
@@ -430,9 +439,9 @@ const subProposalFixture = [
         {
           name: 'hashToApprove',
           type: 'bytes32',
-          value: '0x2e25c70fbb536eb1f64746dd0bdda89d72576dc05910053dae9afd76e481f98d'
-        }
-      ]
+          value: '0x2e25c70fbb536eb1f64746dd0bdda89d72576dc05910053dae9afd76e481f98d',
+        },
+      ],
     },
     confirmationsRequired: 1,
     confirmations: [
@@ -440,12 +449,13 @@ const subProposalFixture = [
         owner: '0xf0C7d25c942264D6F21871c05d3dB3b98344b499',
         submissionDate: '2022-04-29T17:10:43.494865Z',
         transactionHash: null,
-        signature: '0xfbcc82bf8b9fe4c708ec01f3d72f7cc9efbfade483f2fd5f9630b94fe4669c3b5696e03d2ea0b69d2b3f9ebbc2689a8891c8a267331d53eaee6b57809576c7261f',
-        signatureType: 'ETH_SIGN'
-      }
+        signature:
+          '0xfbcc82bf8b9fe4c708ec01f3d72f7cc9efbfade483f2fd5f9630b94fe4669c3b5696e03d2ea0b69d2b3f9ebbc2689a8891c8a267331d53eaee6b57809576c7261f',
+        signatureType: 'ETH_SIGN',
+      },
     ],
     trusted: true,
-    signatures: null
+    signatures: null,
   },
   {
     safe: '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
@@ -480,9 +490,9 @@ const subProposalFixture = [
         {
           name: 'hashToApprove',
           type: 'bytes32',
-          value: '0x2734e0ad044c85994633c20675336aa75b626e4ec6f466c95c7fa90ae2bfef00'
-        }
-      ]
+          value: '0x2734e0ad044c85994633c20675336aa75b626e4ec6f466c95c7fa90ae2bfef00',
+        },
+      ],
     },
     confirmationsRequired: 1,
     confirmations: [
@@ -490,12 +500,14 @@ const subProposalFixture = [
         owner: '0xf0C7d25c942264D6F21871c05d3dB3b98344b499',
         submissionDate: '2022-04-29T16:04:02.191133Z',
         transactionHash: null,
-        signature: '0x0bcaf8c819b5f8ebff8cf490776e7fdff523b1c118ee9a7799ab39332e7f1e872cafb05aa829faa8012a93a62125ba0afe53f8a701a1c8f8e0de2636d362201e1f',
-        signatureType: 'ETH_SIGN'
-      }
+        signature:
+          '0x0bcaf8c819b5f8ebff8cf490776e7fdff523b1c118ee9a7799ab39332e7f1e872cafb05aa829faa8012a93a62125ba0afe53f8a701a1c8f8e0de2636d362201e1f',
+        signatureType: 'ETH_SIGN',
+      },
     ],
     trusted: true,
-    signatures: '0x0bcaf8c819b5f8ebff8cf490776e7fdff523b1c118ee9a7799ab39332e7f1e872cafb05aa829faa8012a93a62125ba0afe53f8a701a1c8f8e0de2636d362201e1f'
+    signatures:
+      '0x0bcaf8c819b5f8ebff8cf490776e7fdff523b1c118ee9a7799ab39332e7f1e872cafb05aa829faa8012a93a62125ba0afe53f8a701a1c8f8e0de2636d362201e1f',
   },
   {
     safe: '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
@@ -530,9 +542,9 @@ const subProposalFixture = [
         {
           name: 'hashToApprove',
           type: 'bytes32',
-          value: '0xd4eb322d9d2c4dfeedc4e55a7e254a17bc46a65412adf4f69b23e251f7cce017'
-        }
-      ]
+          value: '0xd4eb322d9d2c4dfeedc4e55a7e254a17bc46a65412adf4f69b23e251f7cce017',
+        },
+      ],
     },
     confirmationsRequired: 1,
     confirmations: [
@@ -540,11 +552,12 @@ const subProposalFixture = [
         owner: '0xf0C7d25c942264D6F21871c05d3dB3b98344b499',
         submissionDate: '2022-04-29T16:02:50.685863Z',
         transactionHash: null,
-        signature: '0x670f320e8bf16fd71ae98bd612006c5d980d010ff51e1b226adb344a7f3531050f97600858ac0ed3c4cbfc0689f2d1c989a83a8a8ac0e27675dd7fe2e0ae68d01f',
-        signatureType: 'ETH_SIGN'
-      }
+        signature:
+          '0x670f320e8bf16fd71ae98bd612006c5d980d010ff51e1b226adb344a7f3531050f97600858ac0ed3c4cbfc0689f2d1c989a83a8a8ac0e27675dd7fe2e0ae68d01f',
+        signatureType: 'ETH_SIGN',
+      },
     ],
     trusted: true,
-    signatures: null
+    signatures: null,
   },
 ];

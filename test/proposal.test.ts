@@ -1,21 +1,20 @@
 import axios from 'axios';
 import { ethers } from 'ethers';
-import { init } from "../src";
-import { getPod } from "../src";
+import { init } from '../src';
+import { getPod } from '../src';
 import * as txService from '../src/lib/services/transaction-service';
 import * as fetchers from '../src/fetchers';
 import { constructGqlGetUsers, getSafeTransactionFixture } from './fixtures';
-import {
-  userAddress,
-  userAddress2,
-} from './fixtures';
+import { userAddress, userAddress2 } from './fixtures';
 
 // Baseline mock for this set of tests.
 function standardMock(fetchType?: string) {
   jest.spyOn(fetchers, 'getPodFetchersByAddressOrEns').mockResolvedValueOnce({
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    Controller: { podAdmin: jest.fn().mockResolvedValueOnce('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41') },
+    Controller: {
+      podAdmin: jest.fn().mockResolvedValueOnce('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41'),
+    },
     safe: '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
     podId: 5, // Arbitrary
     Name: { name: 'whatever.pod.eth' },
@@ -25,7 +24,9 @@ function standardMock(fetchType?: string) {
   // For getMember related calls
   jest.spyOn(axios, 'post').mockResolvedValueOnce(constructGqlGetUsers([userAddress]));
 
-  const mockGetSafeTransactions = jest.spyOn(txService, 'getSafeTransactionsBySafe').mockResolvedValueOnce(getSafeTransactionFixture(fetchType));
+  const mockGetSafeTransactions = jest
+    .spyOn(txService, 'getSafeTransactionsBySafe')
+    .mockResolvedValueOnce(getSafeTransactionFixture(fetchType));
   return { mockGetSafeTransactions };
 }
 
@@ -38,7 +39,7 @@ beforeAll(async () => {
   provider.getSigner = () => {
     return {
       getAddress: jest.fn().mockResolvedValueOnce(userAddress2),
-    }
+    };
   };
   init({ provider, network: 1 });
 });
@@ -52,7 +53,7 @@ describe('Pod.getProposals', () => {
     standardMock();
     const pod = await getPod('0x2be14C515c5EE125BA13Bd2F4569Ab8c29B927c0');
     const proposals = await pod.getProposals();
-    
+
     expect(proposals[0].timestamp > proposals[1].timestamp).toBeTruthy();
   });
 
@@ -73,7 +74,10 @@ describe('Pod.getProposals', () => {
 
     expect(proposals[0].id).toBeGreaterThan(1);
     expect(proposals.length).toBe(3);
-    expect(mockGetSafeTransactions).toHaveBeenCalledWith('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41', { nonce__lte: 1, limit: 10 })
+    expect(mockGetSafeTransactions).toHaveBeenCalledWith(
+      '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
+      { nonce__lte: 1, limit: 10 },
+    );
   });
 
   test('Pod.getProposals({ status: active }) will return only the active proposal', async () => {
@@ -82,7 +86,10 @@ describe('Pod.getProposals', () => {
     const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
     await pod.getProposals({ status: 'active' });
 
-    expect(mockGetSafeTransactions).toHaveBeenCalledWith('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41', { nonce: 1 })
+    expect(mockGetSafeTransactions).toHaveBeenCalledWith(
+      '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
+      { nonce: 1 },
+    );
   });
 
   test('Pod.getProposals({ status: active }) will return an empty array if there is no active proposal', async () => {
@@ -90,9 +97,12 @@ describe('Pod.getProposals', () => {
 
     const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
     const proposals = await pod.getProposals({ status: 'active' });
-    
+
     expect(proposals).toEqual([]);
-    expect(mockGetSafeTransactions).toHaveBeenCalledWith('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41', { nonce: 1 })
+    expect(mockGetSafeTransactions).toHaveBeenCalledWith(
+      '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
+      { nonce: 1 },
+    );
   });
 
   test('Pod.getProposals({ status: executed }) will return only the active proposal', async () => {
@@ -101,7 +111,10 @@ describe('Pod.getProposals', () => {
     const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
     await pod.getProposals({ status: 'executed' });
 
-    expect(mockGetSafeTransactions).toHaveBeenCalledWith('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41', { nonce__lt: 1, limit: 10 })
+    expect(mockGetSafeTransactions).toHaveBeenCalledWith(
+      '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
+      { nonce__lt: 1, limit: 10 },
+    );
   });
 
   test('Pod.getProposals({ status: queued }) will return any queued proposals, then active proposals', async () => {
@@ -110,7 +123,10 @@ describe('Pod.getProposals', () => {
     const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
     await pod.getProposals({ status: 'queued' });
 
-    expect(mockGetSafeTransactions).toHaveBeenCalledWith('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41', { limit: 10 })
+    expect(mockGetSafeTransactions).toHaveBeenCalledWith(
+      '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
+      { limit: 10 },
+    );
   });
 
   test('Pod.getProposals pairs sub proposal approve/rejects properly', async () => {
@@ -149,20 +165,23 @@ describe('Proposal details', () => {
   test('Proposal populates dataDecoded properly', async () => {
     standardMock('queued');
     const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
-    const proposal = (await pod.getProposals({ status: 'queued'}))[0];
+    const proposal = (await pod.getProposals({ status: 'queued' }))[0];
 
     expect(proposal.method).toBe('transfer');
-    expect(proposal.parameters).toEqual(expect.arrayContaining([{
-        name: 'to', 
-        type: 'address',
-        value: '0x1cC62cE7cb56ed99513823064295761f9b7C856e',
-      },
-      {
-        name: 'tokens',
-        type: 'uint256',
-        value: '200',
-      },
-    ]))
+    expect(proposal.parameters).toEqual(
+      expect.arrayContaining([
+        {
+          name: 'to',
+          type: 'address',
+          value: '0x1cC62cE7cb56ed99513823064295761f9b7C856e',
+        },
+        {
+          name: 'tokens',
+          type: 'uint256',
+          value: '200',
+        },
+      ]),
+    );
   });
 });
 
@@ -193,7 +212,9 @@ describe('Proposal approve/reject', () => {
     const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
     const proposal = (await pod.getProposals())[0];
 
-    await expect(proposal.approve(mockSigner)).rejects.toThrow('Signer has already approved this proposal');
+    await expect(proposal.approve(mockSigner)).rejects.toThrow(
+      'Signer has already approved this proposal',
+    );
   });
 
   test('Approve should throw if signer is not part of the pod', async () => {
@@ -216,11 +237,13 @@ describe('Proposal approve/reject', () => {
     const mockSigner = {
       getAddress: jest.fn().mockResolvedValueOnce(userAddress),
     };
-    const mockCreate = jest.spyOn(txService, 'createRejectTransaction').mockResolvedValueOnce({ safe: '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41' });
+    const mockCreate = jest
+      .spyOn(txService, 'createRejectTransaction')
+      .mockResolvedValueOnce({ safe: '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41' });
 
     const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
     const proposal = (await pod.getProposals())[0];
-    
+
     // Manually remove reject transaction for test purposes.
     proposal.rejectTransaction = null;
 
@@ -254,7 +277,9 @@ describe('Proposal approve/reject', () => {
     const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
     const proposal = (await pod.getProposals())[0];
 
-    await expect(proposal.reject(mockSigner)).rejects.toThrow('Signer has already rejected this proposal');
+    await expect(proposal.reject(mockSigner)).rejects.toThrow(
+      'Signer has already rejected this proposal',
+    );
   });
 
   test('Reject should throw if signer is not part of pod', async () => {

@@ -2,7 +2,15 @@ import { ethers } from 'ethers';
 import axios from 'axios';
 import * as ENS from '@ensdomains/ensjs';
 import { init, getPod, config } from '../src';
-import { gqlGetUsers, orcanautAddress, orcanautPod, userAddress, userAddress2, constructGqlGetUsers, artNautPod } from './fixtures';
+import {
+  gqlGetUsers,
+  orcanautAddress,
+  orcanautPod,
+  userAddress,
+  userAddress2,
+  constructGqlGetUsers,
+  artNautPod,
+} from './fixtures';
 import * as fetchers from '../src/fetchers';
 import Pod from '../src/Pod';
 
@@ -158,25 +166,21 @@ test('Pod object should be able to fetch member pods via async call', async () =
     podId: artNautPod.id,
     Name: { name: artNautPod.ensName },
   });
-  jest.spyOn(axios, 'post').mockResolvedValueOnce(constructGqlGetUsers([
-    '0x25F55d2e577a937433686A01439E5fFdffe62218',
-  ]));
+  jest
+    .spyOn(axios, 'post')
+    .mockResolvedValueOnce(constructGqlGetUsers(['0x25F55d2e577a937433686A01439E5fFdffe62218']));
 
   const rootPod = await getPod(orcanautAddress);
   const memberPods = await rootPod.getMemberPods();
   const podNames = memberPods.map(pod => pod.ensName);
-  expect(podNames).toEqual(
-    expect.arrayContaining([
-      'art-naut.pod.xyz',
-    ]),
-  );
+  expect(podNames).toEqual(expect.arrayContaining(['art-naut.pod.xyz']));
 });
 
 test('Pod.getMembers() should include member pods in its list', async () => {
   mockGetPodFetchersByAddress();
-  jest.spyOn(axios, 'post').mockResolvedValueOnce(constructGqlGetUsers([
-    '0x25F55d2e577a937433686A01439E5fFdffe62218',
-  ]));
+  jest
+    .spyOn(axios, 'post')
+    .mockResolvedValueOnce(constructGqlGetUsers(['0x25F55d2e577a937433686A01439E5fFdffe62218']));
   // Additional mock to fill out the artnaut pod (i.e., the member pod)
   jest.spyOn(fetchers, 'getPodFetchersByAddressOrEns').mockResolvedValueOnce({
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -192,9 +196,7 @@ test('Pod.getMembers() should include member pods in its list', async () => {
   const members = await rootPod.getMembers();
 
   // users should contain the safe addresses of member pods
-  expect(members).toEqual(
-    expect.arrayContaining([artNaut.safe]),
-  );
+  expect(members).toEqual(expect.arrayContaining([artNaut.safe]));
 });
 
 test('Pod.getMemberEOAs() should not include pod members', async () => {
@@ -285,7 +287,9 @@ test('Pod.isAdmin() should throw if given a non-address input', async () => {
   jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
 
   const pod = await getPod(orcanautAddress);
-  expect(() => { pod.isAdmin('not an address') }).toThrow('Invalid address');
+  expect(() => {
+    pod.isAdmin('not an address');
+  }).toThrow('Invalid address');
 });
 
 test('Pod.isAdminPodMember() should return true/false if a given address is a member of the admin pod', async () => {
@@ -301,12 +305,12 @@ test('Pod.isAdminPodMember() should return true/false if a given address is a me
 
 test('Pod.isSubPodMember() should return true/false if a given address is a nested member', async () => {
   mockGetPodFetchersByAddress();
-  jest.spyOn(axios, 'post')
-  // Populates members on the pod to be artNaut pod.
-  .mockResolvedValueOnce(constructGqlGetUsers([artNautPod.safe]))
-  // Populates members on the first subPod (i.e., the artNaut pod)
-  .mockResolvedValueOnce(constructGqlGetUsers([artNautPod.members[0]]));
-
+  jest
+    .spyOn(axios, 'post')
+    // Populates members on the pod to be artNaut pod.
+    .mockResolvedValueOnce(constructGqlGetUsers([artNautPod.safe]))
+    // Populates members on the first subPod (i.e., the artNaut pod)
+    .mockResolvedValueOnce(constructGqlGetUsers([artNautPod.members[0]]));
 
   const pod = await getPod(orcanautAddress);
   const isSubPodMember1 = await pod.isSubPodMember(artNautPod.members[0]);

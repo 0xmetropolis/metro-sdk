@@ -7,7 +7,7 @@ async function main() {
 
   // Get the pod we're working with
   const adminPod = await getPod(adminPodAddress);
-  const subPod = await getPod(subPodAddress)
+  const subPod = await getPod(subPodAddress);
 
   if ((await adminPod.getProposals({ queued: true }))[0].status !== 'executed') {
     throw new Error(
