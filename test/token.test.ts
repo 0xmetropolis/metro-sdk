@@ -30,7 +30,13 @@ function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
       podAdmin: jest.fn().mockResolvedValue(admin),
       address: '0x242e1E6cF6C30d36988D8019d0fE2e187325CCEd',
     },
-    safe: orcanautAddress,
+    Safe: {
+      address: orcanautAddress,
+      nonce: jest.fn().mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
+      getThreshold: jest
+        .fn()
+        .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+    },
     podId: orcanautPod.id,
     Name: { name: orcanautPod.ensName },
   });
@@ -210,34 +216,52 @@ describe('member actions', () => {
   });
 });
 
-describe('proposeMintMemberFromPod', () => {
-  function setupAdminAndSubPod() {
-    jest
-      .spyOn(fetchers, 'getPodFetchersByAddressOrEns')
-      .mockResolvedValueOnce({
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        Controller: { podAdmin: jest.fn().mockResolvedValue(orcanautPod.admin) },
-        safe: orcanautAddress,
-        podId: orcanautPod.id,
-        Name: { name: orcanautPod.ensName },
-      })
-      .mockResolvedValueOnce({
-        // Mock artNaut admin to be orcanaut pod.
-        Controller: { podAdmin: jest.fn().mockResolvedValue(orcanautPod.safe) },
-        safe: artNautPod.safe,
-        podId: artNautPod.id,
-        Name: { name: artNautPod.ensName },
-      });
-    jest.spyOn(utils, 'getContract').mockReturnValueOnce({
-      address: memberTokenAddress,
+function setupAdminAndSubPod() {
+  jest
+    .spyOn(fetchers, 'getPodFetchersByAddressOrEns')
+    .mockResolvedValueOnce({
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      Controller: {
+        podAdmin: jest.fn().mockResolvedValue(orcanautPod.admin),
+        address: '0x17FDC2Eaf2bd46f3e1052CCbccD9e6AD0296C42c',
+      },
+      Safe: {
+        address: orcanautAddress,
+        nonce: jest.fn().mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
+        getThreshold: jest
+          .fn()
+          .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+      },
+      podId: orcanautPod.id,
+      Name: { name: orcanautPod.ensName },
+    })
+    .mockResolvedValueOnce({
+      // Mock artNaut admin to be orcanaut pod.
+      Controller: {
+        podAdmin: jest.fn().mockResolvedValue(orcanautPod.safe),
+        address: '0x17FDC2Eaf2bd46f3e1052CCbccD9e6AD0296C42c',
+      },
+      Safe: {
+        address: artNautPod.safe,
+        nonce: jest.fn().mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
+        getThreshold: jest
+          .fn()
+          .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+      },
+      podId: artNautPod.id,
+      Name: { name: artNautPod.ensName },
     });
-    jest
-      .spyOn(axios, 'post')
-      .mockResolvedValueOnce(constructGqlGetUsers(orcanautPod.members))
-      .mockResolvedValueOnce(constructGqlGetUsers(artNautPod.members));
-  }
+  jest.spyOn(utils, 'getContract').mockReturnValueOnce({
+    address: memberTokenAddress,
+  });
+  jest
+    .spyOn(axios, 'post')
+    .mockResolvedValueOnce(constructGqlGetUsers(orcanautPod.members))
+    .mockResolvedValueOnce(constructGqlGetUsers(artNautPod.members));
+}
 
+describe('proposeMintMemberFromPod', () => {
   test('As a member of an admin pod, I should be able to create a proposal on the admin pod to mint a member to a subpod', async () => {
     setupAdminAndSubPod();
     const mockSigner = {
@@ -323,33 +347,6 @@ describe('proposeMintMemberFromPod', () => {
 });
 
 describe('proposeBurnMemberFromPod', () => {
-  function setupAdminAndSubPod() {
-    jest
-      .spyOn(fetchers, 'getPodFetchersByAddressOrEns')
-      .mockResolvedValueOnce({
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        Controller: { podAdmin: jest.fn().mockResolvedValue(orcanautPod.admin) },
-        safe: orcanautAddress,
-        podId: orcanautPod.id,
-        Name: { name: orcanautPod.ensName },
-      })
-      .mockResolvedValueOnce({
-        // Mock artNaut admin to be orcanaut pod.
-        Controller: { podAdmin: jest.fn().mockResolvedValue(orcanautPod.safe) },
-        safe: artNautPod.safe,
-        podId: artNautPod.id,
-        Name: { name: artNautPod.ensName },
-      });
-    jest.spyOn(utils, 'getContract').mockReturnValueOnce({
-      address: memberTokenAddress,
-    });
-    jest
-      .spyOn(axios, 'post')
-      .mockResolvedValueOnce(constructGqlGetUsers(orcanautPod.members))
-      .mockResolvedValueOnce(constructGqlGetUsers(artNautPod.members));
-  }
-
   test('As a member of an admin pod, I should be able to create a proposal on the admin pod to burn a member to a subpod', async () => {
     setupAdminAndSubPod();
     const mockSigner = {
@@ -408,7 +405,15 @@ describe('proposeBurnMemberFromPod', () => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         Controller: { podAdmin: jest.fn().mockResolvedValue(orcaCorePod.admin) },
-        safe: orcaCorePod.safe,
+        Safe: {
+          address: orcaCorePod.safe,
+          nonce: jest
+            .fn()
+            .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
+          getThreshold: jest
+            .fn()
+            .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+        },
         podId: orcaCorePod.id,
         Name: { name: orcaCorePod.ensName },
       })
@@ -416,7 +421,15 @@ describe('proposeBurnMemberFromPod', () => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         Controller: { podAdmin: jest.fn().mockResolvedValue(artNautPod.admin) },
-        safe: artNautPod.safe,
+        Safe: {
+          address: artNautPod.safe,
+          nonce: jest
+            .fn()
+            .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
+          getThreshold: jest
+            .fn()
+            .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+        },
         podId: artNautPod.id,
         Name: { name: artNautPod.ensName },
       });
@@ -472,33 +485,6 @@ describe('proposeBurnMemberFromPod', () => {
 });
 
 describe('proposeTransferMembershipFromSubPod', () => {
-  function setupAdminAndSubPod() {
-    jest
-      .spyOn(fetchers, 'getPodFetchersByAddressOrEns')
-      .mockResolvedValueOnce({
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        Controller: { podAdmin: jest.fn().mockResolvedValue(orcanautPod.admin) },
-        safe: orcanautAddress,
-        podId: orcanautPod.id,
-        Name: { name: orcanautPod.ensName },
-      })
-      .mockResolvedValueOnce({
-        // Mock artNaut admin to be orcanaut pod.
-        Controller: { podAdmin: jest.fn().mockResolvedValue(orcanautPod.safe) },
-        safe: artNautPod.safe,
-        podId: artNautPod.id,
-        Name: { name: artNautPod.ensName },
-      });
-    jest.spyOn(utils, 'getContract').mockReturnValueOnce({
-      address: memberTokenAddress,
-    });
-    jest
-      .spyOn(axios, 'post')
-      .mockResolvedValueOnce(constructGqlGetUsers(orcanautPod.members))
-      .mockResolvedValueOnce(constructGqlGetUsers(artNautPod.members));
-  }
-
   test('As a member of a sub pod, I should be able to create a proposal on the sub pod to transfer membership to another address', async () => {
     setupAdminAndSubPod();
     const mockSigner = {
@@ -532,7 +518,15 @@ describe('proposeTransferMembershipFromSubPod', () => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         Controller: { podAdmin: jest.fn().mockResolvedValue(orcaCorePod.admin) },
-        safe: orcaCorePod.safe,
+        Safe: {
+          address: orcaCorePod.safe,
+          nonce: jest
+            .fn()
+            .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
+          getThreshold: jest
+            .fn()
+            .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+        },
         podId: orcaCorePod.id,
         Name: { name: orcaCorePod.ensName },
       })
@@ -540,7 +534,15 @@ describe('proposeTransferMembershipFromSubPod', () => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         Controller: { podAdmin: jest.fn().mockResolvedValue(artNautPod.admin) },
-        safe: artNautPod.safe,
+        Safe: {
+          address: artNautPod.safe,
+          nonce: jest
+            .fn()
+            .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
+          getThreshold: jest
+            .fn()
+            .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+        },
         podId: artNautPod.id,
         Name: { name: artNautPod.ensName },
       });
@@ -601,36 +603,6 @@ describe('proposeTransferMembershipFromSubPod', () => {
 });
 
 describe('proposeTransferAdminFromAdminPod', () => {
-  function setupAdminAndSubPod() {
-    jest
-      .spyOn(fetchers, 'getPodFetchersByAddressOrEns')
-      .mockResolvedValueOnce({
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        Controller: { podAdmin: jest.fn().mockResolvedValue(orcanautPod.admin) },
-        safe: orcanautAddress,
-        podId: orcanautPod.id,
-        Name: { name: orcanautPod.ensName },
-      })
-      .mockResolvedValueOnce({
-        // Mock artNaut admin to be orcanaut pod.
-        Controller: {
-          podAdmin: jest.fn().mockResolvedValue(orcanautPod.safe),
-          address: '0x242e1E6cF6C30d36988D8019d0fE2e187325CCEd',
-        },
-        safe: artNautPod.safe,
-        podId: artNautPod.id,
-        Name: { name: artNautPod.ensName },
-      });
-    jest.spyOn(utils, 'getContract').mockReturnValueOnce({
-      address: memberTokenAddress,
-    });
-    jest
-      .spyOn(axios, 'post')
-      .mockResolvedValueOnce(constructGqlGetUsers(orcanautPod.members))
-      .mockResolvedValueOnce(constructGqlGetUsers(artNautPod.members));
-  }
-
   test('As a member of a sub pod, I should be able to create a proposal on the sub pod to transfer admin to another address', async () => {
     setupAdminAndSubPod();
     const mockSigner = {
@@ -663,7 +635,15 @@ describe('proposeTransferAdminFromAdminPod', () => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         Controller: { podAdmin: jest.fn().mockResolvedValue(orcaCorePod.admin) },
-        safe: orcaCorePod.safe,
+        Safe: {
+          address: orcaCorePod.safe,
+          nonce: jest
+            .fn()
+            .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
+          getThreshold: jest
+            .fn()
+            .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+        },
         podId: orcaCorePod.id,
         Name: { name: orcaCorePod.ensName },
       })
@@ -671,7 +651,15 @@ describe('proposeTransferAdminFromAdminPod', () => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         Controller: { podAdmin: jest.fn().mockResolvedValue(artNautPod.admin) },
-        safe: artNautPod.safe,
+        Safe: {
+          address: artNautPod.safe,
+          nonce: jest
+            .fn()
+            .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
+          getThreshold: jest
+            .fn()
+            .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+        },
         podId: artNautPod.id,
         Name: { name: artNautPod.ensName },
       });

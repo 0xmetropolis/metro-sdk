@@ -15,7 +15,13 @@ function standardMock(fetchType?: string) {
     Controller: {
       podAdmin: jest.fn().mockResolvedValueOnce('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41'),
     },
-    safe: '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
+    Safe: {
+      address: '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
+      nonce: jest.fn().mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 1) }),
+      getThreshold: jest
+        .fn()
+        .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 3) }),
+    },
     podId: 5, // Arbitrary
     Name: { name: 'whatever.pod.eth' },
   });
