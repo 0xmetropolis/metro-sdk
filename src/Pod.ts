@@ -1,5 +1,4 @@
 import { ethers } from 'ethers';
-import axios from 'axios';
 import ENS from '@ensdomains/ensjs';
 import { getControllerByAddress, getDeployment } from '@orcaprotocol/contracts';
 import { config } from './config';
@@ -23,6 +22,7 @@ import {
 } from './lib/services/create-safe-transaction';
 import Proposal from './Proposal';
 import type { ProposalStatus } from './Proposal';
+import { fetchPodUsers, fetchUserPodIds } from './lib/services/subgraph';
 
 /**
  * The `Pod` object is the interface for fetching pod data.
@@ -170,6 +170,13 @@ export default class Pod {
   memberPods?: Pod[];
 
   /**
+   * @ignore
+   * @property Array of Pod objects for any super pods
+   * Do not call this property directly, use `Pod.getSuperPods()`
+   */
+  superPods?: Pod[];
+
+  /**
    * Returns an array of Proposal objects in reverse chronological order. Defaults to returning 5,
    * which can be overridden by passing { limit: 10 } for example in the options.
    *
@@ -282,27 +289,41 @@ export default class Pod {
   };
 
   /**
+   * Returns an array of this pod's super pods, i.e., pods that this pod is a member of
+   */
+  getSuperPods = async (): Promise<Pod[]> => {
+    if (this.superPods) return this.superPods;
+    const userPodIds = await fetchUserPodIds(this.safe);
+    this.superPods = await Promise.all(userPodIds.map(async podId => new Pod(podId)));
+    return this.superPods;
+  };
+
+  /**
+   * Returns an array of all active super proposals, i.e., active proposals of any super pods
+   */
+  getSuperProposals = async (): Promise<Proposal[]> => {
+    const superPods = await this.getSuperPods();
+    if (superPods.length === 0) return [];
+    const superProposals = (
+      await Promise.all(
+        superPods.map(async pod => {
+          const [activeProposal] = await pod.getProposals({ status: 'active' });
+          return activeProposal;
+        }),
+      )
+    ).filter(x => x); // Filter all null values, i.e., super pods that have no active proposals
+    return superProposals;
+  };
+
+  /**
    * Returns of list of all member addresses.
    * Members include member pods and member EOAs
    */
   getMembers = async (): Promise<string[]> => {
-    const { subgraphUrl } = config;
     if (this.members) return this.members;
-    const { data } = await axios.post(subgraphUrl, {
-      query: `query GetPodUsers($id: ID!) {
-            pod(id: $id) {
-              users {
-                user {
-                  id
-                }
-              }
-            }
-          }`,
-      variables: { id: this.id },
-    });
-    const { users } = data.data.pod || { users: [] };
+    const users = await fetchPodUsers(this.id);
     // Checksum all addresses.
-    this.members = users.length > 0 ? users.map(user => ethers.utils.getAddress(user.user.id)) : [];
+    this.members = users.length > 0 ? users.map(user => ethers.utils.getAddress(user)) : [];
     return this.members;
   };
 
