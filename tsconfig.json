@@ -4,8 +4,8 @@
     "outDir": "./dist",
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "skipLibCheck": true,
+    "skipLibCheck": true
   },
   "include": ["src"],
-  "exclude": ["./node_modules"],
+  "exclude": ["./node_modules"]
 }

@@ -13,7 +13,8 @@ import { init } from '@orcaprotocol/orca-sdk';
 init({ provider: ethers.getDefaultProvider(), network: 1 });
 ```
 
-Once you init the SDK, you can call `getPod()`, `getUserPods()`, or `getAdminPods()` anywhere to fetch Pod objects.
+Once you init the SDK, you can call `getPod()`, `getUserPods()`, or `getAdminPods()` anywhere to
+fetch Pod objects.
 
 ```js
 import { getPod, getUserPods, getAdminPods } from '@orcaprotocol/orca-sdk';
@@ -46,4 +47,6 @@ Additional documentation can be found [here](https://orcaprotocol.github.io/orca
 
 ## Test Scripts
 
-We have some test scripts to test approve/reject proposals and super proposals. They can be executed by duplicating the `env-examples.json` with private keys in `env.json`, and executing the transactions with `npx ts-node ./scripts/reject-superproposal.ts`. 
+We have some test scripts to test approve/reject proposals and super proposals. They can be executed
+by duplicating the `env-examples.json` with private keys in `env.json`, and executing the
+transactions with `npx ts-node ./scripts/reject-superproposal.ts`.
