@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { ethers } from 'ethers';
 import Pod from './Pod';
 import { Pod as PodType, Proposal as ProposalType, ProposalStatus } from './types';

@@ -421,6 +421,89 @@ export default class Pod {
     return results.includes(true);
   };
 
+  mint = (newMember: string, signer: ethers.Signer) => {
+    const MemberToken = getContract('MemberToken', signer);
+
+    return {
+      asAdmin: async () => {
+        if (await this.isMember(newMember)) {
+          throw new Error(`Address ${newMember} is already in this pod`);
+        }
+        return MemberToken.mint(newMember, this.id, ethers.constants.HashZero);
+      },
+      propose: async () => {
+        if (await this.isMember(newMember)) {
+          throw new Error(`Address ${newMember} is already in this pod`);
+        }
+
+        const data = encodeFunctionData('MemberToken', 'mint', [
+          ethers.utils.getAddress(newMember),
+          this.id,
+          ethers.constants.HashZero,
+        ]);
+
+        const memberAddress = await signer.getAddress();
+        try {
+          await createSafeTransaction(
+            {
+              sender: memberAddress,
+              safe: this.safe,
+              to: MemberToken.address,
+              data,
+            },
+            signer,
+          );
+        } catch (err) {
+          throw new Error(err);
+        }
+      },
+      proposeFromSubPod: async subPodIdentifier => {
+        if (await this.isMember(newMember)) {
+          throw new Error(`Address ${newMember} is already in this pod`);
+        }
+
+        let subPod: Pod;
+        if (subPodIdentifier instanceof Pod) subPod = subPodIdentifier;
+        else {
+          subPod = await new Pod(subPodIdentifier);
+        }
+        if (!subPod) throw new Error(`Could not find a pod with identifier ${subPodIdentifier}`);
+
+        // External pod must be the subpod of this pod.
+        if (!(await this.isMember(subPod.safe))) {
+          throw new Error(`Pod ${subPod.safe} must be a subpod of this pod to make proposals`);
+        }
+
+        const signerAddress = await signer.getAddress();
+        if (!(await subPod.isMember(signerAddress)))
+          throw new Error(`Signer ${signerAddress} was not a member of the external pod`);
+
+        // Tells MemberToken to mint a new token for this pod to newMember.
+        const data = encodeFunctionData('MemberToken', 'mint', [
+          ethers.utils.getAddress(newMember),
+          this.id,
+          ethers.constants.HashZero,
+        ]);
+
+        try {
+          // Create a safe transaction on this pod, sent from the signer
+          await createNestedProposal(
+            {
+              sender: subPod.safe,
+              safe: this.safe,
+              to: MemberToken.address,
+              data,
+            },
+            subPod,
+            signer,
+          );
+        } catch (err) {
+          throw new Error(err);
+        }
+      },
+    };
+  };
+
   /**
    * Mints member to this pod.
    * @throws if signer is not admin
