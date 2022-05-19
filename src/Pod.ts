@@ -482,6 +482,14 @@ export default class Pod {
     return externalPod;
   };
 
+  mint = async () => {
+    return null;
+  };
+
+  propose = async () => {
+    return null;
+  };
+
   /**
    * Mints member to this pod.
    * @throws if signer is not admin
