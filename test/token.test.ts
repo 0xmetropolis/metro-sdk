@@ -401,7 +401,7 @@ describe('proposeBurnMemberFromPod', () => {
     );
   });
 
-  test("Should throw if the adminPod is neither the admin, nor a subpod of the Pod you're trying to mint to", async () => {
+  test("Should throw if the adminPod is not the admin of the Pod you're trying to mint to", async () => {
     jest
       .spyOn(fetchers, 'getPodFetchersByAddressOrEns')
       .mockResolvedValueOnce({
@@ -435,7 +435,7 @@ describe('proposeBurnMemberFromPod', () => {
 
     await expect(
       subPod.burnMemberFromAdminPod(adminPod, artNautPod.members[0], mockSigner),
-    ).rejects.toThrow('must be the admin or a subpod of this pod to make proposals');
+    ).rejects.toThrow('must be the admin of this pod to make proposals');
   });
 
   test('Should throw if the signer of proposeBurnMemberFromSubPod is not a member of the sub pod', async () => {
@@ -596,7 +596,7 @@ describe('proposeTransferMembershipFromSubPod', () => {
 
     await expect(
       adminPod.proposeTransferMembershipFromSubPod(subPod, userAddress2, mockSigner),
-    ).rejects.toThrow('was not a member of sub pod');
+    ).rejects.toThrow('was not a member of the sub pod');
   });
 });
 
@@ -723,7 +723,7 @@ describe('proposeTransferAdminFromAdminPod', () => {
 
     await expect(
       subPod.proposeTransferAdminFromAdminPod(adminPod, userAddress2, mockSigner),
-    ).rejects.toThrow('was not a member of admin pod');
+    ).rejects.toThrow('was not a member of the admin pod');
   });
 });
 

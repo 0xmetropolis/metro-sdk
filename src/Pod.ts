@@ -422,6 +422,50 @@ export default class Pod {
   };
 
   /**
+   * Fetches an external pod (i.e., a sub or admin pod) and performs checks.
+   * Mostly used in context of creating sub/super proposals.
+   * @ignore
+   * @param podIdentifier - Pod safe, ID, or the Pod object itself
+   * @param relationship - 'admin' or 'sub'
+   * @param signerAddress - Address of signer
+   * @returns
+   */
+  getExternalPod = async (
+    podIdentifier: string | number | Pod,
+    relationship: string,
+    signerAddress: string,
+  ) => {
+    let externalPod;
+    if (podIdentifier instanceof Pod) externalPod = podIdentifier;
+    else {
+      externalPod = await new Pod(podIdentifier);
+    }
+
+    if (!externalPod) throw new Error(`Could not find a pod with identifier ${podIdentifier}`);
+
+    if (relationship === 'admin') {
+      if (!this.isAdmin(externalPod.safe)) {
+        throw new Error(
+          `Pod ${externalPod.ensName} must be the admin of this pod to make proposals`,
+        );
+      }
+    } else if (relationship === 'sub') {
+      if (!(await this.isMember(externalPod.safe))) {
+        throw new Error(
+          `Pod ${externalPod.ensName} must be a subpod of this pod to make proposals`,
+        );
+      }
+    }
+
+    if (!(await externalPod.isMember(signerAddress)))
+      throw new Error(
+        `Signer ${signerAddress} was not a member of the ${relationship} pod ${externalPod.ensName}`,
+      );
+
+    return externalPod;
+  };
+
+  /**
    * Mints member to this pod.
    * @throws if signer is not admin
    */
@@ -571,21 +615,8 @@ export default class Pod {
       throw new Error(`Address ${newMember} is already in this pod`);
     }
 
-    let subPod: Pod;
-    if (subPodIdentifier instanceof Pod) subPod = subPodIdentifier;
-    else {
-      subPod = await new Pod(subPodIdentifier);
-    }
-    if (!subPod) throw new Error(`Could not find a pod with identifier ${subPodIdentifier}`);
-
-    // External pod must be the subpod of this pod.
-    if (!(await this.isMember(subPod.safe))) {
-      throw new Error(`Pod ${subPod.safe} must be a subpod of this pod to make proposals`);
-    }
-
     const signerAddress = await signer.getAddress();
-    if (!(await subPod.isMember(signerAddress)))
-      throw new Error(`Signer ${signerAddress} was not a member of the external pod`);
+    const subPod = await this.getExternalPod(subPodIdentifier, 'sub', signerAddress);
 
     // Tells MemberToken to mint a new token for this pod to newMember.
     const data = encodeFunctionData('MemberToken', 'mint', [
@@ -632,21 +663,8 @@ export default class Pod {
       throw new Error(`Address ${newMember} is already in this pod`);
     }
 
-    let adminPod: Pod;
-    if (adminPodIdentifier instanceof Pod) adminPod = adminPodIdentifier;
-    else {
-      adminPod = await new Pod(adminPodIdentifier);
-    }
-    if (!adminPod) throw new Error(`Could not find a pod with identifier ${adminPodIdentifier}`);
-
-    // External pod must be the admin of this pod
-    if (!this.isAdmin(adminPod.safe)) {
-      throw new Error(`Pod ${adminPod.safe} must be the admin of this pod to make proposals`);
-    }
-
     const signerAddress = await signer.getAddress();
-    if (!(await adminPod.isMember(signerAddress)))
-      throw new Error(`Signer ${signerAddress} was not a member of the admin pod`);
+    const adminPod = await this.getExternalPod(adminPodIdentifier, 'admin', signerAddress);
 
     // Tells MemberToken to mint a new token for this pod to newMember.
     const data = encodeFunctionData('MemberToken', 'mint', [
@@ -731,23 +749,8 @@ export default class Pod {
       throw new Error(`Address ${memberToBurn} is not in this pod`);
     }
 
-    let subPod: Pod;
-    if (subPodIdentifier instanceof Pod) subPod = subPodIdentifier;
-    else {
-      subPod = await new Pod(subPodIdentifier);
-    }
-    if (!subPod) throw new Error(`Could not find a pod with identifier ${subPodIdentifier}`);
-
-    // External pod must be the admin or a subpod of this pod.
-    if (!(await this.isMember(subPod.safe))) {
-      throw new Error(
-        `Pod ${subPod.safe} must be the admin or a subpod of this pod to make proposals`,
-      );
-    }
-
     const signerAddress = await signer.getAddress();
-    if (!(await subPod.isMember(signerAddress)))
-      throw new Error(`Signer ${signerAddress} was not a member of the sub pod`);
+    const subPod = await this.getExternalPod(subPodIdentifier, 'sub', signerAddress);
 
     // Tells MemberToken to mint a new token for this pod to newMember.
     const data = encodeFunctionData('MemberToken', 'burn', [
@@ -792,23 +795,8 @@ export default class Pod {
       throw new Error(`Address ${memberToBurn} is not in this pod`);
     }
 
-    let adminPod: Pod;
-    if (adminPodIdentifier instanceof Pod) adminPod = adminPodIdentifier;
-    else {
-      adminPod = await new Pod(adminPodIdentifier);
-    }
-    if (!adminPod) throw new Error(`Could not find a pod with identifier ${adminPodIdentifier}`);
-
-    // External pod must be the admin or a subpod of this pod.
-    if (!this.isAdmin(adminPod.safe)) {
-      throw new Error(
-        `Pod ${adminPod.safe} must be the admin or a subpod of this pod to make proposals`,
-      );
-    }
-
     const signerAddress = await signer.getAddress();
-    if (!(await adminPod.isMember(signerAddress)))
-      throw new Error(`Signer ${signerAddress} was not a member of the external pod`);
+    const adminPod = await this.getExternalPod(adminPodIdentifier, 'admin', signerAddress);
 
     // Tells MemberToken to mint a new token for this pod to newMember.
     const data = encodeFunctionData('MemberToken', 'burn', [
@@ -852,21 +840,8 @@ export default class Pod {
       throw new Error(`Address ${addressToTransferTo} is already in this pod`);
     }
 
-    let subPod: Pod;
-    if (subPodIdentifier instanceof Pod) subPod = subPodIdentifier;
-    else {
-      subPod = await new Pod(subPodIdentifier);
-    }
-    if (!subPod) throw new Error(`Could not find a pod with identifier ${subPodIdentifier}`);
-
-    // Sub pod must be the admin or a subpod of this pod.
-    if (!(await this.isMember(subPod.safe))) {
-      throw new Error(`Pod ${subPod.ensName} must be a subpod of this pod to make proposals`);
-    }
-
     const signerAddress = await signer.getAddress();
-    if (!(await subPod.isMember(signerAddress)))
-      throw new Error(`Signer ${signerAddress} was not a member of sub pod ${subPod.ensName}`);
+    const subPod = await this.getExternalPod(subPodIdentifier, 'sub', signerAddress);
 
     // Tells MemberToken to transfer token for this pod from subpod.safe to checkedAddress.
     const data = encodeFunctionData('MemberToken', 'safeTransferFrom', [
@@ -915,20 +890,8 @@ export default class Pod {
       throw new Error(`Address ${addressToTransferTo} is already pod admin`);
     }
 
-    let adminPod: Pod;
-    if (adminPodIdentifier instanceof Pod) adminPod = adminPodIdentifier;
-    else {
-      adminPod = await new Pod(adminPodIdentifier);
-    }
-    if (!adminPod) throw new Error(`Could not find a pod with identifier ${adminPodIdentifier}`);
-
-    if (!this.isAdmin(adminPod.safe)) {
-      throw new Error(`Pod ${adminPod.ensName} must be the admin of this pod`);
-    }
-
     const signerAddress = await signer.getAddress();
-    if (!(await adminPod.isMember(signerAddress)))
-      throw new Error(`Signer ${signerAddress} was not a member of admin pod ${adminPod.ensName}`);
+    const adminPod = await this.getExternalPod(adminPodIdentifier, 'admin', signerAddress);
 
     const { abi: controllerAbi } = getControllerByAddress(this.controller, config.network);
     const data = new ethers.utils.Interface(controllerAbi).encodeFunctionData('updatePodAdmin', [
