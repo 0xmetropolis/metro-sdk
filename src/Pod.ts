@@ -12,7 +12,6 @@ import {
 } from './lib/utils';
 import {
   createRejectTransaction,
-  getSafeInfo,
   getSafeTransactionsBySafe,
   populateDataDecoded,
 } from './lib/services/transaction-service';
@@ -96,7 +95,9 @@ export default class Pod {
           fetchers = await getPodFetchersById(identifier);
         }
         podId = fetchers.podId;
-        safe = fetchers.safe;
+        safe = fetchers.Safe.address;
+        this.nonce = (await fetchers.Safe.nonce()).toNumber();
+        this.threshold = (await fetchers.Safe.getThreshold()).toNumber();
         Controller = fetchers.Controller;
         Name = fetchers.Name;
       } catch (err) {
@@ -133,6 +134,9 @@ export default class Pod {
 
   /** @property Gnosis Safe address */
   safe: string;
+
+  /** @property Current nonce, i.e., the nonce of the active proposal */
+  nonce: number;
 
   /** @property Number of votes required to pass a proposal */
   threshold: number;
@@ -198,8 +202,7 @@ export default class Pod {
     } = {},
   ): Promise<Proposal[]> => {
     // Nonce here is the current nonce, i.e., the active proposal.
-    const { nonce, threshold } = await getSafeInfo(this.safe);
-    this.threshold = threshold;
+    const { nonce, threshold } = this;
     const { limit = 5 } = options;
 
     // We double the limit here because each Proposal is unique, but there can be two

@@ -1,7 +1,10 @@
 import { ethers } from 'ethers';
 import { getDeployment, getControllerByAddress } from '@orcaprotocol/contracts';
+import { getSafeSingletonDeployment } from '@gnosis.pm/safe-deployments';
 import ENS, { getEnsAddress } from '@ensdomains/ensjs';
 import { config } from './config';
+
+const GnosisSafe = getSafeSingletonDeployment({ version: process.env.GNOSIS_SAFE_VERSION });
 
 /**
  * Returns Controller, ENS Name and pod ID for a given pod address.
@@ -9,7 +12,7 @@ import { config } from './config';
  */
 export async function getPodFetchersByAddressOrEns(identifier: string): Promise<{
   podId: number;
-  safe: string;
+  Safe: ethers.Contract;
   Controller: ethers.Contract;
   Name: ENS.Name;
 }> {
@@ -52,11 +55,14 @@ export async function getPodFetchersByAddressOrEns(identifier: string): Promise<
     controllerDeployment.abi,
     provider,
   );
+
+  const Safe = new ethers.Contract(address, GnosisSafe.abi, provider);
+
   return {
     podId: parseInt(podId, 10),
-    safe: address,
     Controller,
     Name,
+    Safe,
   };
 }
 
@@ -66,7 +72,7 @@ export async function getPodFetchersByAddressOrEns(identifier: string): Promise<
  */
 export async function getPodFetchersById(id: number): Promise<{
   podId: number;
-  safe: string;
+  Safe: ethers.Contract;
   Controller: ethers.Contract;
   Name: ENS.Name;
 }> {
@@ -96,9 +102,11 @@ export async function getPodFetchersById(id: number): Promise<{
   if (!name) throw new Error('Address did not have an ENS name');
   const Name = ens.name(name);
 
+  const Safe = new ethers.Contract(safe, GnosisSafe.abi, provider);
+
   return {
     podId: id,
-    safe,
+    Safe,
     Controller,
     Name,
   };

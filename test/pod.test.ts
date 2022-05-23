@@ -1,6 +1,5 @@
 import { ethers } from 'ethers';
 import axios from 'axios';
-import * as ENS from '@ensdomains/ensjs';
 import { init, getPod, config } from '../src';
 import {
   gqlGetUsers,
@@ -20,7 +19,13 @@ function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     Controller: { podAdmin: jest.fn().mockResolvedValueOnce(admin) },
-    safe: orcanautAddress,
+    Safe: {
+      address: orcanautPod.safe,
+      nonce: jest.fn().mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
+      getThreshold: jest
+        .fn()
+        .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+    },
     podId: orcanautPod.id,
     Name: { name: orcanautPod.ensName },
   });
@@ -38,51 +43,19 @@ beforeEach(() => {
 });
 
 test('getPod should be able to fetch via address', async () => {
-  jest.spyOn(ENS, 'default').mockReturnValueOnce({
-    getName: jest.fn().mockReturnValueOnce({ name: 'orcanauts.pod.xyz' }),
-    name: jest.fn().mockReturnValueOnce({
-      getText: jest.fn().mockResolvedValueOnce(1),
-      name: 'orcanauts.pod.xyz',
-    }),
-  });
-  jest
-    .spyOn(ethers, 'Contract')
-    .mockReturnValueOnce({
-      memberController: jest
-        .fn()
-        .mockResolvedValueOnce('0xD89AAd5348A34E440E72f5F596De4fA7e291A3e8'),
-    })
-    .mockReturnValueOnce({
-      podAdmin: jest.fn().mockResolvedValueOnce('0x094A473985464098b59660B37162a284b5132753'),
-    });
+  mockGetPodFetchersByAddress();
   const pod = await getPod(orcanautAddress);
   expect(pod.id).toEqual(orcanautPod.id);
   expect(pod.safe).toEqual(orcanautPod.safe);
   expect(pod.imageNoTextUrl).toEqual(orcanautPod.imageNoTextUrl);
   expect(pod.admin).toEqual(orcanautPod.admin);
   expect(pod.ensName).toEqual(orcanautPod.ensName);
+  expect(pod.nonce).toBe(5);
+  expect(pod.threshold).toBe(10);
 });
 
 test('getPod should be able to fetch via ens name', async () => {
-  jest.spyOn(ENS, 'default').mockReturnValueOnce({
-    name: jest.fn().mockReturnValueOnce({
-      getText: jest.fn().mockResolvedValueOnce(1),
-      name: 'orcanauts.pod.xyz',
-    }),
-  });
-  jest
-    .spyOn(config.provider, 'resolveName')
-    .mockReturnValueOnce('0x97F7Dcdf56934Cf87a2d5DF860fD881FA84ad142');
-  jest
-    .spyOn(ethers, 'Contract')
-    .mockReturnValueOnce({
-      memberController: jest
-        .fn()
-        .mockResolvedValueOnce('0xD89AAd5348A34E440E72f5F596De4fA7e291A3e8'),
-    })
-    .mockReturnValueOnce({
-      podAdmin: jest.fn().mockResolvedValueOnce('0x094A473985464098b59660B37162a284b5132753'),
-    });
+  mockGetPodFetchersByAddress();
   const pod = await getPod(orcanautPod.ensName);
   expect(pod.id).toEqual(orcanautPod.id);
   expect(pod.safe).toEqual(orcanautPod.safe);
@@ -92,23 +65,7 @@ test('getPod should be able to fetch via ens name', async () => {
 });
 
 test('getPod should be able to fetch via pod id', async () => {
-  jest.spyOn(ENS, 'default').mockReturnValueOnce({
-    getName: jest.fn().mockReturnValueOnce({ name: 'orcanauts.pod.xyz' }),
-    name: jest.fn().mockReturnValueOnce({
-      name: 'orcanauts.pod.xyz',
-    }),
-  });
-  jest
-    .spyOn(ethers, 'Contract')
-    .mockReturnValueOnce({
-      memberController: jest
-        .fn()
-        .mockResolvedValueOnce('0xD89AAd5348A34E440E72f5F596De4fA7e291A3e8'),
-    })
-    .mockReturnValueOnce({
-      podIdToSafe: jest.fn().mockResolvedValueOnce('0x97F7Dcdf56934Cf87a2d5DF860fD881FA84ad142'),
-      podAdmin: jest.fn().mockResolvedValueOnce('0x094A473985464098b59660B37162a284b5132753'),
-    });
+  mockGetPodFetchersByAddress();
   const pod = await getPod(orcanautPod.id);
   expect(pod.id).toEqual(orcanautPod.id);
   expect(pod.safe).toEqual(orcanautPod.safe);
@@ -162,7 +119,13 @@ test('Pod object should be able to fetch member pods via async call', async () =
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     Controller: { podAdmin: jest.fn().mockResolvedValueOnce(artNautPod.admin) },
-    safe: artNautPod.safe,
+    Safe: {
+      address: artNautPod.safe,
+      nonce: jest.fn().mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
+      getThreshold: jest
+        .fn()
+        .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+    },
     podId: artNautPod.id,
     Name: { name: artNautPod.ensName },
   });
@@ -186,7 +149,13 @@ test('Pod.getMembers() should include member pods in its list', async () => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     Controller: { podAdmin: jest.fn().mockResolvedValueOnce(artNautPod.admin) },
-    safe: artNautPod.safe,
+    Safe: {
+      address: artNautPod.safe,
+      nonce: jest.fn().mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
+      getThreshold: jest
+        .fn()
+        .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+    },
     podId: artNautPod.id,
     Name: { name: artNautPod.ensName },
   });
