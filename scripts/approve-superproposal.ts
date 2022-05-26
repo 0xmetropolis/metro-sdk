@@ -51,7 +51,7 @@ async function main() {
 
   console.log('Executing both sub proposals');
   const subProposal = (await subPod.getProposals())[0];
-  await subProposal.approve(walletOne)
+  await subProposal.approve(walletOne);
   await subProposal.executeApprove(walletOne);
 
   const subProposalTwo = (await subPodTwo.getProposals())[0];

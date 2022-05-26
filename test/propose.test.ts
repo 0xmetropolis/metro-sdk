@@ -32,7 +32,8 @@ function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
       getThreshold: jest
         .fn()
         .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
-    },    podId: orcanautPod.id,
+    },
+    podId: orcanautPod.id,
     Name: { name: orcanautPod.ensName },
   });
 }
@@ -100,12 +101,14 @@ beforeEach(() => {
 test('Subpod members should be able to propose a mint member', async () => {
   mockGetPodFetchersByAddress();
   // Arbitrary return value.
-  const create = jest.spyOn(createSafe, 'createSafeTransaction').mockResolvedValue(erc20TransferTransaction);
+  const create = jest
+    .spyOn(createSafe, 'createSafeTransaction')
+    .mockResolvedValue(erc20TransferTransaction);
   const pod = await sdk.getPod(orcanautAddress);
 
   const mint = pod.populateMint(userAddress);
   await pod.propose(mint, artNautPod.members[0]);
-  
+
   expect(create).toHaveBeenCalledWith({
     sender: orcanautPod.members[0],
     to: mint.to,
@@ -116,19 +119,15 @@ test('Subpod members should be able to propose a mint member', async () => {
 
 test('Sub pod members should be able to propose a super pod mint', async () => {
   setupAdminAndSubPod();
-  const create = jest.spyOn(createSafe, 'createSafeTransaction').mockResolvedValue(erc20TransferTransaction);
+  const create = jest
+    .spyOn(createSafe, 'createSafeTransaction')
+    .mockResolvedValue(erc20TransferTransaction);
 
   const superPod = await sdk.getPod(orcanautAddress);
   const subPod = await sdk.getPod(artNautPod.safe);
   const mint = superPod.populateMint(userAddress);
 
-  await subPod.propose(
-    await superPod.propose(
-      mint,
-      orcanautPod.members[0]
-    ),
-    artNautPod.members[0]
-  );
+  await subPod.propose(await superPod.propose(mint, orcanautPod.members[0]), artNautPod.members[0]);
   expect(create).toHaveBeenNthCalledWith(1, {
     sender: orcanautPod.members[0],
     to: mint.to,

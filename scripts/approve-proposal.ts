@@ -24,7 +24,7 @@ async function main() {
     data = pod.populateMint(dummyAccount);
   }
 
-  const proposal = await pod.propose(data, walletOne.address)
+  const proposal = await pod.propose(data, walletOne.address);
 
   // const [proposal] = await pod.getProposals();
 
