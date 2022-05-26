@@ -5,33 +5,34 @@ import { setup, sleep } from './utils';
 async function main() {
   const { walletOne, walletTwo } = setup();
 
-  const superPod = await getPod(adminPodAddress);
+  const pod = await getPod(adminPodAddress);
 
-  if ((await superPod.getProposals({ queued: true }))[0].status !== 'executed') {
+  if ((await pod.getProposals({ status: 'queued' }))[0].status !== 'executed') {
     throw new Error(
       'Super pod had an active/queued transaction. This script expects no enqueued transactions',
     );
   }
 
   // We mint/burn the dummy account based on whether its a member or not.
-  const isMember = await superPod.isMember(dummyAccount);
+  const isMember = await pod.isMember(dummyAccount);
+  let data;
   if (isMember) {
-    await superPod.proposeBurnMember(dummyAccount, walletOne);
+    data = pod.populateBurn(dummyAccount);
   } else {
-    await superPod.proposeMintMember(dummyAccount, walletOne);
+    data = pod.populateMint(dummyAccount);
   }
 
-  const proposal = (await superPod.getProposals())[0];
+  const proposal = await pod.propose(data, walletOne.address)
 
-  // await proposal.reject(walletOne);
-  // await proposal.reject(walletTwo);
+  await proposal.reject(walletOne);
+  await proposal.reject(walletTwo);
   await proposal.executeReject(walletTwo);
 
   // Let gnosis catch up.
   await sleep(5000);
 
   if (proposal.status !== 'executed') throw new Error('Proposal status not right');
-  const refetchProposal = (await superPod.getProposals())[0];
+  const refetchProposal = (await pod.getProposals())[0];
   if (!refetchProposal.safeTransaction.isExecuted)
     throw new Error('Proposal not executed according to gnosis');
 }

@@ -90,9 +90,13 @@ export default class Proposal {
     if (podNonce > this.id) this.status = 'executed';
     if (podNonce < this.id) this.status = 'queued';
 
-    this.approvals = safeTransaction.confirmations.map(confirmation => confirmation.owner);
+    this.approvals = safeTransaction.confirmations
+      ? safeTransaction.confirmations.map(confirmation => confirmation.owner)
+      : [];
     if (rejectTransaction) {
-      this.rejections = rejectTransaction.confirmations.map(confirmation => confirmation.owner);
+      this.rejections = rejectTransaction.confirmations
+        ? rejectTransaction.confirmations.map(confirmation => confirmation.owner)
+        : [];
     } else {
       this.rejections = [];
     }

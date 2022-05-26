@@ -9,7 +9,7 @@ async function main() {
 
   const pod = await getPod(adminPodAddress);
 
-  if ((await pod.getProposals({ queued: true }))[0].status !== 'executed') {
+  if ((await pod.getProposals({ status: 'queued' }))[0].status !== 'executed') {
     throw new Error(
       'Super pod had an active/queued transaction. This script expects no enqueued transactions',
     );
@@ -17,14 +17,18 @@ async function main() {
 
   // We mint/burn the dummy account based on whether its a member or not.
   const isMember = await pod.isMember(dummyAccount);
+  let data;
   if (isMember) {
-    await pod.proposeBurnMember(dummyAccount, walletOne);
+    data = pod.populateBurn(dummyAccount);
   } else {
-    await pod.proposeMintMember(dummyAccount, walletOne);
+    data = pod.populateMint(dummyAccount);
   }
 
-  const proposal = (await pod.getProposals())[0];
+  const proposal = await pod.propose(data, walletOne.address)
 
+  // const [proposal] = await pod.getProposals();
+
+  await proposal.approve(walletOne);
   await proposal.approve(walletTwo);
   await proposal.executeApprove(walletTwo);
 

@@ -1,20 +1,16 @@
 /* eslint-disable jest/prefer-todo */
 import { ethers } from 'ethers';
 import axios from 'axios';
-import contracts from '@orcaprotocol/contracts';
 import * as sdk from '../src';
-import * as utils from '../src/lib/utils';
 import * as fetchers from '../src/fetchers';
 import * as createSafe from '../src/lib/services/create-safe-transaction';
 import {
   artNautPod,
-  orcaCorePod,
-  memberTokenAddress,
   orcanautAddress,
   orcanautPod,
   userAddress,
-  userAddress2,
   constructGqlGetUsers,
+  erc20TransferTransaction,
 } from './fixtures';
 
 // Tests for any token, or token-like functionality (this includes admin transfers)
@@ -30,10 +26,57 @@ function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
       podAdmin: jest.fn().mockResolvedValue(admin),
       address: '0x242e1E6cF6C30d36988D8019d0fE2e187325CCEd',
     },
-    safe: orcanautAddress,
-    podId: orcanautPod.id,
+    Safe: {
+      address: orcanautPod.safe,
+      nonce: jest.fn().mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
+      getThreshold: jest
+        .fn()
+        .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+    },    podId: orcanautPod.id,
     Name: { name: orcanautPod.ensName },
   });
+}
+
+function setupAdminAndSubPod() {
+  jest
+    .spyOn(fetchers, 'getPodFetchersByAddressOrEns')
+    .mockResolvedValueOnce({
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      Controller: {
+        podAdmin: jest.fn().mockResolvedValue(orcanautPod.admin),
+        address: '0x17FDC2Eaf2bd46f3e1052CCbccD9e6AD0296C42c',
+      },
+      Safe: {
+        address: orcanautAddress,
+        nonce: jest.fn().mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
+        getThreshold: jest
+          .fn()
+          .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+      },
+      podId: orcanautPod.id,
+      Name: { name: orcanautPod.ensName },
+    })
+    .mockResolvedValueOnce({
+      // Mock artNaut admin to be orcanaut pod.
+      Controller: {
+        podAdmin: jest.fn().mockResolvedValue(orcanautPod.safe),
+        address: '0x17FDC2Eaf2bd46f3e1052CCbccD9e6AD0296C42c',
+      },
+      Safe: {
+        address: artNautPod.safe,
+        nonce: jest.fn().mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
+        getThreshold: jest
+          .fn()
+          .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+      },
+      podId: artNautPod.id,
+      Name: { name: artNautPod.ensName },
+    });
+  jest
+    .spyOn(axios, 'post')
+    .mockResolvedValueOnce(constructGqlGetUsers(orcanautPod.members))
+    .mockResolvedValueOnce(constructGqlGetUsers(artNautPod.members));
 }
 
 beforeAll(async () => {
@@ -54,56 +97,48 @@ beforeEach(() => {
   jest.restoreAllMocks();
 });
 
-test('Pod members should be able to propose a mint member', async () => {
+test('Subpod members should be able to propose a mint member', async () => {
+  mockGetPodFetchersByAddress();
+  // Arbitrary return value.
+  const create = jest.spyOn(createSafe, 'createSafeTransaction').mockResolvedValue(erc20TransferTransaction);
   const pod = await sdk.getPod(orcanautAddress);
-  await pod.propose(pod.mint());
-});
 
-test('Pod members should be able to propose arbitrary functions', async () => {
-  const pod = await sdk.getPod(orcanautAddress);
-  await pod.propose(await MemberToken.functions.mint(
-    dummyAccount,
-    pod.id,
-    ethers.constants.HashZero
-  ));
-  // Check to see if createSafeTransaction is called correctly
-});
-
-test('Propose function should throw if the function would throw', async () => {
-  // Propose function should throw if attempting to mint an already existing member.
-});
-
-test('Admin pod members should be able to create a proposal to mint to a sub pod', async () => {
-  const adminPod = await sdk.getPod(orcanautAddress);
-  const subPod = await sdk.getPod(artNautPod.id);
-  await adminPod.propose(await subPod.mint());
-});
-
-test('Admin pod members should be able to propose arbitrary functions', async () => {
-  const adminPod = await sdk.getPod(orcanautAddress);
-  const subPod = await sdk.getPod(artNautPod.id);
-  await adminPod.propose(await MemberToken.functions.mint(
-    dummyAccount,
-    subPod.id,
-    ethers.constants.HashZero
-  ));
+  const mint = pod.populateMint(userAddress);
+  await pod.propose(mint, artNautPod.members[0]);
+  
+  expect(create).toHaveBeenCalledWith({
+    sender: orcanautPod.members[0],
+    to: mint.to,
+    data: mint.data,
+    safe: pod.safe,
+  });
 });
 
 test('Sub pod members should be able to propose a super pod mint', async () => {
+  setupAdminAndSubPod();
+  const create = jest.spyOn(createSafe, 'createSafeTransaction').mockResolvedValue(erc20TransferTransaction);
+
   const superPod = await sdk.getPod(orcanautAddress);
-  const subPod = await sdk.getPod(artNautPod.id);
-  await subPod.propose(await superPod.propose(await superPod.mint()));
+  const subPod = await sdk.getPod(artNautPod.safe);
+  const mint = superPod.populateMint(userAddress);
+
+  await subPod.propose(
+    await superPod.propose(
+      mint,
+      orcanautPod.members[0]
+    ),
+    artNautPod.members[0]
+  );
+  expect(create).toHaveBeenNthCalledWith(1, {
+    sender: orcanautPod.members[0],
+    to: mint.to,
+    data: mint.data,
+    safe: superPod.safe,
+  });
+  expect(create).toHaveBeenNthCalledWith(2, {
+    sender: artNautPod.members[0],
+    to: orcanautPod.safe,
+    data: '0xd4d9bdcda382f3f9a3fc80b8694b97906354918858b8e5c8147304ff4dc6311f95ac2b93',
+    safe: subPod.safe,
+  });
 });
-
-test('Sub pod members should be able to propose an arbitrary super proposal', async () => {
-  const superPod = await sdk.getPod(orcanautAddress);
-  const subPod = await sdk.getPod(artNautPod.id);
-  await subPod.propose(await superPod.propose(await superPod.mint()));
-});
-
-test('If propose function is passed a Proposal, assume that is a super proposal and create an approval proposal', async () => {
-  // test goes here lol.
-})
-
-// To think about:
-// What does the propose function need to return? 

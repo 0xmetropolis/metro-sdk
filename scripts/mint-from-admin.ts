@@ -9,26 +9,25 @@ async function main() {
   const adminPod = await getPod(adminPodAddress);
   const subPod = await getPod(subPodAddress);
 
-  if ((await adminPod.getProposals({ queued: true }))[0].status !== 'executed') {
+  if ((await adminPod.getProposals({ status: 'queued' }))[0].status !== 'executed') {
     throw new Error(
       'Super pod had an active/queued transaction. This script expects no enqueued transactions',
     );
   }
 
-  console.log('subPod.admin', subPod.admin);
-
   // We mint/burn the dummy account based on whether its a member or not.
   const isMember = await subPod.isMember(dummyAccount);
+  let data;
   if (isMember) {
-    await subPod.burnMemberFromAdminPod(adminPod, dummyAccount, walletOne);
+    data = subPod.populateBurn(dummyAccount);
   } else {
-    await subPod.mintMemberFromAdminPod(adminPod, dummyAccount, walletOne);
+    data = subPod.populateMint(dummyAccount);
   }
 
-  const proposal = (await adminPod.getProposals())[0];
-
+  const proposal = await adminPod.propose(data, walletOne.address);
+  await proposal.approve(walletOne);
   await proposal.approve(walletTwo);
-  await proposal.executeApprove(walletTwo);
+  await proposal.executeApprove(walletOne);
 }
 
 main();

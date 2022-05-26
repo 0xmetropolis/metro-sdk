@@ -34,22 +34,23 @@ export async function getNextNonce(safeAddress: string): Promise<number> {
  * @returns {SafeTransaction}
  */
 // eslint-disable-next-line import/prefer-default-export
-export async function createSafeTransaction(
-  input: {
-    safe: string;
-    to: string;
-    value?: string;
-    data?: string;
-    sender: string;
-    nonce?: number;
-  },
-  signer: ethers.Signer,
-) {
-  const [{ threshold }, nonce, safeTxGas] = await Promise.all([
+export async function createSafeTransaction(input: {
+  safe: string;
+  to: string;
+  value?: string;
+  data?: string;
+  sender: string;
+  nonce?: number;
+}): Promise<SafeTransaction> {
+  const [{ nonce, threshold }, [lastTx], safeTxGas] = await Promise.all([
     getSafeInfo(input.safe),
-    getNextNonce(input.safe),
+    getSafeTransactionsBySafe(input.safe, { limit: 1, status: 'queued' }),
     getGasEstimation(input),
   ]);
+
+  if (!lastTx.isExecuted) {
+    throw new Error('Pod already has an active proposal');
+  }
 
   const data = {
     safe: input.safe,
@@ -71,7 +72,6 @@ export async function createSafeTransaction(
   const safeTxHash = await getSafeTxHash(data);
 
   const createdSafeTransaction = await submitSafeTransactionToService({ safeTxHash, ...data });
-  await approveSafeTransaction(createdSafeTransaction, signer);
 
   return createdSafeTransaction;
 }
@@ -124,15 +124,12 @@ export async function createNestedProposal(
   // Creating the sub proposal
   const signerAddress = await signer.getAddress();
   try {
-    await createSafeTransaction(
-      {
-        safe: subPod.safe,
-        to: superProposal.safe,
-        data: encodeFunctionData('GnosisSafe', 'approveHash', [superProposalHash]),
-        sender: signerAddress,
-      },
-      signer,
-    );
+    await createSafeTransaction({
+      safe: subPod.safe,
+      to: superProposal.safe,
+      data: encodeFunctionData('GnosisSafe', 'approveHash', [superProposalHash]),
+      sender: signerAddress,
+    });
   } catch (err) {
     throw new Error(`Error when creating subproposal: ${err.response.data}`);
   }
@@ -190,15 +187,12 @@ export async function approveSuperProposal(
   // Otherwise, we have to create the sub proposal
   try {
     // createSafeTransaction also approves the transaction.
-    await createSafeTransaction(
-      {
-        safe: subPod.safe,
-        to: superProposal.safe,
-        data: encodeFunctionData('GnosisSafe', 'approveHash', [superProposal.safeTxHash]),
-        sender: signerAddress,
-      },
-      signer,
-    );
+    await createSafeTransaction({
+      safe: subPod.safe,
+      to: superProposal.safe,
+      data: encodeFunctionData('GnosisSafe', 'approveHash', [superProposal.safeTxHash]),
+      sender: signerAddress,
+    });
   } catch (err) {
     throw new Error(`Error when creating sub proposal: ${err.response.data}`);
   }
@@ -272,16 +266,13 @@ export async function rejectSuperProposal(
 
   // Create the sub reject. This is _not_ a standard Gnosis reject
   // Instead, we need to create a sub proposal that approves the super reject proposal.
-  await createSafeTransaction(
-    {
-      safe: subPod.safe,
-      to: superProposal.safe,
-      data: encodeFunctionData('GnosisSafe', 'approveHash', [superReject.safeTxHash]),
-      sender: await signer.getAddress(),
-      // If the sub approve exists, use the same nonce. Otherwise createSafeTransaction will auto-populate
-      // the appropriate nonce if we pass null.
-      nonce: subApprove ? subApprove.id : null,
-    },
-    signer,
-  );
+  await createSafeTransaction({
+    safe: subPod.safe,
+    to: superProposal.safe,
+    data: encodeFunctionData('GnosisSafe', 'approveHash', [superReject.safeTxHash]),
+    sender: await signer.getAddress(),
+    // If the sub approve exists, use the same nonce. Otherwise createSafeTransaction will auto-populate
+    // the appropriate nonce if we pass null.
+    nonce: subApprove ? subApprove.id : null,
+  });
 }

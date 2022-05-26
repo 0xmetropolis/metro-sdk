@@ -11,9 +11,9 @@ async function main() {
   const subPodTwo = await getPod(subPodTwoAddress);
 
   if (
-    (await superPod.getProposals({ queued: true }))[0].status !== 'executed' ||
-    (await subPod.getProposals({ queued: true }))[0].status !== 'executed' ||
-    (await subPodTwo.getProposals({ queued: true }))[0].status !== 'executed'
+    (await superPod.getProposals({ status: 'queued' }))[0].status !== 'executed' ||
+    (await subPod.getProposals({ status: 'queued' }))[0].status !== 'executed' ||
+    (await subPodTwo.getProposals({ status: 'queued' }))[0].status !== 'executed'
   ) {
     throw new Error(
       'Admin or sub pod had an active/queued transaction. This script expects no enqueued transactions',
@@ -23,44 +23,38 @@ async function main() {
   // We mint/burn the dummy account based on whether its a member or not.
   const isMember = await superPod.isMember(dummyAccount);
   console.log('Creating super proposal');
+  let data;
   try {
     if (isMember) {
-      console.log('Burning');
-      await superPod.proposeBurnMemberFromSubPod(subPod, dummyAccount, walletOne);
+      data = superPod.populateBurn(dummyAccount);
     } else {
-      console.log('Minting');
-      await superPod.proposeMintMemberFromSubPod(subPod, dummyAccount, walletOne);
+      data = superPod.populateMint(dummyAccount);
     }
+    await superPod.propose(data, subPod.safe);
   } catch (err) {
     console.log(err);
     throw new Error('Error creating proposal on subpod');
   }
 
   let [superProposal] = await superPod.getProposals();
+  console.log('superProposal', superProposal);
 
   console.log('Rejecting the first sub proposal');
-  await superProposal.rejectFromSubPod(subPod, walletOne);
-  const [subProposal] = await subPod.getProposals();
-  console.log('Executing the sub proposal reject');
+  // This would approve the proposal, and then reject it
+  const subProposal = await subPod.propose(superProposal, await walletOne.getAddress());
+  await subProposal.reject(walletOne);
   await subProposal.executeReject(walletOne);
 
-  console.log('Rejecting super proposal from subPodTwo');
-  [superProposal] = await superPod.getProposals();
-  await superProposal.rejectFromSubPod(subPod, walletTwo);
-
-  console.log('Creating the second sub reject');
-  await superProposal.rejectFromSubPod(subPodTwo, walletOne);
-  await sleep(5000);
-
-  console.log('Executing the second reject');
-  const [subProposalTwo] = await subPodTwo.getProposals();
-  console.log('subProposalTwo', subProposalTwo);
-  await subProposalTwo.executeReject(walletOne);
+  console.log('Rejecting the second sub proposal');
+  const subProposal2 = await subPodTwo.propose(superProposal, walletOne.address);
+  await subProposal2.reject(walletOne);
+  await subProposal2.executeReject(walletOne);
 
   console.log('Letting tx service catch up...');
   await sleep(40000);
 
   [superProposal] = await superPod.getProposals();
+  console.log('superProposal', superProposal);
   await superProposal.executeReject(walletOne);
 
   console.log('Rejection seems to have worked, now waiting to refetch from Gnosis');
