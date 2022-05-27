@@ -417,11 +417,25 @@ export default class Pod {
     if (!this.memberPods) await this.populateMembers();
     const results = await Promise.all(
       this.memberPods.map(async pod => {
-        const members = await pod.getMembers();
-        return members.includes(checkedAddress);
+        return pod.isMember(checkedAddress);
       }),
     );
     return results.includes(true);
+  };
+
+  /**
+   * Returns all sub pods of this pod that an address is the member of.
+   * @param address
+   */
+  getSubPodsByMember = async (address: string): Promise<Pod[]> => {
+    const checkedAddress = checkAddress(address);
+    if (!this.memberPods) await this.populateMembers();
+    const results = await Promise.all(
+      this.memberPods.map(async pod => {
+        return (await pod.isMember(checkedAddress)) ? pod : null;
+      }),
+    );
+    return results.filter(x => !!x);
   };
 
   /**
