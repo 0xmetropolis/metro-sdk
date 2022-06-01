@@ -661,10 +661,10 @@ export default class Pod {
           data,
         });
       } catch (err) {
-        if (err.response.data.message === 'Gas estimation failed') {
+        if (err.response?.data.message === 'Gas estimation failed') {
           throw new Error('Gas estimation failed (this is often a revert error)');
         }
-        throw new Error(err);
+        throw err;
       }
     }
 

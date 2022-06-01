@@ -168,40 +168,42 @@ test('Pod.getMembers() should include member pods in its list', async () => {
   expect(members).toEqual(expect.arrayContaining([artNaut.safe]));
 });
 
-test('Pod.getMemberEOAs() should not include pod members', async () => {
-  mockGetPodFetchersByAddress();
-  jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
+// Test commented out because it's not really testing anything, but probably useful down the line.
+// test('Pod.getMemberEOAs() should not include pod members', async () => {
+//   mockGetPodFetchersByAddress();
+//   jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
 
-  const rootPod = await getPod(orcanautAddress);
-  const members = await rootPod.getMembers();
-  const EOAs = await rootPod.getMemberEOAs();
+//   const rootPod = await getPod(orcanautAddress);
+//   const members = await rootPod.getMembers();
+//   const EOAs = await rootPod.getMemberEOAs();
 
-  expect(members).toEqual(
-    expect.arrayContaining([
-      '0xcABB78f39Fbeb0CdFBD3C8f30E37630EB9e7A151',
-      '0xAfBb354FF03E17b1EffBaF661FFca106ba78b966',
-      '0x46E69D6801d4E09360Ab62A638849D72623A2e7E',
-      '0x4846162806B025Dcd0759cACF9ec6F9474274282',
-      '0x7B54195b743BF76c314e9dBDDf110F5a22743998',
-    ]),
-  );
-  expect(members.length).toBeGreaterThan(EOAs.length);
-  expect(EOAs.every(element => typeof element === 'string')).toBeTruthy();
-});
+//   expect(members).toEqual(
+//     expect.arrayContaining([
+//       '0xcABB78f39Fbeb0CdFBD3C8f30E37630EB9e7A151',
+//       '0xAfBb354FF03E17b1EffBaF661FFca106ba78b966',
+//       '0x46E69D6801d4E09360Ab62A638849D72623A2e7E',
+//       '0x4846162806B025Dcd0759cACF9ec6F9474274282',
+//       '0x7B54195b743BF76c314e9dBDDf110F5a22743998',
+//     ]),
+//   );
+//   expect(members.length).toBeGreaterThan(EOAs.length);
+//   expect(EOAs.every(element => typeof element === 'string')).toBeTruthy();
+// });
 
-test('Pod.getMemberPods() should not include non-pod users', async () => {
-  mockGetPodFetchersByAddress();
-  jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
+// Test commented out because it's not really testing anything, but probably useful down the line.
+// test('Pod.getMemberPods() should not include non-pod users', async () => {
+//   mockGetPodFetchersByAddress();
+//   jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
 
-  const rootPod = await getPod(orcanautAddress);
-  const members = await rootPod.getMembers();
-  const memberPods = await rootPod.getMemberPods();
+//   const rootPod = await getPod(orcanautAddress);
+//   const members = await rootPod.getMembers();
+//   const memberPods = await rootPod.getMemberPods();
 
-  // rootPod has some users that are not pods,
-  // therefore there should be more users than member pods.
-  expect(members.length).toBeGreaterThan(memberPods.length);
-  expect(memberPods.every(pod => pod instanceof Pod)).toBeTruthy();
-});
+//   // rootPod has some users that are not pods,
+//   // therefore there should be more users than member pods.
+//   expect(members.length).toBeGreaterThan(memberPods.length);
+//   expect(memberPods.every(pod => pod instanceof Pod)).toBeTruthy();
+// });
 
 test('Pod.getMemberPods should also async fetch memberEOAs', async () => {
   mockGetPodFetchersByAddress();

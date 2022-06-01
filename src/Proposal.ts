@@ -6,8 +6,9 @@ import {
   executeSafeTransaction,
   executeRejectSuperProposal,
   SafeTransaction,
+  getSafeTransactionByHash,
 } from './lib/services/transaction-service';
-import { approveSuperProposal, rejectSuperProposal } from './lib/services/create-safe-transaction';
+import { rejectSuperProposal } from './lib/services/create-safe-transaction';
 import { checkAddress } from './lib/utils';
 
 export type ProposalStatus = 'active' | 'executed' | 'queued';
@@ -31,7 +32,7 @@ export default class Proposal {
   /**
    * @property Whether or not this proposal corresponds to a superproposal
    */
-  isSubProposal: boolean;
+  isSubProposal?: boolean;
 
   /** @property Array of addresses that approved */
   approvals: string[];
@@ -155,6 +156,32 @@ export default class Proposal {
       throw new Error('Signer was not part of this pod');
     }
 
+    // When a Proposal is fetched directly after creation, e.g., from the `propose` method
+    // Some fields are not populated. If `this.isSubProposal` is undefined, it means that
+    // we fetched directly after creation, and we need to populate this value ourselves.
+    if (this.isSubProposal === undefined) {
+      // Refetch the safe transaction.
+      this.safeTransaction = await getSafeTransactionByHash(this.safeTransaction.safeTxHash);
+      if (this.safeTransaction.dataDecoded) {
+        this.method = this.safeTransaction.dataDecoded.method;
+        this.parameters = this.safeTransaction.dataDecoded.parameters;
+      } else {
+        this.method = null;
+        this.parameters = null;
+      }
+      this.isSubProposal = this.method === 'approveHash';
+    }
+
+    if (this.isSubProposal === true) {
+      try {
+        await rejectSuperProposal(this.parameters[0].value, this.pod, signer);
+        this.rejections.push(signerAddress);
+        return;
+      } catch (err) {
+        throw new Error(`Error rejecting super proposal: ${err.message}`);
+      }
+    }
+
     if (!this.rejectTransaction) {
       this.rejectTransaction = await createRejectTransaction(this.safeTransaction, signer);
     } else {
@@ -166,32 +193,6 @@ export default class Proposal {
     }
 
     this.rejections.push(signerAddress);
-  };
-
-  /**
-   * Approves a super proposal from a sub pod. This creates a sub proposal if one does not exist.
-   * @param subPod - Pod to approve from
-   * @param signer - Signer of sub pod member
-   */
-  approveFromSubPod = async (subPod: Pod, signer: ethers.Signer) => {
-    const sender = await signer.getAddress();
-    if (!(await this.pod.isMember(subPod.safe))) {
-      throw new Error(`${subPod.ensName} is not a sub pod of ${this.pod.ensName}`);
-    }
-    await approveSuperProposal({ sender, ...this.safeTransaction }, subPod, signer);
-  };
-
-  /**
-   * Rejects a super proposal from a sub pod. This creates a sub proposal if one does not exist.
-   * @param subPod - Pod to reject from
-   * @param signer - Signer of sub pod member
-   */
-  rejectFromSubPod = async (subPod: Pod, signer: ethers.Signer) => {
-    const sender = await signer.getAddress();
-    if (!(await this.pod.isMember(subPod.safe))) {
-      throw new Error(`${subPod.ensName} is not a sub pod of ${this.pod.ensName}`);
-    }
-    await rejectSuperProposal({ sender, ...this.safeTransaction }, subPod, signer);
   };
 
   /**

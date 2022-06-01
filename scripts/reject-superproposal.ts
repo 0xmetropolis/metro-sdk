@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import { getPod } from '../src';
 import { adminPodAddress, dummyAccount, subPodAddress, subPodTwoAddress } from '../env.json';
-import { setup, sleep } from './utils';
+import { flush, report, setup, sleep } from './utils';
 
 async function main() {
   const { walletOne, walletTwo } = setup();
@@ -10,15 +10,21 @@ async function main() {
   const subPod = await getPod(subPodAddress);
   const subPodTwo = await getPod(subPodTwoAddress);
 
-  if (
-    (await superPod.getProposals({ status: 'queued' }))[0].status !== 'executed' ||
-    (await subPod.getProposals({ status: 'queued' }))[0].status !== 'executed' ||
-    (await subPodTwo.getProposals({ status: 'queued' }))[0].status !== 'executed'
-  ) {
-    throw new Error(
-      'Admin or sub pod had an active/queued transaction. This script expects no enqueued transactions',
-    );
-  }
+  // await report();
+  // return;
+
+  // await flush(walletOne, walletTwo);
+
+  // if (
+  //   (await superPod.getProposals({ status: 'queued' }))[0].status !== 'executed' ||
+  //   (await subPod.getProposals({ status: 'queued' }))[0].status !== 'executed' ||
+  //   (await subPodTwo.getProposals({ status: 'queued' }))[0].status !== 'executed'
+  // ) {
+  //   throw new Error(
+  //     'Admin or sub pod had an active/queued transaction. This script expects no enqueued transactions',
+  //   );
+  // }
+  // return;
 
   // We mint/burn the dummy account based on whether its a member or not.
   const isMember = await superPod.isMember(dummyAccount);
@@ -32,16 +38,17 @@ async function main() {
     }
     await superPod.propose(data, subPod.safe);
   } catch (err) {
-    console.log(err);
-    throw new Error('Error creating proposal on subpod');
+    console.log('err', err);
+    throw err;
   }
 
   let [superProposal] = await superPod.getProposals();
-  console.log('superProposal', superProposal);
+  // console.log('superProposal', superProposal);
 
   console.log('Rejecting the first sub proposal');
   // This would approve the proposal, and then reject it
   const subProposal = await subPod.propose(superProposal, await walletOne.getAddress());
+  // console.log('subProposal', subProposal);
   await subProposal.reject(walletOne);
   await subProposal.executeReject(walletOne);
 
