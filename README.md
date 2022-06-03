@@ -19,8 +19,8 @@ fetch Pod objects.
 ```js
 import { getPod, getUserPods, getAdminPods } from '@orcaprotocol/orca-sdk';
 
-// ENS names also work for the below.
 const podFromEnsName = await getPod('mypod.pod.xyz');
+// ENS names also work for the below.
 const podFromAddress = await getPod('0x123...456');
 const podFromId = await getPod(1);
 // Returns null
