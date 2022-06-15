@@ -1,13 +1,7 @@
 import axios from 'axios';
 import { ethers } from 'ethers';
 import { init, getUserPods, getAdminPods } from '../src';
-import {
-  orcaCorePod,
-  userAddress,
-  gqlGetUserPods,
-  gqlGetUserPodsEmpty,
-  constructGqlGetUsers,
-} from './fixtures';
+import { orcaCorePod, userAddress, gqlGetUserPods, gqlGetUserPodsEmpty } from './fixtures';
 
 beforeAll(async () => {
   const provider = new ethers.providers.InfuraProvider('mainnet', {

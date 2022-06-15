@@ -86,13 +86,20 @@ export function parseTransaction(
     value: string; // Actual value
   }>;
 } {
-  const {
-    name,
-    args,
-    functionFragment: { inputs },
-  } = new ethers.utils.Interface(abi).parseTransaction({
-    data,
-  });
+  let name;
+  let args;
+  let inputs;
+  try {
+    ({
+      name,
+      args,
+      functionFragment: { inputs },
+    } = new ethers.utils.Interface(abi).parseTransaction({
+      data,
+    }));
+  } catch {
+    return null;
+  }
 
   const parameters = inputs.map((input, index) => {
     let value = args[index];
