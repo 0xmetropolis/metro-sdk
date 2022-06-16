@@ -540,10 +540,11 @@ export default class Pod {
   populateUpdatePodAdmin = newAdmin => {
     const Controller = getControllerByAddress(this.controller, config.network);
     return {
-      data: Controller.interface(Controller.abi).encodeFunctionData('updatePodAdmin', [
-        this.id,
-        newAdmin,
-      ]),
+      data: new ethers.Contract(
+        Controller.address,
+        Controller.abi,
+        config.provider,
+      ).interface.encodeFunctionData('updatePodAdmin', [this.id, newAdmin]),
       to: Controller.address,
     };
   };
@@ -554,7 +555,7 @@ export default class Pod {
    * @param signer
    * @returns
    */
-  populateMigratePodToLatest = async (signer: ethers.Signer) => {
+  populateMigratePodToLatest = async () => {
     // forcing to newest controller
     const newController = getDeployment('ControllerLatest', config.network);
     const oldController = getControllerByAddress(this.controller, config.network);
@@ -563,7 +564,6 @@ export default class Pod {
       this.safe,
       oldController.address,
       newController.address,
-      signer,
     );
 
     // use prev controller
@@ -765,7 +765,7 @@ export default class Pod {
    * @param signer - Signer of pod admin
    * @throws If signer is not pod admin TODO
    */
-  migratePodToLatest = async (signer: ethers.Signer) => {
+  migratePodToLatest = async () => {
     // forcing to newest controller
     const newController = getDeployment('ControllerLatest', config.network);
     // Fetch old controller based on this Pod's controller address.
@@ -774,14 +774,13 @@ export default class Pod {
     const OldController = new ethers.Contract(
       oldControllerDeployment.address,
       oldControllerDeployment.abi,
-      signer,
+      config.provider,
     );
 
     const previousModule = await getPreviousModule(
       this.safe,
       oldControllerDeployment.address,
       newController.address,
-      signer,
     );
 
     // use prev controller

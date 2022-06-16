@@ -55,19 +55,19 @@ export async function createSafeTransaction(input: {
   // This also assumes that there's no more than 2 SafeTransactions for a given nonce.
   if (!input.nonce) {
     // Skip this check if we're overriding, e.g., making a super reject
-    if (lastTx.nonce === lastTx2.nonce) {
+    if (lastTx !== undefined && lastTx2 !== undefined && lastTx.nonce === lastTx2.nonce) {
       // If neither of the last txs are executed.
       if (!(lastTx.isExecuted || lastTx2.isExecuted)) {
         throw new Error('Pod already has an active proposal');
       }
-    } else if (!lastTx.isExecuted) {
+    } else if (lastTx !== undefined && !lastTx.isExecuted) {
       throw new Error('Pod already has an active proposal');
     }
   }
 
   const data = {
     safe: input.safe,
-    to: input.to,
+    to: ethers.utils.getAddress(input.to),
     value: input.value || '0',
     data: input.data || ethers.constants.HashZero,
     sender: ethers.utils.getAddress(input.sender), // Get the checksummed address

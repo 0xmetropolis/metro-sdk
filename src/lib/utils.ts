@@ -88,9 +88,8 @@ export async function getPreviousModule(
   safe: string,
   oldController: string,
   newController: string,
-  signer: ethers.Signer,
 ): Promise<string> {
-  const safeContract = new ethers.Contract(safe, GnosisSafe.abi, signer);
+  const safeContract = new ethers.Contract(safe, GnosisSafe.abi, config.provider);
   const AddressOne = '0x0000000000000000000000000000000000000001';
   // TODO: figure out a better way to traverse the safes
   // I'm not sure why but in the SDK, this is nested in some strange object, hence the .array here vs the web version.
