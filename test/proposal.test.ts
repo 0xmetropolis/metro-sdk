@@ -51,6 +51,7 @@ beforeAll(async () => {
 });
 
 beforeEach(() => {
+  init({ provider, network: 1 });
   jest.restoreAllMocks();
 });
 
@@ -252,6 +253,8 @@ describe('Proposal approve/reject', () => {
 
     // Manually remove reject transaction for test purposes.
     proposal.rejectTransaction = null;
+    // Bypass the undefined check for this test.
+    proposal.isSubProposal = false;
 
     await proposal.reject(mockSigner);
     expect(mockCreate).toHaveBeenCalledWith(proposal.safeTransaction, mockSigner);
@@ -268,6 +271,9 @@ describe('Proposal approve/reject', () => {
 
     const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
     const proposal = (await pod.getProposals())[0];
+
+    // Bypass the undefined check for this test.
+    proposal.isSubProposal = false;
 
     await proposal.reject(mockSigner);
     expect(mockApprove).toHaveBeenCalledWith(proposal.rejectTransaction, mockSigner);

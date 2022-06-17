@@ -11,9 +11,9 @@ async function main() {
   const subPodTwo = await getPod(subPodTwoAddress);
 
   if (
-    (await superPod.getProposals({ queued: true }))[0].status !== 'executed' ||
-    (await subPod.getProposals({ queued: true }))[0].status !== 'executed' ||
-    (await subPodTwo.getProposals({ queued: true }))[0].status !== 'executed'
+    (await superPod.getProposals({ status: 'queued' }))[0].status !== 'executed' ||
+    (await subPod.getProposals({ status: 'queued' }))[0].status !== 'executed' ||
+    (await subPodTwo.getProposals({ status: 'queued' }))[0].status !== 'executed'
   ) {
     throw new Error(
       'Admin or sub pod had an active/queued transaction. This script expects no enqueued transactions',
@@ -23,12 +23,14 @@ async function main() {
   // We mint/burn the dummy account based on whether its a member or not.
   const isMember = await superPod.isMember(dummyAccount);
   console.log('Creating super proposal + sub proposal on subPod');
+  let data;
   try {
     if (isMember) {
-      await superPod.proposeBurnMemberFromSubPod(subPod, dummyAccount, walletOne);
+      data = superPod.populateBurn(dummyAccount);
     } else {
-      await superPod.proposeMintMemberFromSubPod(subPod, dummyAccount, walletOne);
+      data = superPod.populateMint(dummyAccount);
     }
+    await superPod.propose(data, subPod.safe);
   } catch (err) {
     console.log(err);
     throw new Error('Error creating proposal on subpod');
@@ -42,15 +44,18 @@ async function main() {
     [superProposal] = await superPod.getProposals();
   }
 
-  console.log('Approving super proposal from sub pod two');
-  await superProposal.approveFromSubPod(subPodTwo, walletOne);
+  console.log('Approving super proposal from sub pods');
+  await subPod.propose(superProposal, walletOne.address);
+  await subPodTwo.propose(superProposal, walletOne.address);
   await sleep(5000);
 
   console.log('Executing both sub proposals');
   const subProposal = (await subPod.getProposals())[0];
+  await subProposal.approve(walletOne);
   await subProposal.executeApprove(walletOne);
 
   const subProposalTwo = (await subPodTwo.getProposals())[0];
+  await subProposalTwo.approve(walletOne);
   await subProposalTwo.executeApprove(walletOne);
 
   console.log('Letting the blockchain + transaction service catch up');

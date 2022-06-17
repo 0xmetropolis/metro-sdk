@@ -15,10 +15,7 @@ import {
   getSafeTransactionsBySafe,
   populateDataDecoded,
 } from './lib/services/transaction-service';
-import {
-  createSafeTransaction,
-  createNestedProposal,
-} from './lib/services/create-safe-transaction';
+import { createSafeTransaction } from './lib/services/create-safe-transaction';
 import Proposal from './Proposal';
 import type { ProposalStatus } from './Proposal';
 import { fetchPodUsers, fetchUserPodIds } from './lib/services/subgraph';
@@ -483,6 +480,198 @@ export default class Pod {
   };
 
   /**
+   * Returns { data, to } object for the propose method to mint a member.
+   * @param newMember
+   * @returns
+   */
+  populateMint = (newMember: string) => {
+    checkAddress(newMember);
+    const MemberToken = getContract('MemberToken', config.provider);
+    return {
+      data: MemberToken.interface.encodeFunctionData('mint', [
+        newMember,
+        this.id,
+        ethers.constants.HashZero,
+      ]),
+      to: MemberToken.address,
+    };
+  };
+
+  /**
+   * Returns { data, to } object for the propose method to burn a member.
+   * @param memberToBurn
+   * @returns
+   */
+  populateBurn = (memberToBurn: string): { data: string; to: string } => {
+    checkAddress(memberToBurn);
+    const MemberToken = getContract('MemberToken', config.provider);
+    return {
+      data: MemberToken.interface.encodeFunctionData('burn', [memberToBurn, this.id]),
+      to: MemberToken.address,
+    };
+  };
+
+  /**
+   * Returns { data, to } object for the propose method to transfer membership
+   * @param transferFrom
+   * @param transferTo
+   * @returns
+   */
+  populateTransfer = (transferFrom, transferTo) => {
+    const MemberToken = getContract('MemberToken', config.provider);
+    const data = encodeFunctionData('MemberToken', 'safeTransferFrom', [
+      transferFrom,
+      transferTo,
+      this.id,
+      1,
+      ethers.constants.HashZero,
+    ]);
+    return {
+      data,
+      to: MemberToken.address,
+    };
+  };
+
+  /**
+   * Returns { data, to } object for the propose method to update the pod admin
+   * @param newAdmin
+   * @returns
+   */
+  populateUpdatePodAdmin = newAdmin => {
+    const Controller = getControllerByAddress(this.controller, config.network);
+    return {
+      data: new ethers.Contract(
+        Controller.address,
+        Controller.abi,
+        config.provider,
+      ).interface.encodeFunctionData('updatePodAdmin', [this.id, newAdmin]),
+      to: Controller.address,
+    };
+  };
+
+  /**
+   * Returns { data, to } object for the propose method to migrate the pod.
+   * Unlike most populate methods, this method is async.
+   * @param signer
+   * @returns
+   */
+  populateMigratePodToLatest = async () => {
+    // forcing to newest controller
+    const newController = getDeployment('ControllerLatest', config.network);
+    const oldController = getControllerByAddress(this.controller, config.network);
+
+    const previousModule = await getPreviousModule(
+      this.safe,
+      oldController.address,
+      newController.address,
+    );
+
+    // use prev controller
+    const data = new ethers.utils.Interface(oldController.abi).encodeFunctionData(
+      'migratePodController',
+      [this.id, newController.address, previousModule],
+    );
+    return {
+      data,
+      to: oldController.address,
+    };
+  };
+
+  /**
+   * Creates a proposal on the pod.
+   *
+   * If the proposal parameter is in the { data, to } format, this will create a proposal to execute
+   * an arbitrary smart contract function on this pod.
+   *
+   * The `data` parameter is unsigned encoded function data. You can generate this function data a number of ways,
+   * our recommended way would be through ethers.Interface.encodeFunctionData. The `to` parameter should be the smart contract
+   * that the function being called belongs to.
+   *
+   * The pod object has populate methods for mint, transfer and burn to generate this data string. (see `populateMint`, etc)
+   *
+   * To create a proposal on the current pod, you can chain the populate method and the propose method like so:
+   *
+   * ```js
+   * await pod.propose(pod.populateMint(newMember), podMember);
+   * ```
+   *
+   * To create a proposal on the admin pod to mint to a managed pod, you can call the managed pod's populate method:
+   * Note that the pod you call the `populate` functions on is important: it determines which pod you are attempting to mint to.
+   *
+   * ```js
+   * await adminPod.propose(managedPod.populateMint(newMember), adminPodMember);
+   * ```
+   *
+   * In order to create a sub proposal of an existing proposal, you can pass the proposal object to the sub pod's propose method:
+   *
+   * ```
+   * const [superProposal] = await superPod.getProposals();
+   * // This creates a sub proposal to approve the super proposal.
+   * await subPod.propose(superProposal, signer);
+   *
+   * // The propose function also returns a Propose object, so you can chain `propose` like so:
+   * await subPod.propose(
+   *   await superPod.propose(
+   *     superPod.populateMint(newMember),
+   *     superPodMember,
+   *   ),
+   *   subPodMember,
+   * );
+   * ```
+   *
+   * The sender parameter should be the address the proposal is being sent from. This should be a member
+   * of the pod for creating a proposal, or a member of a sub pod to create sub proposals.
+   *
+   * @param proposal
+   * @param sender - Address of sender
+   * @returns
+   */
+  propose = async (proposal: { data: string; to: string } | Proposal, sender: string) => {
+    let safeTransaction;
+    if (proposal instanceof Proposal) {
+      if (!(await this.isMember(sender))) {
+        throw new Error('Sender must be part of this pod to create a proposal');
+      }
+      // Making a sub proposal
+      const { safeTxHash } = proposal.safeTransaction;
+      try {
+        safeTransaction = await createSafeTransaction({
+          sender,
+          to: proposal.pod.safe, // To the super proposal
+          data: encodeFunctionData('GnosisSafe', 'approveHash', [safeTxHash]),
+          safe: this.safe,
+        });
+      } catch (err) {
+        if (err.response.data.message === 'Gas estimation failed') {
+          throw new Error('Gas estimation failed (this is often a revert error)');
+        }
+        throw new Error(err);
+      }
+    } else {
+      // Making a regular proposal/potential super proposal.
+      const { to, data } = proposal;
+      if (!((await this.isMember(sender)) || (await this.isSubPodMember(sender)))) {
+        throw new Error('Sender must be a member of this pod or one of its sub pods');
+      }
+      try {
+        safeTransaction = await createSafeTransaction({
+          sender,
+          safe: this.safe,
+          to,
+          data,
+        });
+      } catch (err) {
+        if (err.response?.data.message === 'Gas estimation failed') {
+          throw new Error('Gas estimation failed (this is often a revert error)');
+        }
+        throw err;
+      }
+    }
+
+    return new Proposal(this, this.nonce, safeTransaction);
+  };
+
+  /**
    * Mints member to this pod.
    * @throws if signer is not admin
    */
@@ -572,405 +761,11 @@ export default class Pod {
   };
 
   /**
-   * Creates a proposal to mint a member to this pod
-   * @param newMember
-   * @param signer - Signer of pod member
-   * @throws If new member is part of this pod.
-   * @throws If signer is not part of this pod. TODO
-   */
-  proposeMintMember = async (newMember: string, signer: ethers.Signer) => {
-    checkAddress(newMember);
-    if (await this.isMember(newMember)) {
-      throw new Error(`Address ${newMember} is already in this pod`);
-    }
-
-    const data = encodeFunctionData('MemberToken', 'mint', [
-      ethers.utils.getAddress(newMember),
-      this.id,
-      ethers.constants.HashZero,
-    ]);
-
-    const { address: memberTokenAddress } = getContract('MemberToken', signer);
-    const memberAddress = await signer.getAddress();
-    try {
-      await createSafeTransaction(
-        {
-          sender: memberAddress,
-          safe: this.safe,
-          to: memberTokenAddress,
-          data,
-        },
-        signer,
-      );
-    } catch (err) {
-      throw new Error(err);
-    }
-  };
-
-  /**
-   * Creates a proposal on this pod to mint a new member. Also creates + approves a corresponding
-   * sub proposal on the sub pod.
-   *
-   * After the proposal is created, other sub pods can interact with the super proposal
-   * by fetching the super proposal object from the super pod and calling
-   * Proposal.approveFromSubPod/rejectFromSubPod
-   *
-   * @param subPodIdentifier - The Pod object, pod ID or pod safe address of either the admin pod, or a subpod of this pod.
-   * @param newMember - Member to mint
-   * @param signer - Signer of external pod member
-   * @throws If newMember is already part of this pod
-   * @throws If subPodIdentifier does not correlate to existing pod
-   * @throws If subPodIdentifier is not the admin or subpod of this pod
-   * @throws If signer is not a member of external pod
-   */
-  proposeMintMemberFromSubPod = async (
-    subPodIdentifier: Pod | string | number,
-    newMember: string,
-    signer: ethers.Signer,
-  ) => {
-    if (await this.isMember(newMember)) {
-      throw new Error(`Address ${newMember} is already in this pod`);
-    }
-
-    const signerAddress = await signer.getAddress();
-    const subPod = await this.getExternalPod(subPodIdentifier, 'sub', signerAddress);
-
-    // Tells MemberToken to mint a new token for this pod to newMember.
-    const data = encodeFunctionData('MemberToken', 'mint', [
-      ethers.utils.getAddress(newMember),
-      this.id,
-      ethers.constants.HashZero,
-    ]);
-
-    const { address: memberTokenAddress } = getContract('MemberToken', signer);
-    try {
-      // Create a safe transaction on this pod, sent from the signer
-      await createNestedProposal(
-        {
-          sender: subPod.safe,
-          safe: this.safe,
-          to: memberTokenAddress,
-          data,
-        },
-        subPod,
-        signer,
-      );
-    } catch (err) {
-      throw new Error(err);
-    }
-  };
-
-  /**
-   * Creates a proposal on the admin pod to mint a new member to this pod.
-   *
-   * @param adminPodIdentifier - The Pod object, pod ID or pod safe address of the admin pod of this pod
-   * @param newMember - Member to mint
-   * @param signer - Signer of external pod member
-   * @throws If newMember is already part of this pod
-   * @throws If adminPodIdentifier does not correlate to existing pod
-   * @throws If adminPodIdentifier is not the admin of this pod
-   * @throws If signer is not a member of external pod
-   */
-  mintMemberFromAdminPod = async (
-    adminPodIdentifier: Pod | string | number,
-    newMember: string,
-    signer: ethers.Signer,
-  ) => {
-    if (await this.isMember(newMember)) {
-      throw new Error(`Address ${newMember} is already in this pod`);
-    }
-
-    const signerAddress = await signer.getAddress();
-    const adminPod = await this.getExternalPod(adminPodIdentifier, 'admin', signerAddress);
-
-    // Tells MemberToken to mint a new token for this pod to newMember.
-    const data = encodeFunctionData('MemberToken', 'mint', [
-      ethers.utils.getAddress(newMember),
-      this.id,
-      ethers.constants.HashZero,
-    ]);
-
-    const { address: memberTokenAddress } = getContract('MemberToken', signer);
-    try {
-      // Create a safe transaction on the admin pod
-      await createSafeTransaction(
-        {
-          sender: signerAddress,
-          safe: adminPod.safe,
-          to: memberTokenAddress,
-          data,
-        },
-        signer,
-      );
-    } catch (err) {
-      throw new Error(err);
-    }
-  };
-
-  /**
-   * Creates a proposal to burn a member from this pod
-   * @param memberToBurn - Member to remove from this pod
-   * @param signer - Signer of pod member
-   * @throws If memberToBurn is not part of this pod
-   */
-  proposeBurnMember = async (memberToBurn: string, signer: ethers.Signer) => {
-    checkAddress(memberToBurn);
-    if (!(await this.isMember(memberToBurn))) {
-      throw new Error(`Address ${memberToBurn} is not in this pod`);
-    }
-
-    const data = encodeFunctionData('MemberToken', 'burn', [
-      ethers.utils.getAddress(memberToBurn),
-      this.id,
-    ]);
-
-    const { address: memberTokenAddress } = getContract('MemberToken', signer);
-    const memberAddress = await signer.getAddress();
-
-    try {
-      await createSafeTransaction(
-        {
-          sender: memberAddress,
-          safe: this.safe,
-          to: memberTokenAddress,
-          data,
-        },
-        signer,
-      );
-    } catch (err) {
-      throw new Error(err);
-    }
-  };
-
-  /**
-   * Creates a proposal on this pod to burn an existing member. Also creates + approves a corresponding
-   * sub proposal on the sub pod.
-   *
-   * After the proposal is created, other sub pods can interact with the super proposal
-   * by fetching the Proposal object and calling Proposal.approveFromSubPod/rejectFromSubPod
-   *
-   * @param subPodIdentifier - The Pod object, pod ID or pod safe address of either the admin pod, or a subpod of this pod.
-   * @param memberToBurn - Member to burn
-   * @param signer - Signer of external pod member
-   * @throws If memberToBurn is not part of this pod
-   * @throws If subPodIdentifier is not an existing pod
-   * @throws If subPodIdentifier is not the admin or subpod of this pod
-   * @throws If Signer is not a member of the external pod
-   */
-  proposeBurnMemberFromSubPod = async (
-    subPodIdentifier: Pod | string | number,
-    memberToBurn: string,
-    signer: ethers.Signer,
-  ) => {
-    if (!(await this.isMember(memberToBurn))) {
-      throw new Error(`Address ${memberToBurn} is not in this pod`);
-    }
-
-    const signerAddress = await signer.getAddress();
-    const subPod = await this.getExternalPod(subPodIdentifier, 'sub', signerAddress);
-
-    // Tells MemberToken to mint a new token for this pod to newMember.
-    const data = encodeFunctionData('MemberToken', 'burn', [
-      ethers.utils.getAddress(memberToBurn),
-      this.id,
-    ]);
-
-    const { address: memberTokenAddress } = getContract('MemberToken', signer);
-    try {
-      // Create a safe transaction on this pod, sent from the admin pod
-      await createNestedProposal(
-        {
-          sender: subPod.safe,
-          safe: this.safe,
-          to: memberTokenAddress,
-          data,
-        },
-        subPod,
-        signer,
-      );
-    } catch (err) {
-      throw new Error(err);
-    }
-  };
-
-  /**
-   * Creates a proposal on the admin pod to burn a member from this pod
-   * @param adminPodIdentifier - The Pod object, pod ID or pod safe address of either the admin pod, or a subpod of this pod.
-   * @param memberToBurn - Member to burn
-   * @param signer - Signer of external pod member
-   * @throws If memberToBurn is not part of this pod
-   * @throws If adminPodIdentifier is not an existing pod
-   * @throws If adminPodIdentifier is not the admin or subpod of this pod
-   * @throws If Signer is not a member of the external pod
-   */
-  burnMemberFromAdminPod = async (
-    adminPodIdentifier: Pod | string | number,
-    memberToBurn: string,
-    signer: ethers.Signer,
-  ) => {
-    if (!(await this.isMember(memberToBurn))) {
-      throw new Error(`Address ${memberToBurn} is not in this pod`);
-    }
-
-    const signerAddress = await signer.getAddress();
-    const adminPod = await this.getExternalPod(adminPodIdentifier, 'admin', signerAddress);
-
-    // Tells MemberToken to mint a new token for this pod to newMember.
-    const data = encodeFunctionData('MemberToken', 'burn', [
-      ethers.utils.getAddress(memberToBurn),
-      this.id,
-    ]);
-
-    const { address: memberTokenAddress } = getContract('MemberToken', signer);
-    try {
-      // Create a safe transaction on the admin pod, sent from the signer
-      await createSafeTransaction(
-        {
-          sender: signerAddress,
-          safe: adminPod.safe,
-          to: memberTokenAddress,
-          data,
-        },
-        signer,
-      );
-    } catch (err) {
-      throw new Error(err.message);
-    }
-  };
-
-  /**
-   * Creates a proposal to transfer membership from a subpod
-   * @param subPodIdentifier - Pod, Pod ID or safe address
-   * @param addressToTransferTo - Address that will receive the membership
-   * @param signer - Signer of subpod member
-   * @throws If addressToTransferTo is already a member of this pod
-   * @throws If subPodIdentifier does not exist
-   * @throws If Signer is not a member of this sub pod
-   */
-  proposeTransferMembershipFromSubPod = async (
-    subPodIdentifier: Pod | string | number,
-    addressToTransferTo: string,
-    signer: ethers.Signer,
-  ) => {
-    const checkedAddress = checkAddress(addressToTransferTo);
-    if (await this.isMember(addressToTransferTo)) {
-      throw new Error(`Address ${addressToTransferTo} is already in this pod`);
-    }
-
-    const signerAddress = await signer.getAddress();
-    const subPod = await this.getExternalPod(subPodIdentifier, 'sub', signerAddress);
-
-    // Tells MemberToken to transfer token for this pod from subpod.safe to checkedAddress.
-    const data = encodeFunctionData('MemberToken', 'safeTransferFrom', [
-      subPod.safe,
-      checkedAddress,
-      this.id,
-      1,
-      ethers.constants.HashZero,
-    ]);
-
-    const { address: memberTokenAddress } = getContract('MemberToken', signer);
-    try {
-      await createNestedProposal(
-        {
-          sender: subPod.safe,
-          safe: this.safe,
-          to: memberTokenAddress,
-          data,
-        },
-        subPod,
-        signer,
-      );
-    } catch (err) {
-      throw new Error(err);
-    }
-  };
-
-  /**
-   * Creates proposal to transfer the admin role from the admin pod
-   *
-   * @param adminPodIdentifier - Pod ID, safe address, or ENS name of admin pod
-   * @param addressToTransferTo - Address that will receive admin role
-   * @param signer - Signer of admin pod member
-   * @throws If addressToTransferTo is already the pod admin
-   * @throws If adminPodIdentifier does not exist
-   * @throws If adminPodIdentifier is not the admin of this pod
-   * @throws If Signer is not a member of the admin pod
-   */
-  proposeTransferAdminFromAdminPod = async (
-    adminPodIdentifier: Pod | string | number,
-    addressToTransferTo: string,
-    signer: ethers.Signer,
-  ) => {
-    const checkedAddress = checkAddress(addressToTransferTo);
-    if (this.isAdmin(addressToTransferTo)) {
-      throw new Error(`Address ${addressToTransferTo} is already pod admin`);
-    }
-
-    const signerAddress = await signer.getAddress();
-    const adminPod = await this.getExternalPod(adminPodIdentifier, 'admin', signerAddress);
-
-    const { abi: controllerAbi } = getControllerByAddress(this.controller, config.network);
-    const data = new ethers.utils.Interface(controllerAbi).encodeFunctionData('updatePodAdmin', [
-      this.id,
-      checkedAddress,
-    ]);
-
-    try {
-      // Create a safe transaction on this pod, sent from the admin pod
-      await createSafeTransaction(
-        {
-          sender: adminPod.safe,
-          safe: this.safe,
-          to: this.controller,
-          data,
-        },
-        signer,
-      );
-    } catch (err) {
-      throw new Error(err);
-    }
-  };
-
-  /**
-   * Adds newAdminAddress as the admin of this pod, if this pod does not currently have an admin.
-   * @param newAdminAddress - Address of new admin
-   * @param signer - Signer of pod member
-   * @throws If pod already has an admin
-   */
-  proposeAddAdmin = async (newAdminAddress: string, signer: ethers.Signer) => {
-    const checkedAddress = checkAddress(newAdminAddress);
-    const signerAddress = await signer.getAddress();
-    if (this.admin) throw new Error('Pod already has admin');
-
-    const { abi: controllerAbi } = getControllerByAddress(this.controller, config.network);
-    const data = new ethers.utils.Interface(controllerAbi).encodeFunctionData('updatePodAdmin', [
-      this.id,
-      checkedAddress,
-    ]);
-
-    try {
-      // Create a proposal from the signer address
-      await createSafeTransaction(
-        {
-          sender: signerAddress,
-          safe: this.safe,
-          to: this.controller,
-          data,
-        },
-        signer,
-      );
-    } catch (err) {
-      throw new Error(err);
-    }
-  };
-
-  /**
    * Migrates the pod to the latest version. Signer must be the admin of pod.
    * @param signer - Signer of pod admin
    * @throws If signer is not pod admin TODO
    */
-  migratePodToLatest = async (signer: ethers.Signer) => {
+  migratePodToLatest = async () => {
     // forcing to newest controller
     const newController = getDeployment('ControllerLatest', config.network);
     // Fetch old controller based on this Pod's controller address.
@@ -979,14 +774,13 @@ export default class Pod {
     const OldController = new ethers.Contract(
       oldControllerDeployment.address,
       oldControllerDeployment.abi,
-      signer,
+      config.provider,
     );
 
     const previousModule = await getPreviousModule(
       this.safe,
       oldControllerDeployment.address,
       newController.address,
-      signer,
     );
 
     // use prev controller
@@ -999,44 +793,6 @@ export default class Pod {
       return res;
     } catch (err) {
       return handleEthersError(err);
-    }
-  };
-
-  /**
-   * Creates a proposal to migrate the pod to the latest version.
-   * @param signer - Signer of pod member
-   * @throws If signer is not a pod member TODO
-   */
-  proposeMigratePodToLatest = async (signer: ethers.Signer) => {
-    // forcing to newest controller
-    const newController = getDeployment('ControllerLatest', config.network);
-    const oldController = getControllerByAddress(this.controller, config.network);
-
-    const previousModule = await getPreviousModule(
-      this.safe,
-      oldController.address,
-      newController.address,
-      signer,
-    );
-
-    // use prev controller
-    const data = new ethers.utils.Interface(oldController.abi).encodeFunctionData(
-      'migratePodController',
-      [this.id, newController.address, previousModule],
-    );
-
-    try {
-      await createSafeTransaction(
-        {
-          sender: await signer.getAddress(),
-          safe: this.safe,
-          to: oldController.address,
-          data,
-        },
-        signer,
-      );
-    } catch (err) {
-      throw new Error(err);
     }
   };
 
