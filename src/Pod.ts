@@ -765,7 +765,7 @@ export default class Pod {
    * @param signer - Signer of pod admin
    * @throws If signer is not pod admin TODO
    */
-  migratePodToLatest = async () => {
+  migratePodToLatest = async (signer: ethers.Signer) => {
     // forcing to newest controller
     const newController = getDeployment('ControllerLatest', config.network);
     // Fetch old controller based on this Pod's controller address.
@@ -774,7 +774,7 @@ export default class Pod {
     const OldController = new ethers.Contract(
       oldControllerDeployment.address,
       oldControllerDeployment.abi,
-      config.provider,
+      signer,
     );
 
     const previousModule = await getPreviousModule(
