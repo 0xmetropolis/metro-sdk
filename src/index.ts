@@ -1,9 +1,11 @@
 import { ethers } from 'ethers';
 import Pod from './Pod';
+import Proposal from './Proposal';
 import { Pod as PodType, Proposal as ProposalType, ProposalStatus } from './types';
 import { init, config } from './config';
 import { checkAddress } from './lib/utils';
 import { fetchUserPodIds, fetchAdminPodIds } from './lib/services/subgraph';
+import { getSafeTransactionByHash } from './lib/services/transaction-service';
 
 /**
  * Gets a pod object.
@@ -12,6 +14,20 @@ import { fetchUserPodIds, fetchAdminPodIds } from './lib/services/subgraph';
  */
 async function getPod(identifier: string | number): Promise<Pod> {
   return new Pod(identifier);
+}
+
+/**
+ * Gets the super proposal that the sub proposal relates to
+ * @throws If this proposal is not a sub proposal
+ * @throws If the found super proposal does not relate to this sub proposal.
+ * @returns
+ */
+async function getSuperProposal(proposal: Proposal): Promise<Proposal> {
+  if (!proposal.isSubProposal) throw new Error('This proposal is not a sub proposal');
+  // Getting the safe transaction for the super proposal.
+  const safeTransaction = await getSafeTransactionByHash(proposal.parameters[0].value);
+  const pod = await getPod(safeTransaction.safe);
+  return pod.getProposal(safeTransaction.nonce);
 }
 
 /**
@@ -43,6 +59,7 @@ export {
   init,
   config,
   getPod,
+  getSuperProposal,
   getUserPods,
   getAdminPods,
   PodType as Pod,

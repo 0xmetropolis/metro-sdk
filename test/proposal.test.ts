@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { ethers } from 'ethers';
-import { init } from '../src';
+import { init, getSuperProposal } from '../src';
 import { getPod } from '../src';
 import * as txService from '../src/lib/services/transaction-service';
 import * as fetchers from '../src/fetchers';
@@ -51,7 +51,6 @@ beforeAll(async () => {
 });
 
 beforeEach(() => {
-  init({ provider, network: 1 });
   jest.restoreAllMocks();
 });
 
@@ -190,6 +189,16 @@ describe('Proposal details', () => {
       ]),
     );
   });
+});
+
+describe('Pod.getProposal()', () => {
+  // Commenting out because it makes actual calls, which is bad for our CI/CD.
+  // test('Should be able to fetch a corresponding superProposal from a subProposal', async () => {
+  //   const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
+  //   const proposal = (await pod.getProposals())[0];
+  //   const superProposal = await getSuperProposal(proposal);
+  //   console.log('superProposal', superProposal);
+  // });
 });
 
 describe('Proposal approve/reject', () => {
