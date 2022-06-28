@@ -14,6 +14,7 @@ import {
   createRejectTransaction,
   getSafeTransactionsBySafe,
   populateDataDecoded,
+  getSafeTransactionByHash,
 } from './lib/services/transaction-service';
 import { createSafeTransaction } from './lib/services/create-safe-transaction';
 import Proposal from './Proposal';
@@ -264,6 +265,7 @@ export default class Pod {
       }
       // If the length is 2, that means there is a paired reject transaction.
       // The reject transaction is always created after the approve transaction
+      // TODO: I'm actually not sure if that assumption is true anymore.
       // Because safeTx comes in reverse chron order, subTxPair[1] is the approve, [0] is the reject
       return new Proposal(this, nonce, subTxPair[1], subTxPair[0]);
     });
@@ -286,6 +288,27 @@ export default class Pod {
         return b.id - a.id;
       })
       .slice(0, limit); // Slice to return the requested limited Proposals.
+  };
+
+  /**
+   * Gets a specific proposal by either nonce or the safeTxHash.
+   * @param identifier - Can be either the proposal id/nonce (preferred), or the safeTxHash
+   */
+  getProposal = async (identifier: number | string): Promise<Proposal> => {
+    let nonce: number;
+    if (typeof identifier === 'number') nonce = identifier;
+    else {
+      const safeTransaction = await getSafeTransactionByHash(identifier);
+      nonce = safeTransaction.nonce;
+    }
+
+    // All safe transactions that have a given nonce.
+    const safeTransactions = await getSafeTransactionsBySafe(this.safe, { nonce });
+    if (safeTransactions.length === 0) throw new Error('Could not find a related safe transaction');
+    if (safeTransactions.length === 1) return new Proposal(this, this.nonce, safeTransactions[0]);
+    if (safeTransactions.length === 2)
+      return new Proposal(this, this.nonce, safeTransactions[1], safeTransactions[0]);
+    throw new Error('Unexpected number of safe transactions found');
   };
 
   /**
