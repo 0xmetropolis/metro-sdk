@@ -1,6 +1,11 @@
 import { ethers } from 'ethers';
+import { init } from '../src';
 import { userAddress, constructGqlGetUsers, gqlGetUsers } from './fixtures';
-import { encodeFunctionData } from '../src/lib/utils';
+import { encodeFunctionData, getPreviousModule } from '../src/lib/utils';
+
+const provider = new ethers.providers.InfuraProvider('rinkeby', {
+  infura: '69ecf3b10bc24c6a972972666fe950c8',
+});
 
 test('encodeFunctionData should encode function data', () => {
   const data = encodeFunctionData('MemberToken', 'mint', [
@@ -39,4 +44,42 @@ test('constructGqlGetUsers should convert an array of strings properly', () => {
       '0xcabb78f39fbeb0cdfbd3c8f30e37630eb9e7a151',
     ]),
   ).toEqual(gqlGetUsers);
+});
+
+test('getPreviousModule fetches the previous module if there is one', async () => {
+  init({ provider, network: 4 });
+  jest.spyOn(ethers, 'Contract').mockReturnValue({
+    getModulesPaginated: jest.fn().mockResolvedValue({
+      array: [
+        '0x11e2d4c75b9803fF5d6DA8c30b354B44992E0248',
+        '0x96F983d0B84ecFf01C34991C3718Ad35d520A825',
+      ],
+      next: '0x0000000000000000000000000000000000000001',
+    }),
+  });
+  expect(
+    await getPreviousModule(
+      '0x81CC4c1411044C09b7a888Af225176fac87A5CE3',
+      '0x96F983d0B84ecFf01C34991C3718Ad35d520A825',
+    ),
+  ).toEqual('0x11e2d4c75b9803fF5d6DA8c30b354B44992E0248');
+});
+
+test('getPreviousModule returns AddressOne if there is no previous module', async () => {
+  init({ provider, network: 4 });
+  jest.spyOn(ethers, 'Contract').mockReturnValue({
+    getModulesPaginated: jest.fn().mockResolvedValue({
+      array: [
+        '0x11e2d4c75b9803fF5d6DA8c30b354B44992E0248',
+        '0x96F983d0B84ecFf01C34991C3718Ad35d520A825',
+      ],
+      next: '0x0000000000000000000000000000000000000001',
+    }),
+  });
+  expect(
+    await getPreviousModule(
+      '0x81CC4c1411044C09b7a888Af225176fac87A5CE3',
+      '0x11e2d4c75b9803fF5d6DA8c30b354B44992E0248',
+    ),
+  ).toEqual('0x0000000000000000000000000000000000000001');
 });

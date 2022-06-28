@@ -77,18 +77,13 @@ export async function signMessage(contractTransactionHash: string, signer: ether
 }
 
 /**
- * Gets the previous Controller module from the safe contract.
- * @param safe - Safe address
- * @param oldController - Old controller address
- * @param newController - New controller address
- * @param signer
+ * Gets the previous module from a Gnosis safe
+ * @param safe - Safe to scan through
+ * @param module - Module you're looking for
+ * @param newController - Optional, new controller you are trying to add. Checks to see if module is already on the safe.
  * @returns
  */
-export async function getPreviousModule(
-  safe: string,
-  oldController: string,
-  newController: string,
-): Promise<string> {
+export async function getPreviousModule(safe, module, newController?: string) {
   const safeContract = new ethers.Contract(safe, GnosisSafe.abi, config.provider);
   const AddressOne = '0x0000000000000000000000000000000000000001';
   // TODO: figure out a better way to traverse the safes
@@ -96,12 +91,12 @@ export async function getPreviousModule(
   const temp = await safeContract.getModulesPaginated(AddressOne, 10);
   const safeModules = temp.array ? temp.array : temp;
 
-  if (safeModules.includes(ethers.utils.getAddress(newController)))
+  if (newController && safeModules.includes(ethers.utils.getAddress(newController)))
     throw new Error('Pod is already on latest version');
 
-  const oldIndex = safeModules.indexOf(ethers.utils.getAddress(oldController));
+  const oldIndex = safeModules.indexOf(ethers.utils.getAddress(module));
   const previousModule =
-    safeModules.length === 1 || oldIndex === 0 ? newController : safeModules[oldIndex - 1];
+    safeModules.length === 1 || oldIndex === 0 ? AddressOne : safeModules[oldIndex - 1];
 
   if (!previousModule) throw new Error('Error parsing old modules');
 
