@@ -106,7 +106,7 @@ test('Subpod members should be able to propose a mint member', async () => {
     .mockResolvedValue(erc20TransferTransaction);
   const pod = await sdk.getPod(orcanautAddress);
 
-  const mint = pod.populateMint(userAddress);
+  const mint = (await pod.mintMember(userAddress)) as { to: string; data: string };
   await pod.propose(mint, artNautPod.members[0]);
 
   expect(create).toHaveBeenCalledWith({
@@ -125,7 +125,7 @@ test('Sub pod members should be able to propose a super pod mint', async () => {
 
   const superPod = await sdk.getPod(orcanautAddress);
   const subPod = await sdk.getPod(artNautPod.safe);
-  const mint = superPod.populateMint(userAddress);
+  const mint = (await superPod.mintMember(userAddress)) as { to: string; data: string };
 
   await subPod.propose(await superPod.propose(mint, orcanautPod.members[0]), artNautPod.members[0]);
   expect(create).toHaveBeenNthCalledWith(1, {

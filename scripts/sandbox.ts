@@ -9,6 +9,13 @@ async function main() {
 
   const pod = await getPod('eject.pod.xyz');
   console.log('pod', pod);
+  await pod.propose(await pod.burnMember(walletOne.address), walletOne.address);
+
+  await pod.propose(
+    (await pod.burnMember(walletOne.address)) as { data: string; to: string },
+    walletOne.address,
+  );
+
   // console.log('dummyAccount', dummyAccount);
   // await pod.ejectSafe(dummyAccount);
 }
