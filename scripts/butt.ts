@@ -1,17 +1,18 @@
 import { ethers } from 'ethers';
 import { init } from '../src';
 import { getPod } from '../src';
-import { adminPodAddress, dummyAccount } from '../env.json';
+import { adminPodAddress } from '../env.json';
 import { setup, sleep } from './utils';
 
 async function main() {
-  const { walletOne } = setup();
+  const { walletOne, dummyAccount } = setup();
 
-  const pod = await getPod('0x338219389080C32420f139ae1bb95F7E1e1b6Cf3');
+  const pod = await getPod('wutang.pod.eth');
   const props = await pod.getProposals();
-  await props[0].reject(walletOne);
+  console.log('props', props[0]);
+  await props[0].reject(dummyAccount);
   await sleep(5000);
-  await props[0].executeReject(walletOne);
+  await props[0].executeReject(dummyAccount);
 }
 
 main();
