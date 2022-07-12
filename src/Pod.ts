@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import ENS from '@ensdomains/ensjs';
+import ENS, { labelhash } from '@ensdomains/ensjs';
 import { getControllerByAddress, getDeployment } from '@orcaprotocol/contracts';
 import { config } from './config';
 import { getPodFetchersByAddressOrEns, getPodFetchersById } from './fetchers';
@@ -816,6 +816,33 @@ export default class Pod {
       return res;
     } catch (err) {
       return handleEthersError(err);
+    }
+  };
+
+  /**
+   * Ejects a safe from the Orca ecosystem.
+   * This zeroes out all ENS + Controller data, removes the Orca module, and burns the pod's MemberTokens
+   *
+   * This function can also clean up data for safes that have already removed the Orca module,
+   * but note that the reverse resolver must be zeroed out by the safe manually in this case.
+   */
+  ejectSafe = async (signer: ethers.Signer) => {
+    const previousModule = await getPreviousModule(this.safe, this.controller);
+    const controllerDeployment = getControllerByAddress(this.controller, config.network);
+
+    const Controller = new ethers.Contract(
+      controllerDeployment.address,
+      controllerDeployment.abi,
+      signer,
+    );
+    try {
+      await Controller.ejectSafe(this.id, labelhash(this.ensName.split('.')[0]), previousModule);
+    } catch (err) {
+      if (err.message.includes('ejectSafe is not a function')) {
+        throw new Error(
+          'ejectSafe not found, you may need to upgrade to the latest Controller version',
+        );
+      }
     }
   };
 
