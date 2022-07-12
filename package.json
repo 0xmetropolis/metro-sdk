@@ -31,15 +31,15 @@
     "@types/jest": "^27.4.0",
     "babel-jest": "^27.4.6",
     "cod-scripts": "^10.0.0",
+    "husky": "^7.0.0",
     "jest": "^27.4.7",
     "ts-node": "^10.7.0",
-    "typedoc": "^0.22.15",
-    "husky": "^7.0.0"
+    "typedoc": "^0.22.15"
   },
   "dependencies": {
     "@ensdomains/ensjs": "^2.0.1",
     "@gnosis.pm/safe-deployments": "^1.10.0",
-    "@orcaprotocol/contracts": "^5.2.4",
+    "@orcaprotocol/contracts": "^5.5.0",
     "axios": "^0.25.0",
     "ethers": "^5.5.4",
     "typescript": "^4.6.2"

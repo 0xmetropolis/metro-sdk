@@ -3,6 +3,7 @@ import { init, getPod } from '../src';
 import {
   accountOnePrivateKey,
   accountTwoPrivateKey,
+  dummyAccountPrivateKey,
   adminPodAddress,
   subPodAddress,
   subPodTwoAddress,
@@ -21,7 +22,8 @@ export function setup() {
   // Get two accounts
   const walletOne = new ethers.Wallet(accountOnePrivateKey, provider);
   const walletTwo = new ethers.Wallet(accountTwoPrivateKey, provider);
-  return { walletOne, walletTwo };
+  const dummyAccount = new ethers.Wallet(dummyAccountPrivateKey, provider);
+  return { walletOne, walletTwo, dummyAccount };
 }
 
 /**
