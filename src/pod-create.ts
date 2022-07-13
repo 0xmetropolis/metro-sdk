@@ -2,7 +2,6 @@ import { ethers } from 'ethers';
 import { getDeployment } from '@orcaprotocol/contracts';
 import { labelhash } from '@ensdomains/ensjs';
 import { config } from './config';
-import { createPods } from './temp';
 
 function createAddressPointer(number) {
   const cutLength = String(number).length;
@@ -55,6 +54,7 @@ export async function multiPodCreate(
     admin?: string;
     label: string;
   }>,
+  signer: ethers.Signer,
 ) {
   if (!config.network || !config.provider) {
     throw new Error('Network/provider was not defined. Did you init the SDK?');
@@ -74,7 +74,9 @@ export async function multiPodCreate(
   const labels = [];
   const ensNames = [];
   const imageUrls = [];
-  pods.forEach((pod, index) => {
+
+  // The smart contract expects basically the reverse of what our SDK expects.
+  pods.reverse().forEach(pod => {
     // Check if any of the members are labels.
     members.push(
       pod.members.map(member => {
@@ -82,8 +84,8 @@ export async function multiPodCreate(
         if (!ethers.utils.isAddress(member)) {
           const childPodIndex = pods.findIndex(findPod => findPod.label === member);
           if (childPodIndex < 0) throw new Error(`No pod had the label of ${member}`);
-          if (childPodIndex < index) throw new Error('Pod member cannot reference earlier pod');
-          return createAddressPointer(childPodIndex);
+          // We start the member array indexing at 1 because address 0 is reserved on the smart contract.
+          return createAddressPointer(childPodIndex + 1);
         }
         return member;
       }),
@@ -93,8 +95,8 @@ export async function multiPodCreate(
       else {
         const adminPodIndex = pods.findIndex(findPod => findPod.label === pod.admin);
         if (adminPodIndex < 0) throw new Error(`No pod had the label of ${pod.admin}`);
-        if (adminPodIndex > index) throw new Error('Pod admin cannot reference later pods');
-        admins.push(createAddressPointer(adminPodIndex));
+        // We start the admin array indexing at 1, because address zero is reserved for the no-admin case.
+        admins.push(createAddressPointer(adminPodIndex + 1));
       }
     } else {
       // It's just an eth address, so we can push.
@@ -112,5 +114,21 @@ export async function multiPodCreate(
     nextPodId += 1;
     imageUrls.push(imageUrl);
   });
-  await createPods(Controller.address, members, thresholds, admins, labels, ensNames, imageUrls);
+  const multiCreateDeployment = getDeployment('MultiCreateV1', config.network);
+  const MultiCreate = new ethers.Contract(
+    multiCreateDeployment.address,
+    multiCreateDeployment.abi,
+    signer,
+  );
+
+  return MultiCreate.createPods(
+    Controller.address,
+    members,
+    thresholds,
+    admins,
+    labels,
+    ensNames,
+    // We generate these independently of the incoming pods array, so it has to be manually reversed.
+    imageUrls.reverse(),
+  );
 }

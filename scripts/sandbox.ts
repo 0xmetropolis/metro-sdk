@@ -1,8 +1,28 @@
 import { ethers } from 'ethers';
 import { init } from '../src';
-import { getPod } from '../src';
-import { adminPodAddress } from '../env.json';
+import { getPod, multiPodCreate } from '../src';
+import { accountOne, accountTwo, adminPodAddress } from '../env.json';
 import { setup, sleep } from './utils';
+
+const multiPodInput = [
+  {
+    label: 'multi-parent-c',
+    members: ['multi-child-c', accountOne],
+    threshold: 1,
+    admin: accountOne,
+  },
+  {
+    label: 'multi-child-c',
+    members: [accountOne, accountTwo],
+    threshold: 1,
+  },
+  {
+    label: 'multi-child2-c',
+    members: [accountOne, accountTwo],
+    threshold: 1,
+    admin: 'multi-parent-c',
+  },
+];
 
 async function main() {
   const { walletOne, dummyAccount } = setup(4);
