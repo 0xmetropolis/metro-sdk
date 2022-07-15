@@ -10,7 +10,8 @@ export const config = {
   subgraphUrl: null,
   gnosisUrl: null,
   etherscanUrl: null,
-  etherscanApiKey: null,
+  etherscanApiKey: '2WNX6IRB7FI49FW9BPY2W8YE5XGBCDQCRB',
+  nftServiceUrl: null,
 };
 
 /**
@@ -58,6 +59,4 @@ export function init(input: {
 
   config.etherscanUrl =
     network === 1 ? 'https://api.etherscan.io/api' : 'https://api-rinkeby.etherscan.io/api';
-
-  config.etherscanApiKey = '2WNX6IRB7FI49FW9BPY2W8YE5XGBCDQCRB';
 }
