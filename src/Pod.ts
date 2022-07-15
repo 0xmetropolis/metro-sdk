@@ -503,104 +503,6 @@ export default class Pod {
   };
 
   /**
-   * Returns { data, to } object for the propose method to mint a member.
-   * @param newMember
-   * @returns
-   */
-  populateMint = (newMember: string) => {
-    checkAddress(newMember);
-    const MemberToken = getContract('MemberToken', config.provider);
-    return {
-      data: MemberToken.interface.encodeFunctionData('mint', [
-        newMember,
-        this.id,
-        ethers.constants.HashZero,
-      ]),
-      to: MemberToken.address,
-    };
-  };
-
-  /**
-   * Returns { data, to } object for the propose method to burn a member.
-   * @param memberToBurn
-   * @returns
-   */
-  populateBurn = (memberToBurn: string): { data: string; to: string } => {
-    checkAddress(memberToBurn);
-    const MemberToken = getContract('MemberToken', config.provider);
-    return {
-      data: MemberToken.interface.encodeFunctionData('burn', [memberToBurn, this.id]),
-      to: MemberToken.address,
-    };
-  };
-
-  /**
-   * Returns { data, to } object for the propose method to transfer membership
-   * @param transferFrom
-   * @param transferTo
-   * @returns
-   */
-  populateTransfer = (transferFrom, transferTo) => {
-    const MemberToken = getContract('MemberToken', config.provider);
-    const data = encodeFunctionData('MemberToken', 'safeTransferFrom', [
-      transferFrom,
-      transferTo,
-      this.id,
-      1,
-      ethers.constants.HashZero,
-    ]);
-    return {
-      data,
-      to: MemberToken.address,
-    };
-  };
-
-  /**
-   * Returns { data, to } object for the propose method to update the pod admin
-   * @param newAdmin
-   * @returns
-   */
-  populateUpdatePodAdmin = newAdmin => {
-    const Controller = getControllerByAddress(this.controller, config.network);
-    return {
-      data: new ethers.Contract(
-        Controller.address,
-        Controller.abi,
-        config.provider,
-      ).interface.encodeFunctionData('updatePodAdmin', [this.id, newAdmin]),
-      to: Controller.address,
-    };
-  };
-
-  /**
-   * Returns { data, to } object for the propose method to migrate the pod.
-   * Unlike most populate methods, this method is async.
-   * @param signer
-   * @returns
-   */
-  populateMigratePodToLatest = async () => {
-    // forcing to newest controller
-    const newController = getDeployment('ControllerLatest', config.network);
-    const oldController = getControllerByAddress(this.controller, config.network);
-
-    const previousModule = await getPreviousModule(
-      this.safe,
-      oldController.address,
-      newController.address,
-    );
-
-    // use prev controller
-    const data = new ethers.utils.Interface(oldController.abi).encodeFunctionData(
-      'migratePodController',
-      [this.id, newController.address, previousModule],
-    );
-    return {
-      data,
-      to: oldController.address,
-    };
-  };
-
-  /**
    * Creates a proposal on the pod.
    *
    * If the proposal parameter is in the { data, to } format, this will create a proposal to execute
@@ -610,19 +512,20 @@ export default class Pod {
    * our recommended way would be through ethers.Interface.encodeFunctionData. The `to` parameter should be the smart contract
    * that the function being called belongs to.
    *
-   * The pod object has populate methods for mint, transfer and burn to generate this data string. (see `populateMint`, etc)
+   * The pod object can also populate these transactions by using the supplied methods with no signer (i.e., `pod.mint()`)
    *
-   * To create a proposal on the current pod, you can chain the populate method and the propose method like so:
+   * To create a proposal on the current pod, you can chain the method and the propose method like so:
    *
    * ```js
-   * await pod.propose(pod.populateMint(newMember), podMember);
+   * await pod.propose(await pod.mint(newMember), podMember);
    * ```
    *
-   * To create a proposal on the admin pod to mint to a managed pod, you can call the managed pod's populate method:
-   * Note that the pod you call the `populate` functions on is important: it determines which pod you are attempting to mint to.
+   * To create a proposal on the admin pod to mint to a managed pod, you can call the managed pod's method:
+   * Note that the pod you call the functions on is important: it determines which pod you are attempting to mint to.
    *
    * ```js
-   * await adminPod.propose(managedPod.populateMint(newMember), adminPodMember);
+   * // It is important that you call mint() from managedPod here
+   * await adminPod.propose(await managedPod.mint(newMember), adminPodMember);
    * ```
    *
    * In order to create a sub proposal of an existing proposal, you can pass the proposal object to the sub pod's propose method:
@@ -635,7 +538,7 @@ export default class Pod {
    * // The propose function also returns a Propose object, so you can chain `propose` like so:
    * await subPod.propose(
    *   await superPod.propose(
-   *     superPod.populateMint(newMember),
+   *     await superPod.mint(newMember),
    *     superPodMember,
    *   ),
    *   subPodMember,
@@ -649,7 +552,11 @@ export default class Pod {
    * @param sender - Address of sender
    * @returns
    */
-  propose = async (proposal: { data: string; to: string } | Proposal, sender: string) => {
+  propose = async (
+    // TODO: We don't actually accept a TransactionResponse, this is just to bypass typescript.
+    proposal: { data: string; to: string } | Proposal | ethers.providers.TransactionResponse,
+    sender: string,
+  ) => {
     let safeTransaction;
     if (proposal instanceof Proposal) {
       if (!(await this.isMember(sender))) {
@@ -695,68 +602,108 @@ export default class Pod {
   };
 
   /**
-   * Mints member to this pod.
+   * Mints member to this pod, or returns an unsigned transaction.
+   * @param signer - If a signer is provided, then the tx will execute. Otherwise, an unsigned transaction will be returned.
    * @throws if signer is not admin
    */
   mintMember = async (
     newMember: string,
-    signer: ethers.Signer,
-  ): Promise<ethers.providers.TransactionResponse> => {
+    signer?: ethers.Signer,
+  ): Promise<ethers.providers.TransactionResponse | { to: string; data: string }> => {
     checkAddress(newMember);
-    const signerAddress = await signer.getAddress();
-    if (!this.isAdmin(signerAddress)) throw new Error('Signer was not admin');
+    if (signer) {
+      const signerAddress = await signer.getAddress();
+      if (!this.isAdmin(signerAddress)) throw new Error('Signer was not admin');
+    }
     try {
-      return getContract('MemberToken', signer).mint(newMember, this.id, ethers.constants.HashZero);
+      const MemberToken = getContract('MemberToken', signer);
+      if (signer) return MemberToken.mint(newMember, this.id, ethers.constants.HashZero);
+      return (await MemberToken.populateTransaction.mint(
+        newMember,
+        this.id,
+        ethers.constants.HashZero,
+      )) as { to: string; data: string };
     } catch (err) {
       return handleEthersError(err);
     }
   };
 
   /**
-   * Burns member from this pod.
+   * Burns member from this pod, or returns an unsigned transaction
+   * @param signer - If a signer is provided, then the tx will execute. Otherwise, an unsigned transaction will be returned.
    * @throws If signer is not admin
    */
   burnMember = async (
     memberToBurn: string,
-    signer: ethers.Signer,
-  ): Promise<ethers.providers.TransactionResponse> => {
+    signer?: ethers.Signer,
+  ): Promise<ethers.providers.TransactionResponse | { to: string; data: string }> => {
     checkAddress(memberToBurn);
-    const signerAddress = await signer.getAddress();
-    if (!this.isAdmin(signerAddress)) throw new Error('Signer was not admin');
+    if (signer) {
+      const signerAddress = await signer.getAddress();
+      if (!this.isAdmin(signerAddress)) throw new Error('Signer was not admin');
+    }
     try {
-      return getContract('MemberToken', signer).burn(memberToBurn, this.id);
+      const MemberToken = getContract('MemberToken', signer);
+      if (signer) return MemberToken.burn(memberToBurn, this.id);
+      return (await MemberToken.populateTransaction.burn(memberToBurn, this.id)) as {
+        to: string;
+        data: string;
+      };
     } catch (err) {
       return handleEthersError(err);
     }
   };
 
   /**
-   * Transfers a membership from the signer's account to the memberToTransferTo.
+   * Transfers a membership. If a signer is provided, it will execute the transaction. Otherwise it will return the unsigned tx.
    *
-   * @param addressToTransferTo - Address that will receive new membership
-   * @param signer - Signer of the address that is giving up membership
-   * @throws If addressToTransferTo is already a member TODO
-   * @throws If signer is not admin TODO
+   * @param toAddress - Address that will receive membership
+   * @param fromAddress - Address that is giving up membership
+   * @param signer - If a signer is provided, then the tx will execute. Otherwise, an unsigned transaction will be returned.
+   * @throws If toAddress is already a member
+   * @throws if fromAddress is not a member
+   * @throws If provided signer is not the fromAddress
    */
-  transferMembership = async (addressToTransferTo: string, signer: ethers.Signer) => {
-    const checkedAddress = checkAddress(addressToTransferTo);
-    if (await this.isMember(checkedAddress)) {
-      throw new Error(`Address ${checkedAddress} is already a member of this pod`);
+  transferMembership = async (
+    fromAddress: string,
+    toAddress: string,
+    signer?: ethers.Signer,
+  ): Promise<ethers.providers.TransactionResponse | { to: string; data: string }> => {
+    const checkedFrom = checkAddress(fromAddress);
+    if (!(await this.isMember(fromAddress))) {
+      throw new Error(`Address ${fromAddress} was not a member of this pod`);
+    }
+    const checkedTo = checkAddress(toAddress);
+    if (await this.isMember(checkedTo)) {
+      throw new Error(`Address ${checkedTo} is already a member of this pod`);
     }
 
-    const signerAddress = await signer.getAddress();
-    if (!(await this.isMember(signerAddress))) {
-      throw new Error(`Signer ${signerAddress} is not a member of this pod`);
+    if (signer) {
+      const signerAddress = await signer.getAddress();
+      if (checkedFrom !== signerAddress) throw new Error('Signer did not match the from address');
+      if (!(await this.isMember(signerAddress))) {
+        throw new Error(`Signer ${signerAddress} is not a member of this pod`);
+      }
     }
 
     try {
-      return getContract('MemberToken', signer).safeTransferFrom(
-        signerAddress,
-        checkedAddress,
+      const MemberToken = getContract('MemberToken', signer);
+      if (signer) {
+        return MemberToken.safeTransferFrom(
+          checkedFrom,
+          checkedTo,
+          this.id,
+          1,
+          ethers.constants.HashZero,
+        );
+      }
+      return (await MemberToken.populateTransaction.safeTransferFrom(
+        checkedFrom,
+        checkedTo,
         this.id,
         1,
         ethers.constants.HashZero,
-      );
+      )) as { to: string; data: string };
     } catch (err) {
       return handleEthersError(err);
     }
@@ -764,20 +711,30 @@ export default class Pod {
 
   /**
    * Transfers admin role from signer's account to addressToTransferTo
+   * If a signer is provided, it will execute the transaction. Otherwise it will return the unsigned tx.
    * @param addressToTransferTo - Address that will receive admin role
    * @param signer - Signer of admin
    * @throws If signer is not admin
    */
-  transferAdmin = async (addressToTransferTo: string, signer: ethers.Signer) => {
+  transferAdmin = async (
+    addressToTransferTo: string,
+    signer?: ethers.Signer,
+  ): Promise<ethers.providers.TransactionResponse | { to: string; data: string }> => {
     const checkedAddress = checkAddress(addressToTransferTo);
-    const signerAddress = await signer.getAddress();
-    if (!this.isAdmin(signerAddress)) throw new Error('Signer was not the admin of this pod');
+    if (signer) {
+      const signerAddress = await signer.getAddress();
+      if (!this.isAdmin(signerAddress)) throw new Error('Signer was not the admin of this pod');
+    }
 
     const { abi: controllerAbi } = getControllerByAddress(this.controller, config.network);
     const Controller = new ethers.Contract(this.controller, controllerAbi, signer);
 
     try {
-      return Controller.updatePodAdmin(this.id, checkedAddress);
+      if (signer) return Controller.updatePodAdmin(this.id, checkedAddress);
+      return (await Controller.populateTransaction.updatePodAdmin(this.id, checkedAddress)) as {
+        to: string;
+        data: string;
+      };
     } catch (err) {
       return handleEthersError(err);
     }
@@ -785,10 +742,13 @@ export default class Pod {
 
   /**
    * Migrates the pod to the latest version. Signer must be the admin of pod.
+   * If a signer is provided, it will execute the transaction. Otherwise it will return the unsigned tx.
    * @param signer - Signer of pod admin
-   * @throws If signer is not pod admin TODO
+   * @throws If signer is not pod admin
    */
-  migratePodToLatest = async (signer: ethers.Signer) => {
+  migratePodToLatest = async (
+    signer?: ethers.Signer,
+  ): Promise<ethers.providers.TransactionResponse | { to: string; data: string }> => {
     // forcing to newest controller
     const newController = getDeployment('ControllerLatest', config.network);
     // Fetch old controller based on this Pod's controller address.
@@ -808,12 +768,13 @@ export default class Pod {
 
     // use prev controller
     try {
-      const res = await OldController.migratePodController(
+      if (signer)
+        return OldController.migratePodController(this.id, newController.address, previousModule);
+      return (await OldController.populateTransaction.migratePodController(
         this.id,
         newController.address,
         previousModule,
-      );
-      return res;
+      )) as { to: string; data: string };
     } catch (err) {
       return handleEthersError(err);
     }
@@ -822,11 +783,14 @@ export default class Pod {
   /**
    * Ejects a safe from the Orca ecosystem.
    * This zeroes out all ENS + Controller data, removes the Orca module, and burns the pod's MemberTokens
+   * If a signer is provided, it will execute the transaction. Otherwise it will return the unsigned tx.
    *
    * This function can also clean up data for safes that have already removed the Orca module,
    * but note that the reverse resolver must be zeroed out by the safe manually in this case.
    */
-  ejectSafe = async (signer: ethers.Signer) => {
+  ejectSafe = async (
+    signer?: ethers.Signer,
+  ): Promise<ethers.providers.TransactionResponse | { to: string; data: string }> => {
     const previousModule = await getPreviousModule(this.safe, this.controller);
     const controllerDeployment = getControllerByAddress(this.controller, config.network);
 
@@ -836,13 +800,20 @@ export default class Pod {
       signer,
     );
     try {
-      await Controller.ejectSafe(this.id, labelhash(this.ensName.split('.')[0]), previousModule);
+      if (signer)
+        return Controller.ejectSafe(this.id, labelhash(this.ensName.split('.')[0]), previousModule);
+      return (await Controller.populateTransaction.ejectSafe(
+        this.id,
+        labelhash(this.ensName.split('.')[0]),
+        previousModule,
+      )) as { to: string; data: string };
     } catch (err) {
       if (err.message.includes('ejectSafe is not a function')) {
         throw new Error(
           'ejectSafe not found, you may need to upgrade to the latest Controller version',
         );
       }
+      return handleEthersError(err);
     }
   };
 

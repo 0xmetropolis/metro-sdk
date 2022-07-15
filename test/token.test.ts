@@ -130,7 +130,7 @@ describe('member actions', () => {
   test('As a pod member, I should be able to transfer my membership', async () => {
     mockGetPodFetchersByAddress();
     const mockSigner = {
-      getAddress: jest.fn().mockResolvedValueOnce(orcanautPod.members[0]),
+      getAddress: jest.fn().mockResolvedValue(orcanautPod.members[0]),
     };
     const mockTransfer = jest.fn();
     jest.spyOn(utils, 'getContract').mockReturnValueOnce({
@@ -138,7 +138,7 @@ describe('member actions', () => {
     });
     const pod = await sdk.getPod(orcanautAddress);
 
-    await pod.transferMembership(userAddress, mockSigner);
+    await pod.transferMembership(await mockSigner.getAddress(), userAddress, mockSigner);
     expect(mockTransfer).toHaveBeenCalledWith(
       orcanautPod.members[0],
       userAddress,
@@ -148,16 +148,16 @@ describe('member actions', () => {
     );
   });
 
-  test('transferMembership should throw if the new member is already a member', async () => {
+  test('transferMembership should throw if the fromAddress is not a member', async () => {
     mockGetPodFetchersByAddress();
     const mockSigner = {
-      getAddress: jest.fn().mockResolvedValueOnce(userAddress2),
+      getAddress: jest.fn().mockResolvedValue(userAddress2),
     };
     const pod = await sdk.getPod(orcanautAddress);
 
     // Attempting to transfer membership to already existing member.
-    await expect(pod.transferMembership(orcanautPod.members[0], mockSigner)).rejects.toThrow(
-      'is already a member of this pod',
-    );
+    await expect(
+      pod.transferMembership(await mockSigner.getAddress(), orcanautPod.members[0], mockSigner),
+    ).rejects.toThrow('was not a member of this pod');
   });
 });

@@ -34,7 +34,6 @@ export async function getNextNonce(safeAddress: string): Promise<number> {
  * @param input.sender - Address that is initiating the transaction
  * @returns {SafeTransaction}
  */
-// eslint-disable-next-line import/prefer-default-export
 export async function createSafeTransaction(input: {
   safe: string;
   to: string;
