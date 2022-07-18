@@ -42,10 +42,18 @@ export async function createSafeTransaction(input: {
   sender: string;
   nonce?: number;
 }): Promise<SafeTransaction> {
-  const [{ nonce, threshold }, [lastTx, lastTx2], safeTxGas] = await Promise.all([
+  // Doing this separately because this checks to see if the transaction would even work.
+  let safeTxGas;
+  try {
+    safeTxGas = await getGasEstimation(input);
+  } catch (err) {
+    if (err.response.data.arguments[0]) throw new Error(err.response.data.arguments[0]);
+    throw err;
+  }
+
+  const [{ nonce, threshold }, [lastTx, lastTx2]] = await Promise.all([
     getSafeInfo(input.safe),
     getSafeTransactionsBySafe(input.safe, { limit: 2, status: 'queued' }),
-    getGasEstimation(input),
   ]);
 
   // TODO: This is clunky, but a quick fix to just check if the last "proposal" (i.e.,

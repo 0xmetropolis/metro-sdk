@@ -583,19 +583,12 @@ export default class Pod {
       if (!((await this.isMember(sender)) || (await this.isSubPodMember(sender)))) {
         throw new Error('Sender must be a member of this pod or one of its sub pods');
       }
-      try {
-        safeTransaction = await createSafeTransaction({
-          sender,
-          safe: this.safe,
-          to,
-          data,
-        });
-      } catch (err) {
-        if (err.response?.data.message === 'Gas estimation failed') {
-          throw new Error('Gas estimation failed (this is often a revert error)');
-        }
-        throw err;
-      }
+      safeTransaction = await createSafeTransaction({
+        sender,
+        safe: this.safe,
+        to,
+        data,
+      });
     }
 
     return new Proposal(this, this.nonce, safeTransaction);
