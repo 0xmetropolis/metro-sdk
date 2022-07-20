@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import Pod from './Pod';
 import Proposal from './Proposal';
+import { multiPodCreate } from './pod-create';
 import { Pod as PodType, Proposal as ProposalType, ProposalStatus } from './types';
 import { init, config } from './config';
 import { checkAddress } from './lib/utils';
@@ -62,6 +63,7 @@ export {
   getSuperProposal,
   getUserPods,
   getAdminPods,
+  multiPodCreate,
   PodType as Pod,
   ProposalType as Proposal,
   ProposalStatus,
