@@ -1,11 +1,190 @@
 import { ethers } from 'ethers';
-import { getDeployment } from '@orcaprotocol/contracts';
+import { getDeployment, getControllerByAddress } from '@orcaprotocol/contracts';
 import { labelhash } from '@ensdomains/ensjs';
 import { config } from './config';
+import { encodeFunctionData, getContract, handleEthersError } from './lib/utils';
+import { getSafeInfo, approveSafeTransaction } from './lib/services/transaction-service';
+import { createSafeTransaction } from './lib/services/create-safe-transaction';
 
 function createAddressPointer(number) {
   const cutLength = String(number).length;
   return ethers.constants.AddressZero.slice(0, 42 - cutLength) + number;
+}
+
+function getImageUrl(nextPodId: number) {
+  const baseUrl = `https://orcaprotocol-nft.vercel.app${
+    config.network === 4 ? '/assets/testnet/' : '/assets/'
+  }`;
+  return `${baseUrl}${nextPodId.toString(16).padStart(64, '0')}-image`;
+}
+
+/**
+ * Creates a safe and podifies it.
+ * If a signer is not provided, instead it returns an unsigned transaction.
+ * @param args.members - Array of pod member addresses
+ * @param args.threshold - Voting threshold
+ * @param args.admin - Optional pod admin
+ * @param args.name - ENS label for safe, i.e., 'orca-core'. Do not add the pod.eth/pod.xyz suffix
+ * @param signer - Optional signer
+ */
+export async function createPod(
+  args: {
+    members: Array<string>;
+    threshold: number;
+    admin?: string;
+    name: string;
+  },
+  signer?: ethers.Signer,
+): Promise<ethers.providers.TransactionResponse | { to: string; data: string }> {
+  // Checksum all addresses
+  const members = args.members.map(ethers.utils.getAddress);
+  const admin = args.admin ? ethers.utils.getAddress(args.admin) : ethers.constants.AddressZero;
+  try {
+    const MemberToken = getContract('MemberToken', config.provider);
+    const expectedPodId = (await MemberToken.getNextAvailablePodId()).toNumber();
+    const Controller = getContract('ControllerLatest', signer);
+    if (signer)
+      return Controller.createPod(
+        members,
+        args.threshold,
+        admin,
+        labelhash(args.name),
+        `${args.name}.${config.network === 1 ? 'pod.xyz' : 'pod.eth'}`,
+        expectedPodId,
+        getImageUrl(expectedPodId),
+      );
+    return (await Controller.populateTransaction.createPod(
+      members,
+      args.threshold,
+      admin,
+      labelhash(args.name),
+      `${args.name}.${config.network === 1 ? 'pod.xyz' : 'pod.eth'}`,
+      expectedPodId,
+      getImageUrl(expectedPodId),
+    )) as { to: string; data: string };
+  } catch (err) {
+    return handleEthersError(err);
+  }
+}
+
+/**
+ * Returns the deployment of a controller from a safe's modules, if it exists, otherwise returns null.
+ * @param safeOrModules - safe address or list of modules
+ * @returns bool
+ */
+export async function getControllerFromModules(safeOrModules: string | string[]) {
+  let modules;
+  if (typeof safeOrModules === 'string') {
+    ({ modules } = await getSafeInfo(safeOrModules));
+  } else {
+    modules = safeOrModules;
+  }
+
+  let controller = null;
+  modules.forEach(module => {
+    try {
+      // This throws if the address does not match a Controller deployment.
+      controller = getControllerByAddress(module, config.network);
+      // If the above didn't throw, then we've found an Orca module.
+    } catch {
+      // do nothing
+    }
+  });
+  return controller;
+}
+
+/**
+ * Creates a SafeTx on a safe to enable the latest Controller as a module.
+ *
+ * @param safe - Safe address
+ * @param signer
+ * @throws If a Controller module is already enabled. If you are attempting to upgrade versions, use `Pod.migratePodToLatest`.
+ */
+export async function enableController(safe: string, signer: ethers.Signer) {
+  const sender = await signer.getAddress();
+  // Check to see if signer is safe member
+  const { owners, modules } = await getSafeInfo(safe);
+  if (!owners.includes(sender)) throw new Error('Sender was not safe owner');
+
+  if (await getControllerFromModules(modules))
+    throw new Error(
+      "Pod module was already enabled. If you're trying to upgrade versions, use `Pod.migratePodToLatest` instead",
+    );
+
+  const { address: latestModule } = getDeployment('ControllerLatest', config.network);
+
+  let safeTx;
+  try {
+    await createSafeTransaction({
+      sender,
+      safe,
+      to: safe,
+      data: encodeFunctionData('GnosisSafe', 'enableModule', [latestModule]),
+    });
+  } catch (err) {
+    if (err.response?.data.message === 'Gas estimation failed') {
+      throw new Error('Gas estimation failed (this is often a revert error)');
+    }
+    throw err;
+  }
+  await approveSafeTransaction(safeTx, signer);
+}
+
+/**
+ * Adds a Gnosis Safe to the pod ecosystem.
+ * If a signer is not provided, it instead returns the unsigned transaction.
+ * @param args.admin - Optional address of admin
+ * @param args.name - ENS label for safe, i.e., 'orca-core'. Do not add the pod.eth/pod.xyz suffix
+ * @param args.safe - Safe address
+ * @param signer - Signer of a safe owner.
+ * @throws - If Controller module was not enabled
+ * @throws - If signer is not a safe owner
+ * @returns
+ */
+export async function podifySafe(
+  args: {
+    admin?: string;
+    name: string;
+    safe: string;
+  },
+  signer?: ethers.Signer,
+): Promise<ethers.providers.TransactionResponse | { to: string; data: string }> {
+  const { owners, modules } = await getSafeInfo(args.safe);
+  if (signer && !owners.includes(await signer.getAddress()))
+    throw new Error('Sender was not safe owner');
+
+  const controllerDeployment = await getControllerFromModules(modules);
+  if (!controllerDeployment) throw new Error('Pod module was not enabled');
+  const Controller = new ethers.Contract(
+    controllerDeployment.address,
+    controllerDeployment.abi,
+    signer || config.provider,
+  );
+  // Checksum all addresses
+  const admin = args.admin ? ethers.utils.getAddress(args.admin) : ethers.constants.AddressZero;
+  try {
+    const MemberToken = getContract('MemberToken', config.provider);
+    const expectedPodId = (await MemberToken.getNextAvailablePodId()).toString();
+    if (signer)
+      return Controller.createPodWithSafe(
+        admin,
+        args.safe,
+        labelhash(args.name),
+        `${args.name}.${config.network === 1 ? 'pod.xyz' : 'pod.eth'}`,
+        expectedPodId,
+        getImageUrl(expectedPodId),
+      );
+    return (await Controller.populateTransaction.createPodWithSafe(
+      admin,
+      args.safe,
+      labelhash(args.name),
+      `${args.name}.${config.network === 1 ? 'pod.xyz' : 'pod.eth'}`,
+      expectedPodId,
+      getImageUrl(expectedPodId),
+    )) as { to: string; data: string };
+  } catch (err) {
+    return handleEthersError(err);
+  }
 }
 
 /**
@@ -107,12 +286,8 @@ export async function multiPodCreate(
     labels.push(labelhash(pod.label));
     ensNames.push(`${pod.label}.pod.xyz`);
 
-    const baseUrl = `https://orcaprotocol-nft.vercel.app${
-      config.network === 4 ? '/assets/testnet/' : '/assets/'
-    }`;
-    const imageUrl = `${baseUrl}${nextPodId.toString(16).padStart(64, '0')}-image`;
+    imageUrls.push(getImageUrl(nextPodId));
     nextPodId += 1;
-    imageUrls.push(imageUrl);
   });
   const multiCreateDeployment = getDeployment('MultiCreateV1', config.network);
   const MultiCreate = new ethers.Contract(
