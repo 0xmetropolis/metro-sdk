@@ -42,7 +42,7 @@ export async function createSafeTransaction(input: {
   sender: string;
   nonce?: number;
 }): Promise<SafeTransaction> {
-  // Doing this separately because this checks to see if the transaction would even work.
+  // Doing this first because this checks to see if the transaction would even work.
   let safeTxGas;
   try {
     safeTxGas = await getGasEstimation(input);
@@ -51,26 +51,7 @@ export async function createSafeTransaction(input: {
     throw err;
   }
 
-  const [{ nonce, threshold }, [lastTx, lastTx2]] = await Promise.all([
-    getSafeInfo(input.safe),
-    getSafeTransactionsBySafe(input.safe, { limit: 2, status: 'queued' }),
-  ]);
-
-  // TODO: This is clunky, but a quick fix to just check if the last "proposal" (i.e.,
-  // last 2 transactions) is still active. I think we should probably pass the Pod obj
-  // into this function, but we also need to implement a refetch function in the Pod obj.
-  // This also assumes that there's no more than 2 SafeTransactions for a given nonce.
-  if (!input.nonce) {
-    // Skip this check if we're overriding, e.g., making a super reject
-    if (lastTx !== undefined && lastTx2 !== undefined && lastTx.nonce === lastTx2.nonce) {
-      // If neither of the last txs are executed.
-      if (!(lastTx.isExecuted || lastTx2.isExecuted)) {
-        throw new Error('Pod already has an active proposal');
-      }
-    } else if (lastTx !== undefined && !lastTx.isExecuted) {
-      throw new Error('Pod already has an active proposal');
-    }
-  }
+  const { nonce, threshold } = await getSafeInfo(input.safe);
 
   const data = {
     safe: input.safe,

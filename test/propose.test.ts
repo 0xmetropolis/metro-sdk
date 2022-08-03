@@ -114,6 +114,27 @@ test('Subpod members should be able to propose a mint member', async () => {
     to: mint.to,
     data: mint.data,
     safe: pod.safe,
+    nonce: null,
+  });
+});
+
+test('Propose with a nonce should override the given nonce', async () => {
+  mockGetPodFetchersByAddress();
+  // Arbitrary return value.
+  const create = jest
+    .spyOn(createSafe, 'createSafeTransaction')
+    .mockResolvedValue(erc20TransferTransaction);
+  const pod = await sdk.getPod(orcanautAddress);
+
+  const mint = (await pod.mintMember(userAddress)) as { to: string; data: string };
+  await pod.propose(mint, artNautPod.members[0], { nonce: 5 });
+
+  expect(create).toHaveBeenCalledWith({
+    sender: orcanautPod.members[0],
+    to: mint.to,
+    data: mint.data,
+    safe: pod.safe,
+    nonce: 5,
   });
 });
 
@@ -133,6 +154,7 @@ test('Sub pod members should be able to propose a super pod mint', async () => {
     to: mint.to,
     data: mint.data,
     safe: superPod.safe,
+    nonce: null,
   });
   expect(create).toHaveBeenNthCalledWith(2, {
     sender: artNautPod.members[0],
