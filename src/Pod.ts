@@ -550,13 +550,16 @@ export default class Pod {
    *
    * @param proposal
    * @param sender - Address of sender
+   * @param opts.nonce - Optional nonce. This will create a proposal with the given nonce.
    * @returns
    */
   propose = async (
     // TODO: We don't actually accept a TransactionResponse, this is just to bypass typescript.
     proposal: { data: string; to: string } | Proposal | ethers.providers.TransactionResponse,
     sender: string,
+    opts: { nonce?: number } = {},
   ) => {
+    const { nonce } = opts;
     let safeTransaction;
     if (proposal instanceof Proposal) {
       if (!(await this.isMember(sender))) {
@@ -588,6 +591,7 @@ export default class Pod {
         safe: this.safe,
         to,
         data,
+        nonce: nonce || null,
       });
     }
 
