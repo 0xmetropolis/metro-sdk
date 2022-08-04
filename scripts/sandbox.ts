@@ -29,7 +29,14 @@ async function main() {
 
   const pod = await getPod('multi-child2.pod.eth');
   console.log('pod', pod);
-  await pod.propose(await pod.ejectSafe(), walletOne.address);
+  // await pod.propose(
+  //   (await pod.burnMember(walletOne.address)) as { data: string; to: string },
+  //   walletOne.address,
+  // );
+  const [props] = await pod.getProposals();
+  await props.approve(walletOne);
+  console.log('props', props[0]);
+  // await pod.propose(await pod.ejectSafe(), walletOne.address);
 
   // await pod.propose(
   //   (await pod.burnMember(walletOne.address)) as { data: string; to: string },
