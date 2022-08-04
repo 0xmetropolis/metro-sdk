@@ -1,10 +1,11 @@
 import axios from 'axios';
 import { ethers, BigNumber } from 'ethers';
 import { getSafeSingletonDeployment } from '@gnosis.pm/safe-deployments';
+import { generateSignature } from '@gnosis.pm/safe-core-sdk/dist/src/utils/signatures';
+import EthersAdapter from '@gnosis.pm/safe-ethers-lib';
 import type Proposal from '../../Proposal';
 import { config } from '../../config';
 import { lookupContractAbi } from './etherscan';
-import { signMessage } from '../utils';
 
 // used to checksum addresses
 const { getAddress } = ethers.utils;
@@ -296,8 +297,13 @@ export async function approveSafeTransaction(
   signer: ethers.Signer,
 ) {
   const { safeTxHash } = safeTransaction;
+  const ethAdapter = new EthersAdapter({
+    ethers,
+    signer,
+  });
 
-  const signedHash = await signMessage(safeTxHash, signer);
+  // Using Gnosis SDK to normalize signatures across particular wallet/provider combos.
+  const { data: signedHash } = await generateSignature(ethAdapter, safeTxHash);
 
   const confirmationInApprove = await addConfirmationToSafeTransaction(safeTxHash, signedHash);
   return confirmationInApprove;
