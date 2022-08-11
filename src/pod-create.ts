@@ -115,7 +115,7 @@ export async function enableController(safe: string, signer: ethers.Signer) {
 
   let safeTx;
   try {
-    await createSafeTransaction({
+    safeTx = await createSafeTransaction({
       sender,
       safe,
       to: safe,
