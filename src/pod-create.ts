@@ -63,6 +63,7 @@ export async function createPod(
       getImageUrl(expectedPodId),
     )) as { to: string; data: string };
   } catch (err) {
+    console.log('err', err);
     return handleEthersError(err);
   }
 }
