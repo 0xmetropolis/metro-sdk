@@ -63,6 +63,8 @@ export {
   getSuperProposal,
   getUserPods,
   getAdminPods,
+  fetchUserPodIds,
+  fetchAdminPodIds,
   multiPodCreate,
   podifySafe,
   enableController,
