@@ -5,7 +5,7 @@ import { multiPodCreate, podifySafe, enableController } from './pod-create';
 import { Pod as PodType, Proposal as ProposalType, ProposalStatus } from './types';
 import { init, config } from './config';
 import { checkAddress } from './lib/utils';
-import { fetchUserPodIds, fetchAdminPodIds } from './lib/services/subgraph';
+import { fetchPodUsers, fetchUserPodIds, fetchAdminPodIds } from './lib/services/subgraph';
 import { getSafeTransactionByHash } from './lib/services/transaction-service';
 
 /**
@@ -63,6 +63,7 @@ export {
   getSuperProposal,
   getUserPods,
   getAdminPods,
+  fetchPodUsers,
   fetchUserPodIds,
   fetchAdminPodIds,
   multiPodCreate,
