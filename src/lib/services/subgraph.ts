@@ -24,6 +24,8 @@ export async function fetchPodUsers(id: number): Promise<string[]> {
 
 /**
  * Returns a list of Pod IDs from subgraph that user is a member of.
+ * This function bypasses Pod construction and is mostly used for optimization purposes.
+ * If you're unsure on what function to use, use `getUserPods` instead.
  * @param address
  */
 export async function fetchUserPodIds(address: string): Promise<number[]> {
@@ -48,6 +50,8 @@ export async function fetchUserPodIds(address: string): Promise<number[]> {
 
 /**
  * Returns an array of Pod IDs from sub graph that an address is the admin of
+ * This function bypasses Pod construction and is mostly used for optimization purposes.
+ * If you're unsure on what function to use, use `getAdminPods` instead.
  * @param address
  */
 export async function fetchAdminPodIds(address: string): Promise<number[]> {
