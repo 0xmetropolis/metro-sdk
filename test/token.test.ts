@@ -68,9 +68,7 @@ describe('admin actions', () => {
       mint: mockMint,
     });
     const pod = await sdk.getPod(orcanautAddress);
-    await expect(pod.mintMember('wrongpod', provider.getSigner())).rejects.toThrow(
-      'Invalid address',
-    );
+    await expect(pod.mintMember('wrongpod')).rejects.toThrow('Invalid address');
   });
 
   test('As an admin, I should be able to mint a member to a pod', async () => {

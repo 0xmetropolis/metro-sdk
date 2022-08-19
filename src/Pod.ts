@@ -599,21 +599,36 @@ export default class Pod {
   };
 
   /**
-   * Mints member to this pod, or returns an unsigned transaction.
+   * Mints member(s) to this pod, or returns an unsigned transaction to do so.
+   * @param newMember - Can be a single address or an array of addresses
    * @param signer - If a signer is provided, then the tx will execute. Otherwise, an unsigned transaction will be returned.
    * @throws if signer is not admin
    */
   mintMember = async (
-    newMember: string,
+    newMember: string | string[],
     signer?: ethers.Signer,
   ): Promise<ethers.providers.TransactionResponse | { to: string; data: string }> => {
-    checkAddress(newMember);
     if (signer) {
       const signerAddress = await signer.getAddress();
       if (!this.isAdmin(signerAddress)) throw new Error('Signer was not admin');
     }
+
+    const MemberToken = getContract('MemberToken', signer);
+
+    // Handle array of addresses
+    if (Array.isArray(newMember)) {
+      newMember.forEach(checkAddress);
+      if (signer) return MemberToken.mintSingleBatch(newMember, this.id, ethers.constants.HashZero);
+      return (await MemberToken.populateTransaction.mintSingleBatch(
+        newMember,
+        this.id,
+        ethers.constants.HashZero,
+      )) as { to: string; data: string };
+    }
+
+    // Single member.
+    checkAddress(newMember);
     try {
-      const MemberToken = getContract('MemberToken', signer);
       if (signer) return MemberToken.mint(newMember, this.id, ethers.constants.HashZero);
       return (await MemberToken.populateTransaction.mint(
         newMember,
@@ -626,19 +641,37 @@ export default class Pod {
   };
 
   /**
-   * Burns member from this pod, or returns an unsigned transaction
+   * Burns member(s) from this pod, or returns an unsigned transaction to do so.
+   * @param memberToBurn - Can be a single address or an array of addresses
    * @param signer - If a signer is provided, then the tx will execute. Otherwise, an unsigned transaction will be returned.
    * @throws If signer is not admin
    */
   burnMember = async (
-    memberToBurn: string,
+    memberToBurn: string | string[],
     signer?: ethers.Signer,
   ): Promise<ethers.providers.TransactionResponse | { to: string; data: string }> => {
-    checkAddress(memberToBurn);
     if (signer) {
       const signerAddress = await signer.getAddress();
       if (!this.isAdmin(signerAddress)) throw new Error('Signer was not admin');
     }
+
+    // Handle array of addresses
+    if (Array.isArray(memberToBurn)) {
+      memberToBurn.forEach(checkAddress);
+      try {
+        const MemberToken = getContract('MemberToken', signer);
+        if (signer) return MemberToken.burnSingleBatch(memberToBurn, this.id);
+        return (await MemberToken.populateTransaction.burnSingleBatch(memberToBurn, this.id)) as {
+          to: string;
+          data: string;
+        };
+      } catch (err) {
+        return handleEthersError(err);
+      }
+    }
+
+    // Burn single
+    checkAddress(memberToBurn);
     try {
       const MemberToken = getContract('MemberToken', signer);
       if (signer) return MemberToken.burn(memberToBurn, this.id);
