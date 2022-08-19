@@ -161,3 +161,11 @@ describe('member actions', () => {
     ).rejects.toThrow('was not a member of this pod');
   });
 });
+
+test('batchMintAndBurn should throw if the pod is not on an applicable version', async () => {
+  mockGetPodFetchersByAddress();
+  const pod = await sdk.getPod(orcanautAddress);
+  await expect(pod.batchMintAndBurn([], [])).rejects.toThrow(
+    'you may need to upgrade to the latest',
+  );
+});

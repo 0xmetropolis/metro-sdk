@@ -652,6 +652,42 @@ export default class Pod {
   };
 
   /**
+   * Mints and burns members simultaneously.
+   */
+  batchMintAndBurn = async (
+    mintMembers: string[],
+    burnMembers: string[],
+    signer?: ethers.Signer,
+  ) => {
+    mintMembers.forEach(checkAddress);
+    burnMembers.forEach(checkAddress);
+    if (signer) {
+      const signerAddress = await signer.getAddress();
+      if (!this.isAdmin(signerAddress)) throw new Error('Signer was not admin');
+    }
+    try {
+      const { abi: controllerAbi } = getControllerByAddress(this.controller, config.network);
+      const Controller = new ethers.Contract(this.controller, controllerAbi, signer);
+      if (signer) return Controller.batchMintAndBurn(this.id, mintMembers, burnMembers);
+      return (await Controller.populateTransaction.batchMintAndBurn(
+        this.id,
+        mintMembers,
+        burnMembers,
+      )) as {
+        to: string;
+        data: string;
+      };
+    } catch (err) {
+      if (err.message.includes('batchMintAndBurn is not a function')) {
+        throw new Error(
+          'batchMintAndBurn not found, you may need to upgrade to the latest Controller version',
+        );
+      }
+      return handleEthersError(err);
+    }
+  };
+
+  /**
    * Transfers a membership. If a signer is provided, it will execute the transaction. Otherwise it will return the unsigned tx.
    *
    * @param toAddress - Address that will receive membership
