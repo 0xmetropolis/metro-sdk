@@ -37,6 +37,7 @@
     "typedoc": "^0.22.15"
   },
   "dependencies": {
+    "@0xsequence/multicall": "^0.40.5",
     "@ensdomains/ensjs": "^2.0.1",
     "@gnosis.pm/safe-core-sdk": "^2.3.2",
     "@gnosis.pm/safe-deployments": "^1.10.0",
