@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import { providers } from '@0xsequence/multicall';
 
 /**
  * The config object.
@@ -6,6 +7,7 @@ import { ethers } from 'ethers';
  */
 export const config = {
   provider: null,
+  multicall: null,
   network: null,
   subgraphUrl: null,
   gnosisUrl: null,
@@ -50,6 +52,9 @@ export function init(input: {
       config.provider.getSigner = () => {};
     }
   }
+  config.multicall = new providers.MulticallProvider(provider);
+  // Support ens.js
+  config.multicall.getSigner = () => {};
 
   config.gnosisUrl =
     network === 1

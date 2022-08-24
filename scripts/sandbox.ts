@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { init } from '../src';
+import { getUserPods, init } from '../src';
 import { getPod, multiPodCreate } from '../src';
 import { accountOne, accountTwo, adminPodAddress } from '../env.json';
 import { setup, sleep } from './utils';
@@ -27,24 +27,11 @@ const multiPodInput = [
 async function main() {
   const { walletOne, dummyAccount } = setup(4);
 
-  const pod = await getPod('multi-child2.pod.eth');
-  console.log('pod', pod);
-  // await pod.propose(
-  //   (await pod.burnMember(walletOne.address)) as { data: string; to: string },
-  //   walletOne.address,
-  // );
-  const [props] = await pod.getProposals();
-  await props.approve(walletOne);
-  console.log('props', props[0]);
-  // await pod.propose(await pod.ejectSafe(), walletOne.address);
-
-  // await pod.propose(
-  //   (await pod.burnMember(walletOne.address)) as { data: string; to: string },
-  //   walletOne.address,
-  // );
-
-  // console.log('dummyAccount', dummyAccount);
-  // await pod.ejectSafe(dummyAccount);
+  console.time();
+  const pods = await getUserPods('0x1cC62cE7cb56ed99513823064295761f9b7C856e');
+  console.log('pods', pods);
+  console.log('pods.length', pods.length);
+  console.timeEnd();
 }
 
 main();

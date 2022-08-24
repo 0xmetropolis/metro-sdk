@@ -1,7 +1,8 @@
 import { ethers } from 'ethers';
 import { getDeployment, getControllerByAddress } from '@orcaprotocol/contracts';
 import { getSafeSingletonDeployment } from '@gnosis.pm/safe-deployments';
-import ENS, { getEnsAddress } from '@ensdomains/ensjs';
+import ENS from '@ensdomains/ensjs';
+import getEns from './lib/services/ens';
 import { config } from './config';
 
 const GnosisSafe = getSafeSingletonDeployment({ version: process.env.GNOSIS_SAFE_VERSION });
@@ -16,12 +17,13 @@ export async function getPodFetchersByAddressOrEns(identifier: string): Promise<
   Controller: ethers.Contract;
   Name: ENS.Name;
 }> {
-  const { provider, network } = config;
-  const ens = new ENS({ provider, ensAddress: getEnsAddress(network) });
+  const { network, multicall } = config;
 
   let address;
   // Name is the interface used to perform lookups on ENS
   let Name;
+  const ens = getEns();
+
   try {
     // Handle addresses
     address = ethers.utils.getAddress(identifier);
@@ -34,7 +36,7 @@ export async function getPodFetchersByAddressOrEns(identifier: string): Promise<
     // Might be ENS name instead of address
     // If so, resolve it. The getText below will throw if it's not a valid pod.
     Name = ens.name(identifier);
-    address = await provider.resolveName(Name.name);
+    address = await multicall.resolveName(Name.name);
   }
 
   const podId = await Name.getText('podId');
@@ -45,7 +47,7 @@ export async function getPodFetchersByAddressOrEns(identifier: string): Promise<
   const MemberToken = new ethers.Contract(
     memberTokenDeployment.address,
     memberTokenDeployment.abi,
-    provider,
+    multicall,
   );
 
   const controllerAddress = await MemberToken.memberController(podId);
@@ -53,10 +55,10 @@ export async function getPodFetchersByAddressOrEns(identifier: string): Promise<
   const Controller = new ethers.Contract(
     controllerDeployment.address,
     controllerDeployment.abi,
-    provider,
+    multicall,
   );
 
-  const Safe = new ethers.Contract(address, GnosisSafe.abi, provider);
+  const Safe = new ethers.Contract(address, GnosisSafe.abi, multicall);
 
   return {
     podId: parseInt(podId, 10),
@@ -76,14 +78,14 @@ export async function getPodFetchersById(id: number): Promise<{
   Controller: ethers.Contract;
   Name: ENS.Name;
 }> {
-  const { provider, network } = config;
-  const ens = new ENS({ provider, ensAddress: getEnsAddress(network) }); // Member token tracks Controller for a given pod ID
+  const { network, multicall } = config;
+  const ens = getEns();
 
   const memberTokenDeployment = getDeployment('MemberToken', network);
   const MemberToken = new ethers.Contract(
     memberTokenDeployment.address,
     memberTokenDeployment.abi,
-    provider,
+    multicall,
   );
   const controllerAddress = await MemberToken.memberController(id);
   if (controllerAddress === ethers.constants.AddressZero) {
@@ -94,7 +96,7 @@ export async function getPodFetchersById(id: number): Promise<{
   const Controller = new ethers.Contract(
     controllerDeployment.address,
     controllerDeployment.abi,
-    provider,
+    multicall,
   );
 
   const safe = await Controller.podIdToSafe(id);
@@ -102,7 +104,7 @@ export async function getPodFetchersById(id: number): Promise<{
   if (!name) throw new Error('Address did not have an ENS name');
   const Name = ens.name(name);
 
-  const Safe = new ethers.Contract(safe, GnosisSafe.abi, provider);
+  const Safe = new ethers.Contract(safe, GnosisSafe.abi, multicall);
 
   return {
     podId: id,

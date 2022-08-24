@@ -85,6 +85,7 @@ export default class Pod {
       let safe: string;
       let Controller: ethers.Contract;
       let Name: ENS.Name;
+      let fetchedAdmin;
       try {
         let fetchers;
         if (typeof identifier === 'string') {
@@ -94,8 +95,14 @@ export default class Pod {
         }
         podId = fetchers.podId;
         safe = fetchers.Safe.address;
-        this.nonce = (await fetchers.Safe.nonce()).toNumber();
-        this.threshold = (await fetchers.Safe.getThreshold()).toNumber();
+        const fetched = await Promise.all([
+          fetchers.Safe.nonce(),
+          fetchers.Safe.getThreshold(),
+          fetchers.Controller.podAdmin(podId),
+        ]);
+        this.nonce = fetched[0].toNumber();
+        this.threshold = fetched[1].toNumber();
+        [, , fetchedAdmin] = fetched;
         Controller = fetchers.Controller;
         Name = fetchers.Name;
       } catch (err) {
@@ -105,7 +112,6 @@ export default class Pod {
         return null;
       }
 
-      const fetchedAdmin = await Controller.podAdmin(podId);
       this.controller = Controller.address;
       this.admin = fetchedAdmin === ethers.constants.AddressZero ? null : fetchedAdmin;
       this.id = podId;

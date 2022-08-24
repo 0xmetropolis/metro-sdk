@@ -15,9 +15,10 @@ export function sleep(ms) {
 
 export function setup(network = 4) {
   const networkName = network === 1 ? 'mainnet' : 'rinkeby';
-  const provider = new ethers.providers.InfuraProvider(networkName, {
-    infura: '69ecf3b10bc24c6a972972666fe950c8',
-  });
+  const provider = new ethers.providers.InfuraProvider(
+    networkName,
+    '69ecf3b10bc24c6a972972666fe950c8',
+  );
   init({ provider, network });
 
   // Get two accounts
