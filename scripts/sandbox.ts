@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { getUserPods, init } from '../src';
+import { customSubgraphQuery, getUserPods, init } from '../src';
 import { getPod, multiPodCreate } from '../src';
 import { accountOne, accountTwo, adminPodAddress } from '../env.json';
 import { setup, sleep } from './utils';
@@ -27,11 +27,18 @@ const multiPodInput = [
 async function main() {
   const { walletOne, dummyAccount } = setup(4);
 
-  console.time();
-  const pods = await getUserPods('0x1cC62cE7cb56ed99513823064295761f9b7C856e');
-  console.log('pods', pods);
-  console.log('pods.length', pods.length);
-  console.timeEnd();
+  const butt = await customSubgraphQuery(`{
+    pods(where: {
+      id_in: [1, 2, 3]
+    }) {
+      id
+      users {
+        id
+      }
+      admin
+    }
+  }`);
+  console.log('butt', butt);
 }
 
 main();
