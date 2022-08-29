@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { customSubgraphQuery, getUserPods, init } from '../src';
+import { customSubgraphQuery, getUserPods, init, podifySafe } from '../src';
 import { getPod, multiPodCreate } from '../src';
 import { accountOne, accountTwo, adminPodAddress } from '../env.json';
 import { setup, sleep } from './utils';
@@ -25,19 +25,17 @@ const multiPodInput = [
 ];
 
 async function main() {
-  const { walletOne, dummyAccount } = setup(4);
+  const { walletTwo, dummyAccount } = setup(4);
 
-  const butt = await customSubgraphQuery(`{
-    pods(where: {
-      id_in: [1, 2, 3]
-    }) {
-      id
-      users {
-        id
-      }
-      admin
-    }
-  }`);
+  // await podifySafe({
+  //   admin: walletTwo.address,
+  //   name: 'blargh',
+  //   safe: '0x49E55999e9c47589Fd953747edffA1a754d9f8B5',
+  // }, walletTwo);
+
+  const pod = await getPod('0xA4fD170b92b9CBac066e4551DC4BdbbB85093c51');
+
+  const butt = await pod.isPodifyInProgress();
   console.log('butt', butt);
 }
 
