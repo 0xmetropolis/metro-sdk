@@ -853,6 +853,28 @@ export default class Pod {
   };
 
   /**
+   *
+   */
+  isPodifyInProgress = async () => {
+    const proposals = await this.getProposals();
+    let result = false;
+    proposals.forEach(proposal => {
+      if (proposal.status === 'executed') return;
+      if (proposal.method === 'enableModule') {
+        try {
+          // This throws if the provided address is not one of our controllers.
+          getControllerByAddress(proposal.parameters[0].value, config.network);
+          // Set to true if it doesn't throw.
+          result = true;
+        } catch {
+          // Do nothing.
+        }
+      }
+    });
+    return result;
+  };
+
+  /**
    * Ejects a safe from the Orca ecosystem.
    * This zeroes out all ENS + Controller data, removes the Orca module, and burns the pod's MemberTokens
    * If a signer is provided, it will execute the transaction. Otherwise it will return the unsigned tx.

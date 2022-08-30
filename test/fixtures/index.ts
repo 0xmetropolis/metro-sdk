@@ -561,3 +561,56 @@ const subProposalFixture = [
     signatures: null,
   },
 ];
+
+export const enableModuleSafeTx = {
+  safe: '0x49E55999e9c47589Fd953747edffA1a754d9f8B5',
+  to: '0x49E55999e9c47589Fd953747edffA1a754d9f8B5',
+  value: '0',
+  data: '0x610b592500000000000000000000000011e2d4c75b9803ff5d6da8c30b354b44992e0248',
+  operation: 0,
+  gasToken: '0x0000000000000000000000000000000000000000',
+  safeTxGas: 0,
+  baseGas: 0,
+  gasPrice: '0',
+  refundReceiver: '0x0000000000000000000000000000000000000000',
+  nonce: 0,
+  executionDate: '2022-01-26T18:01:37Z',
+  submissionDate: '2022-01-26T18:01:25.726016Z',
+  modified: '2022-01-26T18:01:37Z',
+  blockNumber: 10059884,
+  transactionHash: '0xa00e81f88f4cb3df006779007424cc469ecc6bdfbac753dba383cfdb03ad97c1',
+  safeTxHash: '0x6723fd3b412953fe3a2c9c776805287d9c914964bc761604cbe73419f6169e80',
+  executor: '0x1cC62cE7cb56ed99513823064295761f9b7C856e',
+  isExecuted: true,
+  isSuccessful: true,
+  ethGasPrice: '2670677244',
+  maxFeePerGas: null,
+  maxPriorityFeePerGas: null,
+  gasUsed: 75937,
+  fee: '202803217877628',
+  origin: '{"url":"https://gnosis-zodiac-app.netlify.app/","name":"Zodiac"}',
+  dataDecoded: {
+    method: 'enableModule',
+    parameters: [
+      {
+        name: 'module',
+        type: 'address',
+        value: '0x4C98aF741e352C6551BfF9509b3f8ca9Dd4E6397',
+      },
+    ],
+  },
+  confirmationsRequired: 1,
+  confirmations: [
+    {
+      owner: '0x1cC62cE7cb56ed99513823064295761f9b7C856e',
+      submissionDate: '2022-01-26T18:01:37Z',
+      transactionHash: null,
+      signature:
+        '0x0000000000000000000000001cc62ce7cb56ed99513823064295761f9b7c856e000000000000000000000000000000000000000000000000000000000000000001',
+      signatureType: 'APPROVED_HASH',
+    },
+  ],
+  trusted: true,
+  signatures:
+    '0x0000000000000000000000001cc62ce7cb56ed99513823064295761f9b7c856e000000000000000000000000000000000000000000000000000000000000000001',
+};
