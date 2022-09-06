@@ -25,7 +25,7 @@ const multiPodInput = [
 ];
 
 async function main() {
-  const { walletTwo, dummyAccount } = setup(4);
+  const { walletOne, dummyAccount } = setup(4);
 
   // await podifySafe({
   //   admin: walletTwo.address,
@@ -33,10 +33,16 @@ async function main() {
   //   safe: '0x49E55999e9c47589Fd953747edffA1a754d9f8B5',
   // }, walletTwo);
 
-  const pod = await getPod('0xA4fD170b92b9CBac066e4551DC4BdbbB85093c51');
+  const pod = await getPod('admin-test.pod.eth');
+  await pod.migratePodToLatest(walletOne);
+  console.log('pod', pod);
 
-  const butt = await pod.isPodifyInProgress();
-  console.log('butt', butt);
+  // await pod.callAsPersona(pod.mintMember, args, {
+  //   persona: 'admin',
+  //   signer: walletOne,
+  //   fromSubPod: 'subPod',
+  // });
+  // await pod.callAsPersona(pod.mintMember, [adminPodAddress], { persona: })
 }
 
 main();

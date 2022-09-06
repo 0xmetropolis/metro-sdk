@@ -13,6 +13,9 @@ import {
 } from './fixtures';
 import * as fetchers from '../src/fetchers';
 import * as txService from '../src/lib/services/transaction-service';
+import * as utils from '../src/lib/utils';
+import * as contracts from '@orcaprotocol/contracts';
+
 import Pod from '../src/Pod';
 
 function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
@@ -20,7 +23,10 @@ function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
   jest.spyOn(fetchers, 'getPodFetchersByAddressOrEns').mockResolvedValueOnce({
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    Controller: { podAdmin: jest.fn().mockResolvedValueOnce(admin) },
+    Controller: {
+      podAdmin: jest.fn().mockResolvedValueOnce(admin),
+      address: '0xDE69E7C2184599093a9E0Bbc5923fa462fdf0302',
+    },
     Safe: {
       address: orcanautPod.safe,
       nonce: jest.fn().mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
@@ -348,3 +354,38 @@ test('Pod.isPodifyInProgress returns false on executed enableModule proposals', 
 });
 
 //TODO: Other ejectSafe tests.
+
+describe('Pod.migratePodToLatest', () => {
+  test('Previous module should handle the sentinel case', async () => {
+    mockGetPodFetchersByAddress();
+    // jest.mock('@orcaprotocol/contracts', () => ({
+    //   getDeployment: jest.fn().mockReturnValue({ address: '0xDE69E7C2184599093a9E0Bbc5923fa462fdf0302' }),
+    // }));
+    jest
+      .spyOn(contracts, 'getDeployment')
+      .mockReturnValue({ address: '0xDE69E7C2184599093a9E0Bbc5923fa462fdf0302' });
+    jest
+      .spyOn(utils, 'getPreviousModule')
+      .mockResolvedValueOnce('0x0000000000000000000000000000000000000001');
+    const pod = await getPod(orcanautAddress);
+    const result = await pod.migratePodToLatest();
+    // This data should contain the latest Controller address, which unfortunately means this will have to be updated whenever we update Controller versions
+    // Not sure how to mock this out.
+    expect(result.data).toBe(
+      '0xe1fc2cc100000000000000000000000000000000000000000000000000000000000000010000000000000000000000004c98af741e352c6551bff9509b3f8ca9dd4e63970000000000000000000000004c98af741e352c6551bff9509b3f8ca9dd4e6397',
+    );
+  });
+
+  test('Previous module should handle if a module was added after the Controller', async () => {
+    mockGetPodFetchersByAddress();
+    const fakePreviousModule = '0x6636900672F411D7Cab64Aa30238DC2658D6Cbb5';
+    jest
+      .spyOn(contracts, 'getDeployment')
+      .mockReturnValue({ address: '0xDE69E7C2184599093a9E0Bbc5923fa462fdf0302' });
+    jest.spyOn(utils, 'getPreviousModule').mockResolvedValueOnce(fakePreviousModule);
+    const pod = await getPod(orcanautAddress);
+    const result = await pod.migratePodToLatest();
+    // The data should have the previous module
+    expect(result.data).toContain(fakePreviousModule.substring(2).toLowerCase());
+  });
+});
