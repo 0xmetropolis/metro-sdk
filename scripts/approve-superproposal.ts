@@ -26,9 +26,9 @@ async function main() {
   let data;
   try {
     if (isMember) {
-      data = superPod.populateBurn(dummyAccount);
+      data = superPod.burnMember(dummyAccount);
     } else {
-      data = superPod.populateMint(dummyAccount);
+      data = superPod.mintMember(dummyAccount);
     }
     await superPod.propose(data, subPod.safe);
   } catch (err) {

@@ -33,16 +33,15 @@ async function main() {
   //   safe: '0x49E55999e9c47589Fd953747edffA1a754d9f8B5',
   // }, walletTwo);
 
-  const pod = await getPod('admin-test.pod.eth');
-  await pod.migratePodToLatest(walletOne);
+  const pod = await getPod('gm.pod.eth');
   console.log('pod', pod);
-
-  // await pod.callAsPersona(pod.mintMember, args, {
-  //   persona: 'admin',
-  //   signer: walletOne,
-  //   fromSubPod: 'subPod',
-  // });
-  // await pod.callAsPersona(pod.mintMember, [adminPodAddress], { persona: })
+  const personas = await pod.getPersonas('0x4B4C43F66ec007D1dBE28f03dAC975AAB5fbb888');
+  console.log('personas', personas);
+  await pod.callAsPersona(
+    pod.mintMember,
+    ['0x4B4C43F66ec007D1dBE28f03dAC975AAB5fbb888'],
+    personas[0],
+  );
 }
 
 main();

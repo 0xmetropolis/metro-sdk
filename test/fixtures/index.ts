@@ -59,6 +59,8 @@ export const artNautPod = {
   ],
 };
 
+export const gmPod = {};
+
 /**
  * Turns arrays into the stupid format that GQL returns
  */

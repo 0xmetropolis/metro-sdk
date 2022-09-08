@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import ENS, { labelhash } from '@ensdomains/ensjs';
 import { getControllerByAddress, getDeployment } from '@orcaprotocol/contracts';
+import { getPersonas } from './pod-utils';
 import { config } from './config';
 import { getPodFetchersByAddressOrEns, getPodFetchersById } from './fetchers';
 import {
@@ -169,6 +170,12 @@ export default class Pod {
    * Do not call this property directly, use `Pod.getMemberEOAs()`
    */
   memberEOAs?: string[];
+
+  /**
+   * @ignore
+   * @property Admin pod object
+   */
+  adminPod?: Pod;
 
   /**
    * @ignore
@@ -402,6 +409,97 @@ export default class Pod {
   };
 
   /**
+   * Calls a Pod method via a persona.
+   * The persona object can be fetched by using `Pod.getPersonas(address)`
+   * E.g.,
+   * ```
+   * callAsPersona(
+   *  pod.mintMember,
+   *  [newMember],
+   *  { type: 'admin', address: userAddress },
+   *  signer,
+   * )
+   * ```
+   * The sender must be a signer in the admin case, or the address of the sender.
+   * The sender must be a member of the relevant pod.
+   *
+   * @param method
+   * @param args
+   * @param persona
+   * @param sender
+   * @returns
+   */
+  callAsPersona = async (
+    method: any,
+    args: Array<any>,
+    persona: { type: string; address: string },
+    sender?: ethers.Signer | string,
+  ) => {
+    switch (persona.type) {
+      case 'admin':
+        if (!sender) throw new Error(`Expected sender to be signer, but received ${sender}`);
+        args.push(sender);
+        return method.apply(this, args);
+      case 'member':
+        return this.propose(await method.apply(this, args), persona.address);
+      case 'adminPodMember': {
+        let adminPod;
+        if (this.adminPod) adminPod = this.adminPod;
+        else {
+          adminPod = await new Pod(this.admin);
+          this.adminPod = adminPod;
+        }
+        let senderAddress = sender;
+        if (sender instanceof ethers.Signer) senderAddress = await sender.getAddress();
+        let result;
+        try {
+          result = await adminPod.propose(await method.apply(this, args), senderAddress);
+        } catch (err) {
+          // Make the error message more specific
+          if (err.message.includes('Sender must be a member of')) {
+            throw new Error('Sender must be a member of the admin pod');
+          }
+        }
+        return result;
+      }
+      case 'subPodMember': {
+        const subPod = await new Pod(persona.address);
+        if (!(await this.isMember(subPod.safe)))
+          throw new Error('Sub pod was not a member of this pod');
+
+        const senderAddress = sender instanceof ethers.Signer ? await sender.getAddress() : sender;
+        let result;
+        try {
+          result = await subPod.propose(
+            await this.propose(await method.apply(this, args), subPod.safe),
+            senderAddress,
+          );
+        } catch (err) {
+          // Make the error message more specific
+          if (err.message.includes('Sender must be a member of')) {
+            throw new Error('Sender must be a member of the sub pod');
+          }
+        }
+        return result;
+      }
+      default:
+        throw new Error(`${persona.type} was not a valid persona`);
+    }
+  };
+
+  /**
+   * Fetches all personas for a given address related to this pod.
+   * All personas return as an object indicating the type of the persona and the address of the persona.
+   * For members and admins, the persona address is the user's address.
+   * For admin pods and sub pods, the persona address is the pod address.
+   * @param address
+   */
+  getPersonas(address: string) {
+    // Function declared separately out for test/mocking purposes.
+    return getPersonas(this, address);
+  }
+
+  /**
    * Checks if user is a member of this pod
    * @param address
    */
@@ -427,7 +525,13 @@ export default class Pod {
   isAdminPodMember = async (address: string): Promise<boolean> => {
     const checkedAddress = checkAddress(address);
     if (!this.admin) return false;
-    const adminPod = await new Pod(this.admin);
+    let adminPod;
+    if (this.adminPod) adminPod = this.adminPod;
+    else {
+      adminPod = await new Pod(this.admin);
+      this.adminPod = adminPod;
+    }
+
     if (!adminPod) return false;
     return adminPod.isMember(checkedAddress);
   };
