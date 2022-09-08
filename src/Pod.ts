@@ -832,11 +832,18 @@ export default class Pod {
       signer,
     );
 
-    const previousModule = await getPreviousModule(
+    let previousModule = await getPreviousModule(
       this.safe,
       oldControllerDeployment.address,
       newController.address,
     );
+
+    // If the previous module is the sentinel, then we're going to add the new controller
+    // before removing the old controller, therefore the previous module will be the
+    // new controller we just added, because safe modules are added reverse-chronologically.
+    if (previousModule === '0x0000000000000000000000000000000000000001') {
+      previousModule = newController.address;
+    }
 
     // use prev controller
     try {

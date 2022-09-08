@@ -89,6 +89,8 @@ export async function getPreviousModule(safe, module, newController?: string) {
   // TODO: figure out a better way to traverse the safes
   // I'm not sure why but in the SDK, this is nested in some strange object, hence the .array here vs the web version.
   const temp = await safeContract.getModulesPaginated(AddressOne, 10);
+  // safeModules is in reverse chronological order,
+  // i.e., the most recent module is safeModules[0]
   const safeModules = temp.array ? temp.array : temp;
 
   if (newController && safeModules.includes(ethers.utils.getAddress(newController)))
