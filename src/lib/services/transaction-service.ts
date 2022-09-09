@@ -383,7 +383,7 @@ export async function executeSafeTransaction(
     ethers.constants.AddressZero, // refundReceiver
     signatures,
     {
-      gasLimit: 2000000,
+      gasLimit: refetched.safeTxGas * 1.2,
     },
   );
 }
