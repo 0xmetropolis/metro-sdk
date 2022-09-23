@@ -14,15 +14,22 @@ const contractJsons = {
 };
 
 /**
- * Returns ethers contract based on name
+ * Returns Orca related contract instance
  * @param contractName
  * @param signer
  * @returns
  */
-export function getContract(contractName: string, signer: ethers.Signer) {
+export function getMetropolisContract(
+  contractName: string,
+  signer: ethers.Signer,
+): ethers.Contract {
   const contractJson = getDeployment(contractName, config.network);
   if (!contractJson) throw new RangeError(`Contract ABI could not be found for ${contractName}`);
   return new ethers.Contract(contractJson.address, contractJson.abi, signer);
+}
+
+export function getGnosisSafeContract(safeAddress: string, signer: ethers.Signer) {
+  return new ethers.Contract(safeAddress, GnosisSafe.abi, signer);
 }
 
 /**

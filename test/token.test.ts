@@ -64,7 +64,7 @@ describe('admin actions', () => {
   test('Mint member should throw if given an invalid address', async () => {
     mockGetPodFetchersByAddress();
     const mockMint = jest.fn();
-    jest.spyOn(utils, 'getContract').mockReturnValueOnce({
+    jest.spyOn(utils, 'getMetropolisContract').mockReturnValueOnce({
       mint: mockMint,
     });
     const pod = await sdk.getPod(orcanautAddress);
@@ -85,7 +85,7 @@ describe('admin actions', () => {
 
     mockGetPodFetchersByAddress();
     const mockMint = jest.fn();
-    jest.spyOn(utils, 'getContract').mockReturnValueOnce({
+    jest.spyOn(utils, 'getMetropolisContract').mockReturnValueOnce({
       mint: mockMint,
     });
     const pod = await sdk.getPod(orcanautAddress);
@@ -97,7 +97,7 @@ describe('admin actions', () => {
   test('As an admin, I should be able to burn a member from a pod', async () => {
     mockGetPodFetchersByAddress();
     const mockBurn = jest.fn();
-    jest.spyOn(utils, 'getContract').mockReturnValueOnce({
+    jest.spyOn(utils, 'getMetropolisContract').mockReturnValueOnce({
       burn: mockBurn,
     });
 
@@ -131,7 +131,7 @@ describe('member actions', () => {
       getAddress: jest.fn().mockResolvedValue(orcanautPod.members[0]),
     };
     const mockTransfer = jest.fn();
-    jest.spyOn(utils, 'getContract').mockReturnValueOnce({
+    jest.spyOn(utils, 'getMetropolisContract').mockReturnValueOnce({
       safeTransferFrom: mockTransfer,
     });
     const pod = await sdk.getPod(orcanautAddress);

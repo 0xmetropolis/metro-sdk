@@ -168,7 +168,7 @@ describe('podifySafe', () => {
     jest.spyOn(ethers, 'Contract').mockReturnValueOnce({
       createPodWithSafe: mockCreatePod,
     });
-    jest.spyOn(utils, 'getContract').mockReturnValueOnce({
+    jest.spyOn(utils, 'getMetropolisContract').mockReturnValueOnce({
       getNextAvailablePodId: jest.fn().mockResolvedValue({
         toString: jest.fn().mockReturnValueOnce(100),
       }),
@@ -189,7 +189,7 @@ describe('podifySafe', () => {
       modules: ['0x5bc9beb5b7e359ec95e001536d18f6c908570401'],
       owners: [userAddress],
     });
-    jest.spyOn(utils, 'getContract').mockReturnValueOnce({
+    jest.spyOn(utils, 'getMetropolisContract').mockReturnValueOnce({
       getNextAvailablePodId: jest.fn().mockResolvedValue({
         toString: jest.fn().mockReturnValueOnce(100),
       }),

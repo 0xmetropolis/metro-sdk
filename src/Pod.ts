@@ -4,11 +4,12 @@ import { getControllerByAddress, getDeployment } from '@orcaprotocol/contracts';
 import { config } from './config';
 import { getPodFetchersByAddressOrEns, getPodFetchersById } from './fetchers';
 import {
-  getContract,
+  getMetropolisContract,
   handleEthersError,
   encodeFunctionData,
   checkAddress,
   getPreviousModule,
+  getGnosisSafeContract,
 } from './lib/utils';
 import {
   createRejectTransaction,
@@ -619,7 +620,7 @@ export default class Pod {
       if (!this.isAdmin(signerAddress)) throw new Error('Signer was not admin');
     }
 
-    const MemberToken = getContract('MemberToken', signer);
+    const MemberToken = getMetropolisContract('MemberToken', signer);
 
     // Handle array of addresses
     if (Array.isArray(newMember)) {
@@ -665,7 +666,7 @@ export default class Pod {
     if (Array.isArray(memberToBurn)) {
       memberToBurn.forEach(checkAddress);
       try {
-        const MemberToken = getContract('MemberToken', signer);
+        const MemberToken = getMetropolisContract('MemberToken', signer);
         if (signer) return MemberToken.burnSingleBatch(memberToBurn, this.id);
         return (await MemberToken.populateTransaction.burnSingleBatch(memberToBurn, this.id)) as {
           to: string;
@@ -679,7 +680,7 @@ export default class Pod {
     // Burn single
     checkAddress(memberToBurn);
     try {
-      const MemberToken = getContract('MemberToken', signer);
+      const MemberToken = getMetropolisContract('MemberToken', signer);
       if (signer) return MemberToken.burn(memberToBurn, this.id);
       return (await MemberToken.populateTransaction.burn(memberToBurn, this.id)) as {
         to: string;
@@ -759,7 +760,7 @@ export default class Pod {
     }
 
     try {
-      const MemberToken = getContract('MemberToken', signer);
+      const MemberToken = getMetropolisContract('MemberToken', signer);
       if (signer) {
         return MemberToken.safeTransferFrom(
           checkedFrom,
@@ -776,6 +777,35 @@ export default class Pod {
         1,
         ethers.constants.HashZero,
       )) as { to: string; data: string };
+    } catch (err) {
+      return handleEthersError(err);
+    }
+  };
+
+  /**
+   * Changes the threshold for the safe associated with this pod.
+   * If a signer is provided, it will execute the transaction. Otherwise it will return the unsigned tx.
+   * @param newThreshold - new threshold
+   * @param signer - Signer of admin
+   * @throws If signer is not admin
+   * @returns
+   */
+  changeThreshold = async (newThreshold: number, signer?: ethers.Signer) => {
+    if (signer) {
+      const signerAddress = await signer.getAddress();
+      if (!this.isAdmin(signerAddress)) throw new Error('Signer was not the admin of this pod');
+    }
+    if (newThreshold === this.threshold)
+      throw new Error(`Current threshold is already ${newThreshold}`);
+
+    const GnosisSafe = getGnosisSafeContract(this.safe, signer);
+
+    try {
+      if (signer) return GnosisSafe.changeThreshold(newThreshold);
+      return (await GnosisSafe.populateTransaction.updatePodAdmin(newThreshold)) as {
+        to: string;
+        data: string;
+      };
     } catch (err) {
       return handleEthersError(err);
     }

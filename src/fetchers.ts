@@ -1,11 +1,9 @@
 import { ethers } from 'ethers';
 import { getDeployment, getControllerByAddress } from '@orcaprotocol/contracts';
-import { getSafeSingletonDeployment } from '@gnosis.pm/safe-deployments';
 import ENS from '@ensdomains/ensjs';
 import getEns from './lib/services/ens';
 import { config } from './config';
-
-const GnosisSafe = getSafeSingletonDeployment({ version: process.env.GNOSIS_SAFE_VERSION });
+import { getGnosisSafeContract } from './lib/utils';
 
 /**
  * Returns Controller, ENS Name and pod ID for a given pod address.
@@ -58,7 +56,7 @@ export async function getPodFetchersByAddressOrEns(identifier: string): Promise<
     multicall,
   );
 
-  const Safe = new ethers.Contract(address, GnosisSafe.abi, multicall);
+  const Safe = getGnosisSafeContract(address, multicall);
 
   return {
     podId: parseInt(podId, 10),
@@ -104,7 +102,7 @@ export async function getPodFetchersById(id: number): Promise<{
   if (!name) throw new Error('Address did not have an ENS name');
   const Name = ens.name(name);
 
-  const Safe = new ethers.Contract(safe, GnosisSafe.abi, multicall);
+  const Safe = getGnosisSafeContract(safe, multicall);
 
   return {
     podId: id,
