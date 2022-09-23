@@ -34,12 +34,14 @@ export interface SafeTransaction {
   confirmations?: Array<Confirmation>;
   confirmationsRequired?: number;
   gasPrice?: string;
+  gasToken?: string;
   executionDate?: string;
   submissionDate?: string;
   blockNumber?: number;
   isExecuted?: boolean;
   isSuccessful?: boolean;
   origin?: string;
+  refundReceiver?: string;
 }
 
 // Confirmation from transaction-service
@@ -183,31 +185,20 @@ export async function getSafeTxHash(transaction: SafeTransaction): Promise<strin
   if (transaction.safeTxHash)
     throw new Error('Unexpected contractTransactionHash at getContractTransactionHash');
 
-  let contractTransactionHash: string;
-  const url = `${config.gnosisUrl}/safes/${getAddress(transaction.safe)}/multisig-transactions/`;
+  const safeContract = getGnosisSafeContract(transaction.safe, config.multicall);
 
-  try {
-    // Sending the transaction service a made up transaction hash causes it to
-    // send back an error with the actual transaction hash, so we'll do that and grab that.
-    await axios.post(url, {
-      contractTransactionHash: '0xd112233445566778899aabbccddff00000000000000000000000000000000000',
-      signature:
-        '0x000000000000000000000000a935484ba4250c446779d4703f1598dc2ea00d12000000000000000000000000000000000000000000000000000000000000000001',
-      ...transaction,
-    });
-  } catch (err) {
-    // result looks like:
-    // 'Contract-transaction-hash=0x5ba491f67082bcc7de5c5a08b969668e0161ad8a402e0dd086d2493c5f28f7b7 does not match provided contract-tx-hash=0xd112233445566778899aabbccddff00000000000000000000000000000000000'
-    // We're trying to grab that first one, that's the expected transaction hash
-    const result = err.response.data.nonFieldErrors;
-    [contractTransactionHash] = result[0].match(/0x\S+/);
-  }
-
-  if (!contractTransactionHash) {
-    throw new Error('Failed to receive contractTransactionHash from transaction service');
-  }
-
-  return contractTransactionHash;
+  return safeContract.getTransactionHash(
+    transaction.to,
+    transaction.value,
+    transaction.data,
+    transaction.operation,
+    transaction.safeTxGas,
+    transaction.baseGas,
+    transaction.gasPrice,
+    transaction.gasToken,
+    transaction.refundReceiver,
+    transaction.nonce,
+  );
 }
 
 /**
@@ -337,7 +328,10 @@ export async function createRejectTransaction(
   // We need to generate one from the transaction-service.
   const safeTxHash = await getSafeTxHash(data);
 
-  const createdSafeTransaction = await submitSafeTransactionToService({ safeTxHash, ...data });
+  const createdSafeTransaction = await submitSafeTransactionToService({
+    safeTxHash,
+    ...data,
+  });
   // Approve only if it's a signer.
   if (typeof signerOrAddress !== 'string') {
     await approveSafeTransaction(createdSafeTransaction, signerOrAddress);

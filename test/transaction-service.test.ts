@@ -1,9 +1,13 @@
-import { erc20TransferTransaction } from './fixtures';
+import { erc20TransferTransaction, getSafeTransactionFixture } from './fixtures';
+import * as utils from '../src/lib/utils';
 import * as etherscan from '../src/lib/services/etherscan';
 import * as txService from '../src/lib/services/transaction-service';
-import { populateDataDecoded } from '../src/lib/services/transaction-service';
+import { populateDataDecoded, getSafeTxHash } from '../src/lib/services/transaction-service';
 import { getNextNonce } from '../src/lib/services/create-safe-transaction';
 import { userAddress } from '../test/fixtures';
+import { init } from '../src/config';
+import axios from 'axios';
+import { ethers } from 'ethers';
 
 test('populateDataDecoded should be able to decode an erc20 transfer function', async () => {
   const { dataDecoded } = erc20TransferTransaction;
@@ -32,6 +36,31 @@ test('populateDataDecoded should be able to decode an erc20 transfer function', 
   const { dataDecoded: dataDecodedPopulated } = await populateDataDecoded(safeTransactionDataERC20);
 
   expect(dataDecodedPopulated).toMatchObject(dataDecoded);
+});
+
+describe('getSafeTxHash', () => {
+  const provider = new ethers.providers.InfuraProvider('rinkeby', {
+    infura: '69ecf3b10bc24c6a972972666fe950c8',
+  });
+  init({ provider, network: 4 });
+
+  test('given a transaction, returns a contract transaction hash', async () => {
+    let safeTx = getSafeTransactionFixture('queued')[0];
+
+    const mockGetSafeTransactionHash = jest
+      .fn()
+      .mockResolvedValueOnce('0x67ce671d9bdb9abe31ad3fe521176ff8ccdea5b87c392c609ce425257fcea6a4');
+    jest.spyOn(utils, 'getGnosisSafeContract').mockReturnValueOnce({
+      getTransactionHash: mockGetSafeTransactionHash,
+    });
+
+    const expectedHash = safeTx.safeTxHash;
+    delete safeTx.safeTxHash; // Gnosis expects this to be nil
+
+    const safeTxHash = await getSafeTxHash(safeTx);
+
+    expect(safeTxHash).toBe(expectedHash);
+  });
 });
 
 describe('getNextNonce', () => {
