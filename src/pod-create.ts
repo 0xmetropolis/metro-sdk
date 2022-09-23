@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import { getDeployment, getControllerByAddress } from '@orcaprotocol/contracts';
 import { labelhash } from '@ensdomains/ensjs';
 import { config } from './config';
-import { encodeFunctionData, getContract, handleEthersError } from './lib/utils';
+import { encodeFunctionData, getMetropolisContract, handleEthersError } from './lib/utils';
 import { getSafeInfo, approveSafeTransaction } from './lib/services/transaction-service';
 import { createSafeTransaction } from './lib/services/create-safe-transaction';
 
@@ -40,9 +40,9 @@ export async function createPod(
   const members = args.members.map(ethers.utils.getAddress);
   const admin = args.admin ? ethers.utils.getAddress(args.admin) : ethers.constants.AddressZero;
   try {
-    const MemberToken = getContract('MemberToken', config.provider);
+    const MemberToken = getMetropolisContract('MemberToken', config.provider);
     const expectedPodId = (await MemberToken.getNextAvailablePodId()).toNumber();
-    const Controller = getContract('ControllerLatest', signer);
+    const Controller = getMetropolisContract('ControllerLatest', signer);
     if (signer)
       return Controller.createPod(
         members,
@@ -163,7 +163,7 @@ export async function podifySafe(
   // Checksum all addresses
   const admin = args.admin ? ethers.utils.getAddress(args.admin) : ethers.constants.AddressZero;
   try {
-    const MemberToken = getContract('MemberToken', config.provider);
+    const MemberToken = getMetropolisContract('MemberToken', config.provider);
     const expectedPodId = (await MemberToken.getNextAvailablePodId()).toString();
     if (signer)
       return Controller.createPodWithSafe(

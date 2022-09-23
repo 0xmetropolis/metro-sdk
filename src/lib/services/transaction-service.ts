@@ -1,16 +1,14 @@
 import axios from 'axios';
 import { ethers, BigNumber } from 'ethers';
-import { getSafeSingletonDeployment } from '@gnosis.pm/safe-deployments';
 import { generateSignature } from '@gnosis.pm/safe-core-sdk/dist/src/utils/signatures';
 import EthersAdapter from '@gnosis.pm/safe-ethers-lib';
 import type Proposal from '../../Proposal';
 import { config } from '../../config';
 import { lookupContractAbi } from './etherscan';
+import { getGnosisSafeContract } from '../utils';
 
 // used to checksum addresses
 const { getAddress } = ethers.utils;
-
-const GnosisSafe = getSafeSingletonDeployment({ version: process.env.GNOSIS_SAFE_VERSION });
 
 // What is returned as a Transaction by the Gnosis Transaction Service
 export interface SafeTransaction {
@@ -370,7 +368,7 @@ export async function executeSafeTransaction(
     // eslint-disable-next-line
     .reduce((acc, cur) => (acc += cur.signature.replace('0x', '')), '0x');
 
-  const safeContract = new ethers.Contract(safeTransaction.safe, GnosisSafe.abi, signer);
+  const safeContract = getGnosisSafeContract(safeTransaction.safe, signer);
   return safeContract.execTransaction(
     refetched.to,
     refetched.value,
