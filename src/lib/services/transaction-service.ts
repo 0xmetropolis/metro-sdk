@@ -381,7 +381,7 @@ export async function executeSafeTransaction(
     ethers.constants.AddressZero, // refundReceiver
     signatures,
     {
-      gasLimit: refetched.safeTxGas * 1.2,
+      gasLimit: Math.ceil(refetched.safeTxGas * 1.2),
     },
   );
 }
