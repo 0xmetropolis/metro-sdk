@@ -23,6 +23,7 @@ const podFromEnsName = await getPod('mypod.pod.xyz');
 // ENS names also work for the below.
 const podFromAddress = await getPod('0x123...456');
 const podFromId = await getPod(1);
+
 // Returns null
 const notAPod = await getPod('not a pod');
 
