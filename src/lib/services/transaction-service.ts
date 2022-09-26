@@ -369,6 +369,7 @@ export async function executeSafeTransaction(
     .reduce((acc, cur) => (acc += cur.signature.replace('0x', '')), '0x');
 
   const safeContract = getGnosisSafeContract(safeTransaction.safe, signer);
+
   return safeContract.execTransaction(
     refetched.to,
     refetched.value,
@@ -380,9 +381,6 @@ export async function executeSafeTransaction(
     ethers.constants.AddressZero, // gasToken
     ethers.constants.AddressZero, // refundReceiver
     signatures,
-    {
-      gasLimit: Math.ceil(refetched.safeTxGas * 1.2),
-    },
   );
 }
 

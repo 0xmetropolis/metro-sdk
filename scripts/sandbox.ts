@@ -34,7 +34,14 @@ async function main() {
   // }, walletTwo);
 
   const pod = await getPod('remake.pod.eth');
-  await pod.mintMember(dummyAccount.address, walletOne);
+  await pod.propose(await pod.mintMember(dummyAccount.address), walletOne.address);
+  const props = (await pod.getProposals({ status: 'active' }))[0];
+  // await props.approve(walletOne);
+  try {
+    await props.executeApprove(walletOne);
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 main();
