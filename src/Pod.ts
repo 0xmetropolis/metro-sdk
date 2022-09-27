@@ -802,7 +802,7 @@ export default class Pod {
 
     try {
       if (signer) return GnosisSafe.changeThreshold(newThreshold);
-      return (await GnosisSafe.populateTransaction.updatePodAdmin(newThreshold)) as {
+      return (await GnosisSafe.populateTransaction.changeThreshold(newThreshold)) as {
         to: string;
         data: string;
       };
