@@ -173,10 +173,7 @@ export async function getGasEstimation(transaction: SafeTransaction): Promise<nu
 }
 
 /**
- * Asks the transaction service what the real transaction should be. Feeding an
- * incorrect transaction hash to the service has it spit back the real one.
- *
- * NOTE: This isn't really safe, we should look into asking the contract later.
+ * Get the safe transaction hash from the Gnosis Contract
  *
  * @param transaction - Transaction object that is missing a contractTransactionHash.
  * @returns - Safe transaction hash.
