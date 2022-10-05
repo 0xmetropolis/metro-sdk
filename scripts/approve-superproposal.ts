@@ -11,9 +11,9 @@ async function main() {
   const subPodTwo = await getPod(subPodTwoAddress);
 
   if (
-    (await superPod.getProposals({ status: 'queued' }))[0].status !== 'executed' ||
-    (await subPod.getProposals({ status: 'queued' }))[0].status !== 'executed' ||
-    (await subPodTwo.getProposals({ status: 'queued' }))[0].status !== 'executed'
+    (await superPod.getProposals({ status: 'queued' }))[0].status !== ('passed' || 'rejected') ||
+    (await subPod.getProposals({ status: 'queued' }))[0].status !== ('passed' || 'rejected') ||
+    (await subPodTwo.getProposals({ status: 'queued' }))[0].status !== ('passed' || 'rejected')
   ) {
     throw new Error(
       'Admin or sub pod had an active/queued transaction. This script expects no enqueued transactions',
