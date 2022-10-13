@@ -25,7 +25,10 @@ const multiPodInput = [
 ];
 
 async function main() {
-  const { walletOne, dummyAccount } = setup(4);
+  const { walletOne, dummyAccount } = setup(5);
+
+  const pods = await getUserPods(walletOne.address);
+  console.log('pods', pods);
 
   // await podifySafe({
   //   admin: walletTwo.address,
@@ -33,15 +36,15 @@ async function main() {
   //   safe: '0x49E55999e9c47589Fd953747edffA1a754d9f8B5',
   // }, walletTwo);
 
-  const pod = await getPod('remake.pod.eth');
-  await pod.propose(await pod.mintMember(dummyAccount.address), walletOne.address);
-  const props = (await pod.getProposals({ status: 'active' }))[0];
-  // await props.approve(walletOne);
-  try {
-    await props.executeApprove(walletOne);
-  } catch (err) {
-    console.log(err);
-  }
+  // const pod = await getPod('remake.pod.eth');
+  // await pod.propose(await pod.mintMember(dummyAccount.address), walletOne.address);
+  // const props = (await pod.getProposals({ status: 'active' }))[0];
+  // // await props.approve(walletOne);
+  // try {
+  //   await props.executeApprove(walletOne);
+  // } catch (err) {
+  //   console.log(err);
+  // }
 }
 
 main();

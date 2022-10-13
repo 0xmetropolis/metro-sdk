@@ -31,7 +31,7 @@ describe('subgraph URLs', () => {
   test('testnet init', () => {
     init({ provider, network: 5 });
     expect(config.subgraphUrl).toBe(
-      'https://api.thegraph.com/subgraphs/name/orcaprotocol/pod-members',
+      'https://api.thegraph.com/subgraphs/name/orcaprotocol/goerli-pods',
     );
   });
 
