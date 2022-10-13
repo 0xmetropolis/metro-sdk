@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { getDeployment } from '@orcaprotocol/contracts';
-// These fetch the rinkeby deployments, but we just need the ABIs so it's irrelevant where we're fetching from.
-import MemberToken from '@orcaprotocol/contracts/deployments/rinkeby/MemberToken.json';
+// These fetch goerli deployments, but we just need the ABIs so it's irrelevant where we're fetching from.
+import MemberToken from '@orcaprotocol/contracts/deployments/goerli/MemberToken.json';
 import { getSafeSingletonDeployment } from '@gnosis.pm/safe-deployments';
 import { config } from '../config';
 

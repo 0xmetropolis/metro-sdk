@@ -13,10 +13,10 @@ import {
 import { userAddress, userAddress2, orcanautAddress } from './fixtures';
 
 beforeAll(async () => {
-  const provider = new ethers.providers.InfuraProvider('rinkeby', {
+  const provider = new ethers.providers.InfuraProvider('goerli', {
     infura: '69ecf3b10bc24c6a972972666fe950c8',
   });
-  init({ provider, network: 4 });
+  init({ provider, network: 5 });
 });
 
 const mockSigner = {
@@ -63,7 +63,7 @@ describe('pod create', () => {
       name: 'test',
     });
     expect(unsignedTx.data.startsWith('0x7d49f1db0000000000000000000000000000000000')).toBe(true);
-    expect(unsignedTx.to).toEqual('0x0C34378834653Be07746BC568b330FbEC2E08a68');
+    expect(unsignedTx.to).toEqual('0x3b1c2Aa5111D385b9eFceA6803D4e1a3c7507852');
   });
 });
 
@@ -71,7 +71,7 @@ describe('podifySafe', () => {
   test('isControllerEnabled should return a deployment if the safe has a Controller module enabled', async () => {
     jest.spyOn(txService, 'getSafeInfo').mockResolvedValueOnce({
       // This is a valid Controller
-      modules: ['0x5bc9beb5b7e359ec95e001536d18f6c908570401'],
+      modules: ['0x3b1c2Aa5111D385b9eFceA6803D4e1a3c7507852'],
     });
     const enabled = await getControllerFromModules('valuedoesntmatter');
     expect(enabled).toBeTruthy;
@@ -97,7 +97,7 @@ describe('podifySafe', () => {
 
   test('isControllerEnabled can accept an array of modules directly', async () => {
     const getSafe = jest.spyOn(txService, 'getSafeInfo');
-    const enabled = await getControllerFromModules(['0x5bc9beb5b7e359ec95e001536d18f6c908570401']);
+    const enabled = await getControllerFromModules(['0x3b1c2Aa5111D385b9eFceA6803D4e1a3c7507852']);
     expect(enabled).toBeTruthy;
     expect(getSafe).toHaveBeenCalledTimes(0);
   });
@@ -121,7 +121,7 @@ describe('podifySafe', () => {
       .mockImplementation(() => {});
     await enableController('valuedoesntmatter', mockSigner);
     expect(mockSafeTx).toBeCalledWith({
-      data: '0x610b59250000000000000000000000000c34378834653be07746bc568b330fbec2e08a68',
+      data: '0x610b59250000000000000000000000003b1c2aa5111d385b9efcea6803d4e1a3c7507852',
       safe: 'valuedoesntmatter',
       sender: '0x4B4C43F66ec007D1dBE28f03dAC975AAB5fbb888',
       to: 'valuedoesntmatter',
@@ -141,7 +141,7 @@ describe('podifySafe', () => {
 
   test('enableController should throw if the pod module was already enabled', async () => {
     jest.spyOn(txService, 'getSafeInfo').mockResolvedValue({
-      modules: ['0x5bc9beb5b7e359ec95e001536d18f6c908570401'],
+      modules: ['0x3b1c2Aa5111D385b9eFceA6803D4e1a3c7507852'],
       owners: [userAddress],
     });
     await expect(enableController('valuedoesntmatter', mockSigner)).rejects.toThrow(
@@ -161,7 +161,7 @@ describe('podifySafe', () => {
 
   test('podifySafe should make a smart contract call', async () => {
     jest.spyOn(txService, 'getSafeInfo').mockResolvedValue({
-      modules: ['0x5bc9beb5b7e359ec95e001536d18f6c908570401'],
+      modules: ['0x3b1c2Aa5111D385b9eFceA6803D4e1a3c7507852'],
       owners: [userAddress],
     });
     const mockCreatePod = jest.fn();
@@ -186,7 +186,7 @@ describe('podifySafe', () => {
 
   test('podifySafe should return an unsigned transaction if not provided signer', async () => {
     jest.spyOn(txService, 'getSafeInfo').mockResolvedValue({
-      modules: ['0x5bc9beb5b7e359ec95e001536d18f6c908570401'],
+      modules: ['0x3b1c2Aa5111D385b9eFceA6803D4e1a3c7507852'],
       owners: [userAddress],
     });
     jest.spyOn(utils, 'getMetropolisContract').mockReturnValueOnce({
@@ -201,7 +201,7 @@ describe('podifySafe', () => {
     });
     expect(unsignedTx).toEqual({
       data: '0x3ef3a75c0000000000000000000000004b4c43f66ec007d1dbe28f03dac975aab5fbb88800000000000000000000000097f7dcdf56934cf87a2d5df860fd881fa84ad1429c22ff5f21f0b81b113e63f7db6da94fedef11b2119b4088b89664fb9a3cb65800000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000000640000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000c746573742e706f642e6574680000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007968747470733a2f2f6f72636170726f746f636f6c2d6e66742e76657263656c2e6170702f6173736574732f746573746e65742f303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303036342d696d61676500000000000000',
-      to: '0x5BC9beb5B7E359Ec95e001536d18f6C908570401',
+      to: '0x3b1c2Aa5111D385b9eFceA6803D4e1a3c7507852',
     });
   });
 });
@@ -240,7 +240,7 @@ describe('multi pod create', () => {
       });
     await multiPodCreate(multiPodInput);
     expect(mockCreate).toHaveBeenCalledWith(
-      '0x0C34378834653Be07746BC568b330FbEC2E08a68',
+      '0x3b1c2Aa5111D385b9eFceA6803D4e1a3c7507852',
       [
         [userAddress, userAddress2],
         [userAddress, userAddress2],

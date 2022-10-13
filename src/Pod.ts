@@ -120,7 +120,7 @@ export default class Pod {
       this.ensName = Name.name;
 
       const baseUrl = `https://orcaprotocol-nft.vercel.app${
-        network === 4 ? '/assets/testnet/' : '/assets/'
+        network === 5 ? '/assets/testnet/' : '/assets/'
       }`;
       const imageUrl = `${baseUrl}${podId.toString(16).padStart(64, '0')}-image`;
       const imageNoTextUrl = `${baseUrl}${podId.toString(16).padStart(64, '0')}-image-no-text`;

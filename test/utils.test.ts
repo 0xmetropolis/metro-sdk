@@ -3,7 +3,7 @@ import { init } from '../src';
 import { userAddress, constructGqlGetUsers, gqlGetUsers } from './fixtures';
 import { encodeFunctionData, getPreviousModule } from '../src/lib/utils';
 
-const provider = new ethers.providers.InfuraProvider('rinkeby', {
+const provider = new ethers.providers.InfuraProvider('goerli', {
   infura: '69ecf3b10bc24c6a972972666fe950c8',
 });
 
@@ -47,7 +47,7 @@ test('constructGqlGetUsers should convert an array of strings properly', () => {
 });
 
 test('getPreviousModule fetches the previous module if there is one', async () => {
-  init({ provider, network: 4 });
+  init({ provider, network: 5 });
   jest.spyOn(ethers, 'Contract').mockReturnValue({
     getModulesPaginated: jest.fn().mockResolvedValue({
       array: [
@@ -66,7 +66,7 @@ test('getPreviousModule fetches the previous module if there is one', async () =
 });
 
 test('getPreviousModule returns AddressOne if there is no previous module', async () => {
-  init({ provider, network: 4 });
+  init({ provider, network: 5 });
   jest.spyOn(ethers, 'Contract').mockReturnValue({
     getModulesPaginated: jest.fn().mockResolvedValue({
       array: [

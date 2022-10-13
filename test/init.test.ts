@@ -5,9 +5,9 @@ const provider = new ethers.providers.InfuraProvider('mainnet', {
   infura: '69ecf3b10bc24c6a972972666fe950c8',
 });
 
-test('init should throw if it receives something other than 1 or 4', async () => {
+test('init should throw if it receives something other than 1 or 5', async () => {
   expect(() => {
-    init({ provider, network: 5 });
+    init({ provider, network: 4 });
   }).toThrow();
 });
 
@@ -29,14 +29,14 @@ describe('subgraph URLs', () => {
   });
 
   test('testnet init', () => {
-    init({ provider, network: 4 });
+    init({ provider, network: 5 });
     expect(config.subgraphUrl).toBe(
       'https://api.thegraph.com/subgraphs/name/orcaprotocol/pod-members',
     );
   });
 
   test('Testnet override', () => {
-    init({ provider, network: 4, subgraphUrl: 'testvalue' });
+    init({ provider, network: 5, subgraphUrl: 'testvalue' });
     expect(config.subgraphUrl).toBe('testvalue');
   });
 });
