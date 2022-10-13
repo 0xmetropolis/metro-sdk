@@ -39,10 +39,10 @@ test('populateDataDecoded should be able to decode an erc20 transfer function', 
 });
 
 describe('getSafeTxHash', () => {
-  const provider = new ethers.providers.InfuraProvider('rinkeby', {
+  const provider = new ethers.providers.InfuraProvider('goerli', {
     infura: '69ecf3b10bc24c6a972972666fe950c8',
   });
-  init({ provider, network: 4 });
+  init({ provider, network: 5 });
 
   test('given a transaction, returns a contract transaction hash', async () => {
     let safeTx = getSafeTransactionFixture('queued')[0];

@@ -8,7 +8,7 @@ Initialize the SDK with the init function on startup:
 import { init } from '@orcaprotocol/orca-sdk';
 
 // Any ethers provider works.
-// 1 for mainnet, 4 for rinkeby.
+// 1 for mainnet, 5 for goerli.
 // Make sure that the provider is instantiated before the SDK
 init({ provider: ethers.getDefaultProvider(), network: 1 });
 ```
