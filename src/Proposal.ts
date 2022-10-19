@@ -76,7 +76,6 @@ export default class Proposal {
     podNonce: number,
     safeTransaction: SafeTransaction,
     rejectTransaction?: SafeTransaction,
-    status?: ProposalStatus,
   ) {
     this.pod = Pod;
     this.id = safeTransaction.nonce;
@@ -87,7 +86,6 @@ export default class Proposal {
       : this.pod.threshold;
     this.safeTransaction = safeTransaction;
     this.rejectTransaction = rejectTransaction;
-    this.status = status;
 
     // TODO: differentiate between passed and executed proposals
     if (podNonce === this.id) this.status = 'active';
@@ -101,6 +99,10 @@ export default class Proposal {
       this.rejections = rejectTransaction.confirmations
         ? rejectTransaction.confirmations.map(confirmation => confirmation.owner)
         : [];
+      // Check to see if the reject transaction has been executed
+      if (rejectTransaction.executionDate !== null) {
+        this.status = 'rejected';
+      }
     } else {
       this.rejections = [];
     }

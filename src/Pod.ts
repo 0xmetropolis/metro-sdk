@@ -244,7 +244,6 @@ export default class Pod {
     const rejectTransactions = [];
     // Sub proposal transactions need to be handled differently.
     const pairedSubTxs = {};
-    let status;
 
     safeTransactions.forEach(tx => {
       if (tx.data === null && tx.to === this.safe) {
@@ -283,18 +282,10 @@ export default class Pod {
       const rejectNonceIndex = rejectNonces.indexOf(tx.nonce);
       // If there is, we package that together with the regular transaction.
       if (rejectNonceIndex >= 0) {
-        // Check to see if the reject transaction has been executed
-        if (tx.executionDate !== null) {
-          status = 'rejected';
-        }
-        return new Proposal(this, nonce, tx, rejectTransactions[rejectNonceIndex], status);
-      }
-      // Check to see if the regular transaction has been excuted
-      if (tx.executionDate !== null) {
-        status = 'passed';
+        return new Proposal(this, nonce, tx, rejectTransactions[rejectNonceIndex]);
       }
       // Otherwise, just handle it normally.
-      return new Proposal(this, nonce, tx, status);
+      return new Proposal(this, nonce, tx);
     });
 
     return subProposals
