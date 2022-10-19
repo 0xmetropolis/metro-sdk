@@ -111,11 +111,11 @@ describe('Pod.getProposals', () => {
     );
   });
 
-  test('Pod.getProposals({ status: passed || rejected }) will return only the active proposal', async () => {
+  test('Pod.getProposals({ status: executed }) will return only the active proposal', async () => {
     const { mockGetSafeTransactions } = standardMock();
 
     const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
-    await pod.getProposals({ status: 'passed' || 'rejected' });
+    await pod.getProposals({ status: 'executed' });
 
     expect(mockGetSafeTransactions).toHaveBeenCalledWith(
       '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',

@@ -11,7 +11,7 @@ import {
 import { rejectSuperProposal } from './lib/services/create-safe-transaction';
 import { checkAddress } from './lib/utils';
 
-export type ProposalStatus = 'active' | 'passed' | 'rejected' | 'queued';
+export type ProposalStatus = 'active' | 'passed' | 'executed' | 'rejected' | 'queued';
 
 export type ProposalType = InstanceType<typeof Proposal>;
 
@@ -76,6 +76,7 @@ export default class Proposal {
     podNonce: number,
     safeTransaction: SafeTransaction,
     rejectTransaction?: SafeTransaction,
+    status?: ProposalStatus,
   ) {
     this.pod = Pod;
     this.id = safeTransaction.nonce;
@@ -86,7 +87,9 @@ export default class Proposal {
       : this.pod.threshold;
     this.safeTransaction = safeTransaction;
     this.rejectTransaction = rejectTransaction;
+    this.status = status;
 
+    // TODO: differentiate between passed and executed proposals
     if (podNonce === this.id) this.status = 'active';
     if (podNonce > this.id) this.status = 'passed';
     if (podNonce < this.id) this.status = 'queued';

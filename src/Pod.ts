@@ -217,11 +217,7 @@ export default class Pod {
       case 'active':
         params = { nonce };
         break;
-      case 'passed':
-        // Need to double limit because some safe Txs are paired.
-        params = { nonce__lt: nonce, limit: limit * 2 };
-        break;
-      case 'rejected':
+      case 'executed':
         // Need to double limit because some safe Txs are paired.
         params = { nonce__lt: nonce, limit: limit * 2 };
         break;
@@ -248,6 +244,7 @@ export default class Pod {
     const rejectTransactions = [];
     // Sub proposal transactions need to be handled differently.
     const pairedSubTxs = {};
+    let status;
 
     safeTransactions.forEach(tx => {
       if (tx.data === null && tx.to === this.safe) {
@@ -286,10 +283,18 @@ export default class Pod {
       const rejectNonceIndex = rejectNonces.indexOf(tx.nonce);
       // If there is, we package that together with the regular transaction.
       if (rejectNonceIndex >= 0) {
-        return new Proposal(this, nonce, tx, rejectTransactions[rejectNonceIndex]);
+        // Check to see if the reject transaction has been executed
+        if (tx.executionDate !== null) {
+          status = 'rejected';
+        }
+        return new Proposal(this, nonce, tx, rejectTransactions[rejectNonceIndex], status);
+      }
+      // Check to see if the regular transaction has been excuted
+      if (tx.executionDate !== null) {
+        status = 'passed';
       }
       // Otherwise, just handle it normally.
-      return new Proposal(this, nonce, tx);
+      return new Proposal(this, nonce, tx, status);
     });
 
     return subProposals
