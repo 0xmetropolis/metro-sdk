@@ -118,7 +118,7 @@ export async function rejectSuperProposal(
       // Looking for an approveHash that is NOT for the super proposal we have, that should be the reject
       // TODO: This theoretically fails if there are two unrelated super proposals being voted on simultaneously.
       proposal.parameters[0].value !== superProposal.safeTxHash &&
-      proposal.status !== 'executed',
+      proposal.status !== ('passed' || 'rejected'),
   );
   // If subReject exists, we can just approve it and end the call.
   if (subReject) {
@@ -141,7 +141,7 @@ export async function rejectSuperProposal(
       // Looking for an approveHash that is NOT for the super proposal we have, that should be the reject
       // TODO: This theoretically fails if there are two unrelated super proposals being voted on simultaneously.
       proposal.parameters[0].value === superProposal.safeTxHash &&
-      proposal.status !== 'executed',
+      proposal.status !== ('passed' || 'rejected'),
   );
 
   // Create the sub reject. This is _not_ a standard Gnosis reject

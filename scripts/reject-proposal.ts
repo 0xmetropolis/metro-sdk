@@ -7,7 +7,7 @@ async function main() {
 
   const pod = await getPod(adminPodAddress);
 
-  if ((await pod.getProposals({ status: 'queued' }))[0].status !== 'executed') {
+  if ((await pod.getProposals({ status: 'queued' }))[0].status !== ('passed' || 'rejected')) {
     throw new Error(
       'Super pod had an active/queued transaction. This script expects no enqueued transactions',
     );
@@ -31,7 +31,7 @@ async function main() {
   // Let gnosis catch up.
   await sleep(5000);
 
-  if (proposal.status !== 'executed') throw new Error('Proposal status not right');
+  if (proposal.status !== ('passed' || 'rejected')) throw new Error('Proposal status not right');
   const refetchProposal = (await pod.getProposals())[0];
   if (!refetchProposal.safeTransaction.isExecuted)
     throw new Error('Proposal not executed according to gnosis');

@@ -194,7 +194,7 @@ export default class Pod {
    * Queued proposals can be fetched by passing { status: 'queued' } in the options. This will return queued
    * proposals, then the active proposal, then executed proposals (up to the requested limit).
    *
-   * Executed proposals can be fetched by passing { status: 'executed' } in the options. This will return
+   * Executed proposals can be fetched by passing { status: 'passed' } or { status: 'rejected' } in the options. This will return
    * only executed proposals.
    *
    * @param options
@@ -896,7 +896,7 @@ export default class Pod {
     const proposals = await this.getProposals();
     let result = false;
     proposals.forEach(proposal => {
-      if (proposal.status === 'executed') return;
+      if (proposal.status === ('passed' || 'rejected')) return;
       if (proposal.method === 'enableModule') {
         try {
           // This throws if the provided address is not one of our controllers.

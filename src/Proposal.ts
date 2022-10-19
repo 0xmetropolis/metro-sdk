@@ -11,7 +11,7 @@ import {
 import { rejectSuperProposal } from './lib/services/create-safe-transaction';
 import { checkAddress } from './lib/utils';
 
-export type ProposalStatus = 'active' | 'executed' | 'queued';
+export type ProposalStatus = 'active' | 'passed' | 'executed' | 'rejected' | 'queued';
 
 export type ProposalType = InstanceType<typeof Proposal>;
 
@@ -26,7 +26,7 @@ export default class Proposal {
   /** @property Proposal ID, i.e., the Gnosis nonce. This is not necessarily a unique number */
   id: number;
 
-  /** @property Proposal status, i.e., 'active', 'executed', or 'queued',  */
+  /** @property Proposal status, i.e., 'active', 'passed', 'rejected', or 'queued',  */
   status: ProposalStatus;
 
   /**
@@ -87,8 +87,9 @@ export default class Proposal {
     this.safeTransaction = safeTransaction;
     this.rejectTransaction = rejectTransaction;
 
+    // TODO: differentiate between passed and executed proposals
     if (podNonce === this.id) this.status = 'active';
-    if (podNonce > this.id) this.status = 'executed';
+    if (podNonce > this.id) this.status = 'passed';
     if (podNonce < this.id) this.status = 'queued';
 
     this.approvals = safeTransaction.confirmations
@@ -98,6 +99,10 @@ export default class Proposal {
       this.rejections = rejectTransaction.confirmations
         ? rejectTransaction.confirmations.map(confirmation => confirmation.owner)
         : [];
+      // Check to see if the reject transaction has been executed
+      if (rejectTransaction.executionDate !== null) {
+        this.status = 'rejected';
+      }
     } else {
       this.rejections = [];
     }
@@ -206,11 +211,19 @@ export default class Proposal {
     if (this.approvals.length < this.threshold) {
       throw new Error('Not enough approvals to execute');
     }
-    if (!(await this.pod.isMember(signerAddress))) {
+    if (
+      !((await this.pod.isMember(signerAddress)) || !(await this.pod.isSubPodMember(signerAddress)))
+    ) {
       throw new Error('Signer was not part of this pod');
     }
-    this.status = 'executed';
-    return executeSafeTransaction(this.safeTransaction, signer);
+
+    try {
+      const execute = await executeSafeTransaction(this.safeTransaction, signer);
+      this.status = 'passed';
+      return execute;
+    } catch (err) {
+      throw new Error(`Error executing Proposal: ${err.message}`);
+    }
   };
 
   /**
@@ -227,10 +240,17 @@ export default class Proposal {
     if (this.rejections.length < this.threshold) {
       throw new Error('Not enough rejections to execute');
     }
-    if (!(await this.pod.isMember(signerAddress))) {
+    if (
+      !((await this.pod.isMember(signerAddress)) || !(await this.pod.isSubPodMember(signerAddress)))
+    ) {
       throw new Error('Signer was not part of this pod');
     }
-    this.status = 'executed';
-    return executeSafeTransaction(this.rejectTransaction, signer);
+    try {
+      const execute = await executeSafeTransaction(this.rejectTransaction, signer);
+      this.status = 'rejected';
+      return execute;
+    } catch (err) {
+      throw new Error(`Error executing Proposal: ${err.message}`);
+    }
   };
 }
