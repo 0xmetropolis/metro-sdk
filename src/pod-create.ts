@@ -284,7 +284,11 @@ export async function multiPodCreate(
 
     thresholds.push(pod.threshold);
     labels.push(labelhash(pod.label));
-    ensNames.push(`${pod.label}.pod.xyz`);
+    if (config.network === '1') {
+      ensNames.push(`${pod.label}.pod.xyz`);
+    } else {
+      ensNames.push(`${pod.label}.pod.eth`);
+    }
 
     imageUrls.push(getImageUrl(nextPodId));
     nextPodId += 1;

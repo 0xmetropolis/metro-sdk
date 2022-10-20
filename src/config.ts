@@ -62,7 +62,7 @@ export function init(input: {
       : 'https://safe-transaction.goerli.gnosis.io/api/v1';
 
   config.etherscanUrl =
-    network === 1 ? 'https://api.etherscan.io/api' : 'https://api.goerli.etherscan.io/api';
+    network === 1 ? 'https://api.etherscan.io/api' : 'https://api-goerli.etherscan.io/api';
 
   config.etherscanApiKey = '2WNX6IRB7FI49FW9BPY2W8YE5XGBCDQCRB';
 }
