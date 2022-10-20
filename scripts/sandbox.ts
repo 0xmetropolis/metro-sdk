@@ -4,47 +4,90 @@ import { getPod, multiPodCreate } from '../src';
 import { accountOne, accountTwo, adminPodAddress, dummyAccount } from '../env.json';
 import { setup, sleep } from './utils';
 
+const members = [
+  '0xf0C7d25c942264D6F21871c05d3dB3b98344b499', // Will
+  '0x4B4C43F66ec007D1dBE28f03dAC975AAB5fbb888', // John
+  '0x85760ef61c0ccB7BCC4C7A0116d80D59D92e736d', // Mike
+  '0x61De0bbb6C8215Af3f821FE4884A28bc737f98D3', // Kevin
+  '0x76180A9ff1fd1EE37873717C7624E8c779cCf4f3', // Daniel
+  '0x094A473985464098b59660B37162a284b5132753', // Chun
+];
+
 const multiPodInput = [
   {
-    label: 'multi-parent-c',
-    members: ['multi-child-c', accountOne],
+    label: '0-pod',
+    members: [
+      '1-root-as-admin',
+      '1-with-admin',
+      '1-without-admin',
+      '1-sc-as-admin',
+      '1-root-as-admin-member-pod',
+      '1-member-pods',
+    ],
     threshold: 1,
     admin: accountOne,
   },
   {
-    label: 'multi-child-c',
-    members: [accountOne, accountTwo],
+    label: '1-root-as-admin',
+    members,
+    admin: '0-pod',
     threshold: 1,
   },
   {
-    label: 'multi-child2-c',
-    members: [accountOne, accountTwo],
+    label: '1-with-admin',
+    admin: accountOne,
+    members,
     threshold: 1,
-    admin: 'multi-parent-c',
+  },
+  {
+    label: '1-without-admin',
+    members,
+    threshold: 1,
+  },
+  {
+    label: '1-sc-as-admin',
+    members,
+    admin: '0x65bDD090C551D470f3dD8D4c401EC43c0eC4e9cA', // Goerli Invite Token
+    threshold: 1,
+  },
+  {
+    label: '1-root-as-admin-member-pod',
+    members,
+    threshold: 1,
+  },
+  {
+    label: '1-member-pods',
+    members: ['2-with-admin', '2-without-admin'].concat(members),
+    admin: accountOne,
+    threshold: 1,
+  },
+  {
+    label: '2-with-admin',
+    members,
+    admin: accountOne,
+    threshold: 1,
+  },
+  {
+    label: '2-without-admin',
+    members,
+    threshold: 1,
   },
 ];
 
 async function main() {
-  const { walletOne, dummyAccount } = setup(5);
+  const { walletOne } = setup(5);
 
-  const pods = await getUserPods(walletOne.address);
-  console.log('pods', pods);
+  const pod = await getPod('orca.pod.eth');
 
-  // await podifySafe({
-  //   admin: walletTwo.address,
-  //   name: 'blargh',
-  //   safe: '0x49E55999e9c47589Fd953747edffA1a754d9f8B5',
-  // }, walletTwo);
+  console.log(await pod.getProposals());
+  // const mintMembers = ['0x3d76351819c5b188C0f7447fe7D1C7AA3e0325C0'];
+  // const burnMembers = [];
 
-  // const pod = await getPod('remake.pod.eth');
-  // await pod.propose(await pod.mintMember(dummyAccount.address), walletOne.address);
-  // const props = (await pod.getProposals({ status: 'active' }))[0];
-  // // await props.approve(walletOne);
-  // try {
-  //   await props.executeApprove(walletOne);
-  // } catch (err) {
-  //   console.log(err);
-  // }
+  // const transaction = await pod.propose(
+  //   await pod.batchMintAndBurn(mintMembers, burnMembers),
+  //   walletOne.address,
+  // );
+  // console.log('transaction', transaction);
 }
 
 main();

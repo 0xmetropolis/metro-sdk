@@ -260,7 +260,7 @@ describe('multi pod create', () => {
         '0x45fd18df471e91cc8d6eb6a2b1bf22bd2033c21c7987cf1a69017e31ed7722c0',
         '0xcba04bae8ddd2442d7f24f0526838e2bc10c828cc09bea0cf6bbf31fe113b667',
       ],
-      ['gov-nauts.pod.xyz', 'art-nauts.pod.xyz', 'orcanauts.pod.xyz'],
+      ['gov-nauts.pod.eth', 'art-nauts.pod.eth', 'orcanauts.pod.eth'],
       [
         'https://orcaprotocol-nft.vercel.app/assets/testnet/0000000000000000000000000000000000000000000000000000000000000066-image',
         'https://orcaprotocol-nft.vercel.app/assets/testnet/0000000000000000000000000000000000000000000000000000000000000065-image',

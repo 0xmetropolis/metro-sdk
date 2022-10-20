@@ -192,8 +192,8 @@ export async function getSafeTxHash(transaction: SafeTransaction): Promise<strin
     transaction.safeTxGas,
     transaction.baseGas,
     transaction.gasPrice,
-    transaction.gasToken,
-    transaction.refundReceiver,
+    transaction.gasToken || ethers.constants.AddressZero,
+    transaction.refundReceiver || ethers.constants.AddressZero,
     transaction.nonce,
   );
 }
