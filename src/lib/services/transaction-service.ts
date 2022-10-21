@@ -187,7 +187,7 @@ export async function getSafeTxHash(transaction: SafeTransaction): Promise<strin
   return safeContract.getTransactionHash(
     transaction.to,
     transaction.value,
-    transaction.data,
+    transaction.data || '0x',
     transaction.operation,
     transaction.safeTxGas,
     transaction.baseGas,
