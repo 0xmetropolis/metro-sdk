@@ -79,15 +79,10 @@ async function main() {
 
   const pod = await getPod('orca.pod.eth');
 
-  console.log(await pod.getProposals());
-  // const mintMembers = ['0x3d76351819c5b188C0f7447fe7D1C7AA3e0325C0'];
-  // const burnMembers = [];
-
-  // const transaction = await pod.propose(
-  //   await pod.batchMintAndBurn(mintMembers, burnMembers),
-  //   walletOne.address,
-  // );
-  // console.log('transaction', transaction);
+  const [prop] = await pod.getProposals();
+  console.log('prop', prop);
+  await prop.reject(walletOne);
+  console.log('prop', prop);
 }
 
 main();
