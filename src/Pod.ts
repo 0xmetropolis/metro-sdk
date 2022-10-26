@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import ENS, { labelhash } from '@ensdomains/ensjs';
 import { getControllerByAddress, getDeployment } from '@orcaprotocol/contracts';
+import axios from 'axios';
 import { config } from './config';
 import { getPodFetchersByAddressOrEns, getPodFetchersById } from './fetchers';
 import {
@@ -122,8 +123,16 @@ export default class Pod {
       const baseUrl = `https://orcaprotocol-nft.vercel.app${
         network === 5 ? '/assets/testnet/' : '/assets/'
       }`;
-      const imageUrl = `${baseUrl}${podId.toString(16).padStart(64, '0')}-image`;
-      const imageNoTextUrl = `${baseUrl}${podId.toString(16).padStart(64, '0')}-image-no-text`;
+      // Pod ID converted to hex and left padded to 64 chars.
+      const paddedId = podId.toString(16).padStart(64, '0');
+      try {
+        const metadata = (await axios.get(`${baseUrl}${paddedId}.json`)).data;
+        this.description = metadata.description || null;
+      } catch {
+        this.description = null;
+      }
+      const imageUrl = `${baseUrl}${paddedId}-image`;
+      const imageNoTextUrl = `${baseUrl}${paddedId}-image-no-text`;
 
       this.imageUrl = imageUrl;
       this.imageNoTextUrl = imageNoTextUrl;
@@ -151,6 +160,9 @@ export default class Pod {
 
   /** @property Admin address */
   admin: string;
+
+  /** @property Description of NFT */
+  description: string;
 
   /** @property Link to Pod NFT image */
   imageUrl: string;
