@@ -79,10 +79,7 @@ async function main() {
 
   const pod = await getPod('orca.pod.eth');
 
-  const [prop] = await pod.getProposals();
-  console.log('prop', prop);
-  await prop.reject(walletOne);
-  console.log('prop', prop);
+  console.log('pod', pod);
 }
 
 main();

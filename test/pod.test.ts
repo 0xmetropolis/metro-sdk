@@ -16,8 +16,6 @@ import * as txService from '../src/lib/services/transaction-service';
 import * as utils from '../src/lib/utils';
 import * as contracts from '@orcaprotocol/contracts';
 
-import Pod from '../src/Pod';
-
 function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
   const admin = opts?.overrideAdmin ? opts.overrideAdmin : orcanautPod.admin;
   jest.spyOn(fetchers, 'getPodFetchersByAddressOrEns').mockResolvedValueOnce({
@@ -86,6 +84,26 @@ test('getPod should be able to fetch via pod id', async () => {
 test('getPod should return null if given a value that doesnt resolve to an address', async () => {
   const pod = await getPod('not valid string');
   expect(pod).toBe(null);
+});
+
+test('getPod should fetch description', async () => {
+  jest.spyOn(axios, 'get').mockResolvedValueOnce({
+    data: {
+      description: 'Metropolis Pod Membership',
+    },
+  });
+  mockGetPodFetchersByAddress();
+  const pod = await getPod(orcanautPod.id);
+  expect(pod.description).toEqual('Metropolis Pod Membership');
+});
+
+test('getPod should return null for the description if it cannot find a metadata obj', async () => {
+  mockGetPodFetchersByAddress();
+  jest.spyOn(axios, 'get').mockResolvedValueOnce({
+    data: null,
+  });
+  const pod = await getPod(orcanautPod.id);
+  expect(pod.description).toBeNull();
 });
 
 test('getPod should return null if the given address is not a pod', async () => {
