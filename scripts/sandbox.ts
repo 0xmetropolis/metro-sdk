@@ -77,7 +77,7 @@ const multiPodInput = [
 async function main() {
   const { walletOne } = setup(5);
 
-  const pod = await getPod('orca.pod.eth');
+  const pod = await getPod(25);
 
   console.log('pod', pod);
 }

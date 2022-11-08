@@ -118,6 +118,7 @@ export default class Pod {
       this.admin = fetchedAdmin === ethers.constants.AddressZero ? null : fetchedAdmin;
       this.id = podId;
       this.safe = safe;
+      this.address = this.safe;
       this.ensName = Name.name;
 
       const baseUrl = `https://orcaprotocol-nft.vercel.app${
@@ -148,6 +149,9 @@ export default class Pod {
 
   /** @property Gnosis Safe address */
   safe: string;
+
+  /** @property Gnosis Safe address, duplicate of `safe` */
+  address: string;
 
   /** @property Current nonce, i.e., the nonce of the active proposal */
   nonce: number;

@@ -54,6 +54,7 @@ test('getPod should be able to fetch via address', async () => {
   const pod = await getPod(orcanautAddress);
   expect(pod.id).toEqual(orcanautPod.id);
   expect(pod.safe).toEqual(orcanautPod.safe);
+  expect(pod.address).toEqual(pod.safe);
   expect(pod.imageNoTextUrl).toEqual(orcanautPod.imageNoTextUrl);
   expect(pod.admin).toEqual(orcanautPod.admin);
   expect(pod.ensName).toEqual(orcanautPod.ensName);
