@@ -77,9 +77,10 @@ const multiPodInput = [
 async function main() {
   const { walletOne } = setup(5);
 
-  const pod = await getPod(25);
-
+  const pod = await getPod('1-member-pods.pod.eth');
   console.log('pod', pod);
+  const personas = await pod.getPersonas('0x85760ef61c0ccB7BCC4C7A0116d80D59D92e736d');
+  console.log('personas', personas);
 }
 
 main();
