@@ -1,7 +1,19 @@
 import { ethers } from 'ethers';
-import { customSubgraphQuery, getUserPods, init, podifySafe } from '../src';
+import {
+  batchTransferMembership,
+  customSubgraphQuery,
+  fetchUserPodIds,
+  getUserPods,
+  init,
+  podifySafe,
+} from '../src';
 import { getPod, multiPodCreate } from '../src';
-import { accountOne, accountTwo, adminPodAddress, dummyAccount } from '../env.json';
+import {
+  accountOne,
+  accountTwo,
+  adminPodAddress,
+  dummyAccount,
+} from '../env.json';
 import { setup, sleep } from './utils';
 
 const members = [
@@ -77,15 +89,6 @@ const multiPodInput = [
 async function main() {
   const { walletOne } = setup(5);
 
-  const pod = await getPod('balloon.pod.eth');
-  console.log('pod', pod);
-  const admin = pod.admin;
-  console.log(admin, 'ADMIN');
-  const adminPod = await getPod(pod.admin);
-  console.log(adminPod, 'ADMIN POD');
-  const personas = await pod.getPersonas('0x3d76351819c5b188C0f7447fe7D1C7AA3e0325C0');
-  console.log('personas', personas);
-
   // await pod.callAsPersona(
   //   pod.burnMember,
   //   ['0x8d2d96d31e86843e9B71E635beA331f9b1016055'],
@@ -102,6 +105,14 @@ async function main() {
   //   ['0x8d2d96d31e86843e9B71E635beA331f9b1016055'],
   //   personas[2],
   // );
+  const transfer = await batchTransferMembership(
+    '0x3d76351819c5b188C0f7447fe7D1C7AA3e0325C0',
+    '0x76180A9ff1fd1EE37873717C7624E8c779cCf4f3',
+    [39, 40],
+    walletOne
+  );
+  console.log(transfer, 'TRANSFER!');
+  return transfer;
 }
 
 main();
