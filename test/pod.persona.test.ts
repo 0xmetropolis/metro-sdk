@@ -5,6 +5,7 @@ import * as createSafe from '../src/lib/services/create-safe-transaction';
 import { userAddress2, constructGqlGetUsers, getSafeTransactionFixture } from './fixtures';
 import * as fetchers from '../src/fetchers';
 import * as utils from '../src/lib/utils';
+import { infuraKey } from '../env.json';
 
 // Some of these tests run long.
 jest.setTimeout(7500);
@@ -38,7 +39,7 @@ function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
 }
 
 const provider = new ethers.providers.InfuraProvider('goerli', {
-  infura: '69ecf3b10bc24c6a972972666fe950c8',
+  infura: infuraKey,
 });
 
 beforeAll(async () => {
@@ -210,7 +211,7 @@ test('Mint via subPodMember persona should throw if sender is not a sub pod memb
 
   await expect(
     pod.callAsPersona(pod.mintMember, [userAddress2], personas[0], userAddress2),
-  ).rejects.toThrow('Sub pod was not a member of this pod');
+  ).rejects.toThrow('Sub pod is not a member of this pod');
 });
 
 test('Mint via subPodMember persona should throw if the sub pod is not a member of the pod', async () => {
@@ -224,6 +225,6 @@ test('Mint via subPodMember persona should throw if the sub pod is not a member 
   const personas = await pod.getPersonas('0x08A9C4898e045A4E176C2cbf4Ca86aEf9f6EA478');
 
   await expect(pod.callAsPersona(pod.mintMember, [userAddress2], personas[0])).rejects.toThrow(
-    'Sub pod was not a member of this pod',
+    'Sub pod is not a member of this pod',
   );
 });

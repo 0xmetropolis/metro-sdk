@@ -12,6 +12,7 @@ import {
   constructGqlGetUsers,
   erc20TransferTransaction,
 } from './fixtures';
+import { infuraKey } from '../env.json';
 
 // Tests for any token, or token-like functionality (this includes admin transfers)
 
@@ -28,10 +29,12 @@ function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
     },
     Safe: {
       address: orcanautPod.safe,
-      nonce: jest.fn().mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
-      getThreshold: jest
-        .fn()
-        .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+      nonce: jest.fn().mockResolvedValueOnce({
+        toNumber: jest.fn().mockImplementation(() => 5),
+      }),
+      getThreshold: jest.fn().mockResolvedValueOnce({
+        toNumber: jest.fn().mockImplementation(() => 10),
+      }),
     },
     podId: orcanautPod.id,
     Name: { name: orcanautPod.ensName },
@@ -50,10 +53,12 @@ function setupAdminAndSubPod() {
       },
       Safe: {
         address: orcanautAddress,
-        nonce: jest.fn().mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
-        getThreshold: jest
-          .fn()
-          .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+        nonce: jest.fn().mockResolvedValueOnce({
+          toNumber: jest.fn().mockImplementation(() => 5),
+        }),
+        getThreshold: jest.fn().mockResolvedValueOnce({
+          toNumber: jest.fn().mockImplementation(() => 10),
+        }),
       },
       podId: orcanautPod.id,
       Name: { name: orcanautPod.ensName },
@@ -66,10 +71,12 @@ function setupAdminAndSubPod() {
       },
       Safe: {
         address: artNautPod.safe,
-        nonce: jest.fn().mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
-        getThreshold: jest
-          .fn()
-          .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+        nonce: jest.fn().mockResolvedValueOnce({
+          toNumber: jest.fn().mockImplementation(() => 5),
+        }),
+        getThreshold: jest.fn().mockResolvedValueOnce({
+          toNumber: jest.fn().mockImplementation(() => 10),
+        }),
       },
       podId: artNautPod.id,
       Name: { name: artNautPod.ensName },
@@ -82,7 +89,7 @@ function setupAdminAndSubPod() {
 
 beforeAll(async () => {
   provider = new ethers.providers.InfuraProvider('mainnet', {
-    infura: '69ecf3b10bc24c6a972972666fe950c8',
+    infura: infuraKey,
   });
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
@@ -106,7 +113,10 @@ test('Subpod members should be able to propose a mint member', async () => {
     .mockResolvedValue(erc20TransferTransaction);
   const pod = await sdk.getPod(orcanautAddress);
 
-  const mint = (await pod.mintMember(userAddress)) as { to: string; data: string };
+  const mint = (await pod.mintMember(userAddress)) as {
+    to: string;
+    data: string;
+  };
   await pod.propose(mint, artNautPod.members[0]);
 
   expect(create).toHaveBeenCalledWith({
@@ -126,7 +136,10 @@ test('Propose with a nonce should override the given nonce', async () => {
     .mockResolvedValue(erc20TransferTransaction);
   const pod = await sdk.getPod(orcanautAddress);
 
-  const mint = (await pod.mintMember(userAddress)) as { to: string; data: string };
+  const mint = (await pod.mintMember(userAddress)) as {
+    to: string;
+    data: string;
+  };
   await pod.propose(mint, artNautPod.members[0], { nonce: 5 });
 
   expect(create).toHaveBeenCalledWith({
@@ -146,7 +159,10 @@ test('Sub pod members should be able to propose a super pod mint', async () => {
 
   const superPod = await sdk.getPod(orcanautAddress);
   const subPod = await sdk.getPod(artNautPod.safe);
-  const mint = (await superPod.mintMember(userAddress)) as { to: string; data: string };
+  const mint = (await superPod.mintMember(userAddress)) as {
+    to: string;
+    data: string;
+  };
 
   await subPod.propose(await superPod.propose(mint, orcanautPod.members[0]), artNautPod.members[0]);
   expect(create).toHaveBeenNthCalledWith(1, {

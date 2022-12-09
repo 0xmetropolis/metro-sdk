@@ -7,6 +7,7 @@ import {
   adminPodAddress,
   subPodAddress,
   subPodTwoAddress,
+  infuraKey,
 } from '../env.json';
 
 export function sleep(ms) {
@@ -15,10 +16,7 @@ export function sleep(ms) {
 
 export function setup(network = 4) {
   const networkName = network === 1 ? 'mainnet' : 'goerli';
-  const provider = new ethers.providers.InfuraProvider(
-    networkName,
-    '69ecf3b10bc24c6a972972666fe950c8',
-  );
+  const provider = new ethers.providers.InfuraProvider(networkName, infuraKey);
   init({ provider, network });
 
   // Get two accounts

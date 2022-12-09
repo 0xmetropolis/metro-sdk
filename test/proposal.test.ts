@@ -6,6 +6,7 @@ import * as txService from '../src/lib/services/transaction-service';
 import * as fetchers from '../src/fetchers';
 import { constructGqlGetUsers, getSafeTransactionFixture } from './fixtures';
 import { userAddress, userAddress2 } from './fixtures';
+import { infuraKey } from '../env.json';
 
 // Baseline mock for this set of tests.
 function standardMock(fetchType?: string) {
@@ -17,10 +18,12 @@ function standardMock(fetchType?: string) {
     },
     Safe: {
       address: '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
-      nonce: jest.fn().mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 1) }),
-      getThreshold: jest
-        .fn()
-        .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 3) }),
+      nonce: jest.fn().mockResolvedValueOnce({
+        toNumber: jest.fn().mockImplementation(() => 1),
+      }),
+      getThreshold: jest.fn().mockResolvedValueOnce({
+        toNumber: jest.fn().mockImplementation(() => 3),
+      }),
     },
     podId: 5, // Arbitrary
     Name: { name: 'whatever.pod.eth' },
@@ -40,7 +43,7 @@ let provider;
 
 beforeAll(async () => {
   provider = new ethers.providers.InfuraProvider('mainnet', {
-    infura: '69ecf3b10bc24c6a972972666fe950c8',
+    infura: infuraKey,
   });
   provider.getSigner = () => {
     return {
@@ -253,9 +256,9 @@ describe('Proposal approve/reject', () => {
     const mockSigner = {
       getAddress: jest.fn().mockResolvedValueOnce(userAddress),
     };
-    const mockCreate = jest
-      .spyOn(txService, 'createRejectTransaction')
-      .mockResolvedValueOnce({ safe: '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41' });
+    const mockCreate = jest.spyOn(txService, 'createRejectTransaction').mockResolvedValueOnce({
+      safe: '0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41',
+    });
 
     const pod = await getPod('0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41');
     const proposal = (await pod.getProposals())[0];

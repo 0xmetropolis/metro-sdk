@@ -5,5 +5,6 @@
   "accountTwoPrivateKey": "",
   "dummyAccount": "0x1cC62cE7cb56ed99513823064295761f9b7C856e",
   "adminPodAddress": "0xBe71ECaA104645ab78ed62A52763b2854e6DaD2E",
-  "subPodAddress": "0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41"
+  "subPodAddress": "0x4d3ba1AdabA15796CC3d11E48e8EC28e3A5F7C41",
+  "infuraKey": ""
 }

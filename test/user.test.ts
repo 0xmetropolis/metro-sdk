@@ -2,10 +2,11 @@ import axios from 'axios';
 import { ethers } from 'ethers';
 import { init, getUserPods, getAdminPods } from '../src';
 import { orcaCorePod, userAddress, gqlGetUserPods, gqlGetUserPodsEmpty } from './fixtures';
+import { infuraKey } from '../env.json';
 
 beforeAll(async () => {
   const provider = new ethers.providers.InfuraProvider('mainnet', {
-    infura: '69ecf3b10bc24c6a972972666fe950c8',
+    infura: infuraKey,
   });
   init({ provider, network: 1 });
 });
@@ -73,7 +74,7 @@ describe('user memberships', () => {
 
 // test('getAdminPods should fetch Pod objects for all the pods an address is admin of', async () => {
 //   const provider = new ethers.providers.InfuraProvider('mainnet', {
-//     infura: '69ecf3b10bc24c6a972972666fe950c8',
+//      infura: infuraKey,
 //   });
 //   init({ provider, network: 1 });
 //   const pods = await getAdminPods(userAddress);

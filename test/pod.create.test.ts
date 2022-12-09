@@ -11,10 +11,11 @@ import {
   podifySafe,
 } from '../src/pod-create';
 import { userAddress, userAddress2, orcanautAddress } from './fixtures';
+import { infuraKey } from '../env.json';
 
 beforeAll(async () => {
   const provider = new ethers.providers.InfuraProvider('goerli', {
-    infura: '69ecf3b10bc24c6a972972666fe950c8',
+    infura: infuraKey,
   });
   init({ provider, network: 5 });
 });
@@ -41,7 +42,12 @@ describe('pod create', () => {
         createPod: mockCreate,
       });
     await createPod(
-      { members: [userAddress, userAddress2], admin: userAddress, threshold: 1, name: 'test' },
+      {
+        members: [userAddress, userAddress2],
+        admin: userAddress,
+        threshold: 1,
+        name: 'test',
+      },
       mockSigner,
     );
     expect(mockCreate).toHaveBeenCalledWith(

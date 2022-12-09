@@ -9,7 +9,8 @@ export async function getPersonas(
 ): Promise<Array<{ type: string; address: string }>> {
   const personas = [];
   if (pod.isAdmin(address)) personas.push({ type: 'admin', address });
-  if (await pod.isAdminPodMember(address)) personas.push({ type: 'adminPodMember', address });
+  if (await pod.isAdminPodMember(address))
+    personas.push({ type: 'adminPodMember', address: pod.admin });
   if (await pod.isMember(address)) personas.push({ type: 'member', address });
 
   const memberSubPods = await pod.getSubPodsByMember(address);

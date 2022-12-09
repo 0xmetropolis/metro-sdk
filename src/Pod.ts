@@ -486,8 +486,7 @@ export default class Pod {
 
         const isSubPodMember = await this.isMember(subPod.safe);
 
-        if (!isSubPodMember) throw new Error('Sub pod was not a member of this pod');
-
+        if (!isSubPodMember) throw new Error('Sub pod is not a member of this pod');
         const senderAddress = sender instanceof ethers.Signer ? await sender.getAddress() : sender;
         let result;
         try {
@@ -504,7 +503,7 @@ export default class Pod {
         return result;
       }
       default:
-        throw new Error(`${persona.type} was not a valid persona`);
+        throw new Error(`${persona.type} is not a valid persona`);
     }
   };
 

@@ -2,9 +2,10 @@ import { ethers } from 'ethers';
 import { init } from '../src';
 import { userAddress, constructGqlGetUsers, gqlGetUsers } from './fixtures';
 import { encodeFunctionData, getPreviousModule } from '../src/lib/utils';
+import { infuraKey } from '../env.json';
 
 const provider = new ethers.providers.InfuraProvider('goerli', {
-  infura: '69ecf3b10bc24c6a972972666fe950c8',
+  infura: infuraKey,
 });
 
 test('encodeFunctionData should encode function data', () => {

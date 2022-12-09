@@ -15,6 +15,7 @@ import * as fetchers from '../src/fetchers';
 import * as txService from '../src/lib/services/transaction-service';
 import * as utils from '../src/lib/utils';
 import * as contracts from '@orcaprotocol/contracts';
+import { infuraKey } from '../env.json';
 
 function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
   const admin = opts?.overrideAdmin ? opts.overrideAdmin : orcanautPod.admin;
@@ -27,10 +28,12 @@ function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
     },
     Safe: {
       address: orcanautPod.safe,
-      nonce: jest.fn().mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
-      getThreshold: jest
-        .fn()
-        .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+      nonce: jest.fn().mockResolvedValueOnce({
+        toNumber: jest.fn().mockImplementation(() => 5),
+      }),
+      getThreshold: jest.fn().mockResolvedValueOnce({
+        toNumber: jest.fn().mockImplementation(() => 10),
+      }),
     },
     podId: orcanautPod.id,
     Name: { name: orcanautPod.ensName },
@@ -38,7 +41,7 @@ function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
 }
 
 const provider = new ethers.providers.InfuraProvider('mainnet', {
-  infura: '69ecf3b10bc24c6a972972666fe950c8',
+  infura: infuraKey,
 });
 
 beforeAll(async () => {
@@ -149,10 +152,12 @@ test('Pod object should be able to fetch member pods via async call', async () =
     Controller: { podAdmin: jest.fn().mockResolvedValueOnce(artNautPod.admin) },
     Safe: {
       address: artNautPod.safe,
-      nonce: jest.fn().mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
-      getThreshold: jest
-        .fn()
-        .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+      nonce: jest.fn().mockResolvedValueOnce({
+        toNumber: jest.fn().mockImplementation(() => 5),
+      }),
+      getThreshold: jest.fn().mockResolvedValueOnce({
+        toNumber: jest.fn().mockImplementation(() => 10),
+      }),
     },
     podId: artNautPod.id,
     Name: { name: artNautPod.ensName },
@@ -179,10 +184,12 @@ test('Pod.getMembers() should include member pods in its list', async () => {
     Controller: { podAdmin: jest.fn().mockResolvedValueOnce(artNautPod.admin) },
     Safe: {
       address: artNautPod.safe,
-      nonce: jest.fn().mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
-      getThreshold: jest
-        .fn()
-        .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+      nonce: jest.fn().mockResolvedValueOnce({
+        toNumber: jest.fn().mockImplementation(() => 5),
+      }),
+      getThreshold: jest.fn().mockResolvedValueOnce({
+        toNumber: jest.fn().mockImplementation(() => 10),
+      }),
     },
     podId: artNautPod.id,
     Name: { name: artNautPod.ensName },
@@ -380,9 +387,9 @@ describe('Pod.migratePodToLatest', () => {
     // jest.mock('@orcaprotocol/contracts', () => ({
     //   getDeployment: jest.fn().mockReturnValue({ address: '0xDE69E7C2184599093a9E0Bbc5923fa462fdf0302' }),
     // }));
-    jest
-      .spyOn(contracts, 'getDeployment')
-      .mockReturnValue({ address: '0xDE69E7C2184599093a9E0Bbc5923fa462fdf0302' });
+    jest.spyOn(contracts, 'getDeployment').mockReturnValue({
+      address: '0xDE69E7C2184599093a9E0Bbc5923fa462fdf0302',
+    });
     jest
       .spyOn(utils, 'getPreviousModule')
       .mockResolvedValueOnce('0x0000000000000000000000000000000000000001');
@@ -398,9 +405,9 @@ describe('Pod.migratePodToLatest', () => {
   test('Previous module should handle if a module was added after the Controller', async () => {
     mockGetPodFetchersByAddress();
     const fakePreviousModule = '0x6636900672F411D7Cab64Aa30238DC2658D6Cbb5';
-    jest
-      .spyOn(contracts, 'getDeployment')
-      .mockReturnValue({ address: '0xDE69E7C2184599093a9E0Bbc5923fa462fdf0302' });
+    jest.spyOn(contracts, 'getDeployment').mockReturnValue({
+      address: '0xDE69E7C2184599093a9E0Bbc5923fa462fdf0302',
+    });
     jest.spyOn(utils, 'getPreviousModule').mockResolvedValueOnce(fakePreviousModule);
     const pod = await getPod(orcanautAddress);
     const result = await pod.migratePodToLatest();
