@@ -2,3 +2,4 @@ node_modules
 .nvmrc
 dist
 env.json
+.env

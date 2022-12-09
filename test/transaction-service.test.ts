@@ -6,9 +6,7 @@ import { populateDataDecoded, getSafeTxHash } from '../src/lib/services/transact
 import { getNextNonce } from '../src/lib/services/create-safe-transaction';
 import { userAddress } from '../test/fixtures';
 import { init } from '../src/config';
-import axios from 'axios';
 import { ethers } from 'ethers';
-import { infuraKey } from '../env.json';
 
 test('populateDataDecoded should be able to decode an erc20 transfer function', async () => {
   const { dataDecoded } = erc20TransferTransaction;
@@ -41,7 +39,7 @@ test('populateDataDecoded should be able to decode an erc20 transfer function', 
 
 describe('getSafeTxHash', () => {
   const provider = new ethers.providers.InfuraProvider('goerli', {
-    infura: infuraKey,
+    infura: process.env.INFURA_KEY,
   });
   init({ provider, network: 5 });
 

@@ -5,7 +5,6 @@ import * as createSafe from '../src/lib/services/create-safe-transaction';
 import { userAddress2, constructGqlGetUsers, getSafeTransactionFixture } from './fixtures';
 import * as fetchers from '../src/fetchers';
 import * as utils from '../src/lib/utils';
-import { infuraKey } from '../env.json';
 
 // Some of these tests run long.
 jest.setTimeout(7500);
@@ -43,7 +42,7 @@ function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
 }
 
 const provider = new ethers.providers.InfuraProvider('goerli', {
-  infura: infuraKey,
+  infura: process.env.INFURA_KEY,
 });
 
 beforeAll(async () => {

@@ -1,9 +1,8 @@
 import { ethers } from 'ethers';
 import { init, config } from '../src';
-import { infuraKey } from '../env.json';
 
 const provider = new ethers.providers.InfuraProvider('mainnet', {
-  infura: infuraKey,
+  infura: process.env.INFURA_KEY,
 });
 
 test('init should throw if it receives something other than 1 or 5', async () => {

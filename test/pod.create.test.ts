@@ -11,11 +11,10 @@ import {
   podifySafe,
 } from '../src/pod-create';
 import { userAddress, userAddress2, orcanautAddress } from './fixtures';
-import { infuraKey } from '../env.json';
 
 beforeAll(async () => {
   const provider = new ethers.providers.InfuraProvider('goerli', {
-    infura: infuraKey,
+    infura: process.env.INFURA_KEY,
   });
   init({ provider, network: 5 });
 });

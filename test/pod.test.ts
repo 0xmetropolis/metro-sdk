@@ -15,7 +15,6 @@ import * as fetchers from '../src/fetchers';
 import * as txService from '../src/lib/services/transaction-service';
 import * as utils from '../src/lib/utils';
 import * as contracts from '@orcaprotocol/contracts';
-import { infuraKey } from '../env.json';
 
 function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
   const admin = opts?.overrideAdmin ? opts.overrideAdmin : orcanautPod.admin;
@@ -41,7 +40,7 @@ function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
 }
 
 const provider = new ethers.providers.InfuraProvider('mainnet', {
-  infura: infuraKey,
+  infura: process.env.INFURA_KEY,
 });
 
 beforeAll(async () => {

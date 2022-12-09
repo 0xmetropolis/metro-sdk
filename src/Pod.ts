@@ -454,24 +454,29 @@ export default class Pod {
     persona: { type: string; address: string },
     sender?: ethers.Signer | string,
   ) => {
+    const senderAddress = sender instanceof ethers.Signer ? await sender.getAddress() : sender;
     switch (persona.type) {
       case 'admin':
+        // for the admin case, the sender must be a signer
         if (!sender) throw new Error(`Expected sender to be signer, but received ${sender}`);
         args.push(sender);
+        // admin personas do not require proposals
         return method.apply(this, args);
       case 'member':
+        // member personas require proposals to be created
         return this.propose(await method.apply(this, args), persona.address);
       case 'adminPodMember': {
         let adminPod;
+        // if an admin pod object exists, use that
         if (this.adminPod) adminPod = this.adminPod;
         else {
+          // create a new admin pod object with admin address
           adminPod = await new Pod(this.admin);
           this.adminPod = adminPod;
         }
-        let senderAddress = sender;
-        if (sender instanceof ethers.Signer) senderAddress = await sender.getAddress();
         let result;
         try {
+          // admin pods require proposal creation
           result = await adminPod.propose(await method.apply(this, args), senderAddress);
         } catch (err) {
           // Make the error message more specific
@@ -482,14 +487,16 @@ export default class Pod {
         return result;
       }
       case 'subPodMember': {
+        // create a new pod object with sub pod address
         const subPod = await new Pod(persona.address);
 
+        // check to see if sub pod is member of the pod
         const isSubPodMember = await this.isMember(subPod.safe);
 
         if (!isSubPodMember) throw new Error('Sub pod is not a member of this pod');
-        const senderAddress = sender instanceof ethers.Signer ? await sender.getAddress() : sender;
         let result;
         try {
+          // sub pods require proposal creation
           result = await subPod.propose(
             await this.propose(await method.apply(this, args), subPod.safe),
             senderAddress,

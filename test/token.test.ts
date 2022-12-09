@@ -16,7 +16,6 @@ import {
   userAddress2,
   constructGqlGetUsers,
 } from './fixtures';
-import { infuraKey } from '../env.json';
 
 // Tests for any token, or token-like functionality (this includes admin transfers)
 
@@ -47,7 +46,7 @@ function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
 
 beforeAll(async () => {
   provider = new ethers.providers.InfuraProvider('mainnet', {
-    infura: infuraKey,
+    infura: process.env.INFURA_KEY,
   });
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
@@ -76,7 +75,7 @@ describe('admin actions', () => {
 
   test('As an admin, I should be able to mint a member to a pod', async () => {
     provider = new ethers.providers.InfuraProvider('mainnet', {
-      infura: infuraKey,
+      infura: process.env.INFURA_KEY,
     });
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore

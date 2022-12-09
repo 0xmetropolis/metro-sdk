@@ -6,7 +6,6 @@ import * as txService from '../src/lib/services/transaction-service';
 import * as fetchers from '../src/fetchers';
 import { constructGqlGetUsers, getSafeTransactionFixture } from './fixtures';
 import { userAddress, userAddress2 } from './fixtures';
-import { infuraKey } from '../env.json';
 
 // Baseline mock for this set of tests.
 function standardMock(fetchType?: string) {
@@ -43,7 +42,7 @@ let provider;
 
 beforeAll(async () => {
   provider = new ethers.providers.InfuraProvider('mainnet', {
-    infura: infuraKey,
+    infura: process.env.INFURA_KEY,
   });
   provider.getSigner = () => {
     return {
