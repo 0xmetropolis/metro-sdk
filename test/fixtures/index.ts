@@ -2,8 +2,11 @@ import { getDeployment } from '@orcaprotocol/contracts';
 
 export const userAddress = '0x4B4C43F66ec007D1dBE28f03dAC975AAB5fbb888';
 export const userAddress2 = '0x1cC62cE7cb56ed99513823064295761f9b7C856e';
+export const userAddress3 = '0x47a842347E40C5bA9Ce653f3150A316622932fc1';
 export const orcanautAddress = '0x97F7Dcdf56934Cf87a2d5DF860fD881FA84ad142';
 export const { address: memberTokenAddress } = getDeployment('MemberToken', 1);
+
+export const podIds = [10, 11];
 
 export const orcaCorePod = {
   id: 0,
