@@ -3,6 +3,7 @@ import { getDeployment } from '@orcaprotocol/contracts';
 // These fetch goerli deployments, but we just need the ABIs so it's irrelevant where we're fetching from.
 import MemberToken from '@orcaprotocol/contracts/deployments/goerli/MemberToken.json';
 import { getSafeSingletonDeployment } from '@gnosis.pm/safe-deployments';
+import { getAddress } from 'ethers/lib/utils';
 import { config } from '../config';
 
 const GnosisSafe = getSafeSingletonDeployment({ version: '1.3.0' });
@@ -110,4 +111,35 @@ export async function getPreviousModule(safe, module, newController?: string) {
   if (!previousModule) throw new Error('Error parsing old modules');
 
   return previousModule;
+}
+
+/**
+ * Returns ethers contract based on name
+ * @param contractName
+ * @param signer
+ * @returns
+ */
+export function getContract(contractName: string, signer) {
+  const contractJson = getDeployment(contractName, config.network);
+  if (!contractJson) throw new RangeError(`Contract ABI could not be found for ${contractName}`);
+  return new ethers.Contract(contractJson.address, contractJson.abi, signer);
+}
+
+export async function getIsLatestVersion(signer, pod) {
+  const memberToken = getContract('MemberToken', signer);
+  const latestController = getContract('ControllerLatest', signer);
+  const controllerAddress = await memberToken.memberController(pod.id);
+  return getAddress(latestController.address) === getAddress(controllerAddress);
+}
+
+/**
+ * Determines if an array of pods are on the same controller version
+ * @param pods - an array of pod controller versions
+ * @returns - a boolean value stating if all pods are on the same version
+ */
+export function getIsSameVersion(podControllerValues) {
+  // helper function to check if all pods have the same controller values
+  const allEqual = arr => arr.every(val => val === arr[0]);
+  const isSameVersion = allEqual(podControllerValues);
+  return isSameVersion;
 }
