@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import ENS, { labelhash } from '@ensdomains/ensjs';
 import { getControllerByAddress, getDeployment } from '@orcaprotocol/contracts';
 import axios from 'axios';
+import { getPersonas } from './pod-utils';
 import { config } from './config';
 import { getPodFetchersByAddressOrEns, getPodFetchersById } from './fetchers';
 import {
@@ -189,6 +190,12 @@ export default class Pod {
 
   /**
    * @ignore
+   * @property Admin pod object
+   */
+  adminPod?: Pod;
+
+  /**
+   * @ignore
    * @property Array of Pod objects for any member pods
    * Do not call this property directly, use `Pod.getMemberPods()`
    */
@@ -326,7 +333,9 @@ export default class Pod {
     }
 
     // All safe transactions that have a given nonce.
-    const safeTransactions = await getSafeTransactionsBySafe(this.safe, { nonce });
+    const safeTransactions = await getSafeTransactionsBySafe(this.safe, {
+      nonce,
+    });
     if (safeTransactions.length === 0) throw new Error('Could not find a related safe transaction');
     if (safeTransactions.length === 1) return new Proposal(this, this.nonce, safeTransactions[0]);
     if (safeTransactions.length === 2)
@@ -419,6 +428,105 @@ export default class Pod {
   };
 
   /**
+   * Calls a Pod method via a persona.
+   * The persona object can be fetched by using `Pod.getPersonas(address)`
+   * E.g.,
+   * ```
+   * callAsPersona(
+   *  pod.mintMember,
+   *  [newMember],
+   *  { type: 'admin', address: userAddress },
+   *  signer,
+   * )
+   * ```
+   * The sender must be a signer in the admin case, or the address of the sender.
+   * The sender must be a member of the relevant pod.
+   *
+   * @param method
+   * @param args
+   * @param persona
+   * @param sender
+   * @returns
+   */
+  callAsPersona = async (
+    method: any,
+    args: Array<any>,
+    persona: { type: string; address: string },
+    sender?: ethers.Signer | string,
+  ) => {
+    const senderAddress = sender instanceof ethers.Signer ? await sender.getAddress() : sender;
+    switch (persona.type) {
+      case 'admin':
+        // for the admin case, the sender must be a signer
+        if (!sender) throw new Error(`Expected sender to be signer, but received ${sender}`);
+        args.push(sender);
+        // admin personas do not require proposals
+        return method.apply(this, args);
+      case 'member':
+        // member personas require proposals to be created
+        return this.propose(await method.apply(this, args), persona.address);
+      case 'adminPodMember': {
+        let adminPod;
+        // if an admin pod object exists, use that
+        if (this.adminPod) adminPod = this.adminPod;
+        else {
+          // create a new admin pod object with admin address
+          adminPod = await new Pod(this.admin);
+          this.adminPod = adminPod;
+        }
+        let result;
+        try {
+          // admin pods require proposal creation
+          result = await adminPod.propose(await method.apply(this, args), senderAddress);
+        } catch (err) {
+          // Make the error message more specific
+          if (err.message.includes('Sender must be a member of')) {
+            throw new Error('Sender must be a member of the admin pod');
+          }
+        }
+        return result;
+      }
+      case 'subPodMember': {
+        // create a new pod object with sub pod address
+        const subPod = await new Pod(persona.address);
+
+        // check to see if sub pod is member of the pod
+        const isSubPodMember = await this.isMember(subPod.safe);
+
+        if (!isSubPodMember) throw new Error('Sub pod is not a member of this pod');
+        let result;
+        try {
+          // sub pods require proposal creation
+          result = await subPod.propose(
+            await this.propose(await method.apply(this, args), subPod.safe),
+            senderAddress,
+          );
+        } catch (err) {
+          // Make the error message more specific
+          if (err.message.includes('Sender must be a member of')) {
+            throw new Error('Sender must be a member of the sub pod');
+          }
+        }
+        return result;
+      }
+      default:
+        throw new Error(`${persona.type} is not a valid persona`);
+    }
+  };
+
+  /**
+   * Fetches all personas for a given address related to this pod.
+   * All personas return as an object indicating the type of the persona and the address of the persona.
+   * For members and admins, the persona address is the user's address.
+   * For admin pods and sub pods, the persona address is the pod address.
+   * @param address
+   */
+  getPersonas(address: string) {
+    // Function declared separately out for test/mocking purposes.
+    return getPersonas(this, address);
+  }
+
+  /**
    * Checks if user is a member of this pod
    * @param address
    */
@@ -444,7 +552,13 @@ export default class Pod {
   isAdminPodMember = async (address: string): Promise<boolean> => {
     const checkedAddress = checkAddress(address);
     if (!this.admin) return false;
-    const adminPod = await new Pod(this.admin);
+    let adminPod;
+    if (this.adminPod) adminPod = this.adminPod;
+    else {
+      adminPod = await new Pod(this.admin);
+      this.adminPod = adminPod;
+    }
+
     if (!adminPod) return false;
     return adminPod.isMember(checkedAddress);
   };

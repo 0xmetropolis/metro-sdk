@@ -4,7 +4,7 @@ import { userAddress, constructGqlGetUsers, gqlGetUsers } from './fixtures';
 import { encodeFunctionData, getPreviousModule } from '../src/lib/utils';
 
 const provider = new ethers.providers.InfuraProvider('goerli', {
-  infura: '69ecf3b10bc24c6a972972666fe950c8',
+  infura: process.env.INFURA_KEY,
 });
 
 test('encodeFunctionData should encode function data', () => {

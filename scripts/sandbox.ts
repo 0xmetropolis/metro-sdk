@@ -77,9 +77,31 @@ const multiPodInput = [
 async function main() {
   const { walletOne } = setup(5);
 
-  const pod = await getPod(25);
-
+  const pod = await getPod('balloon.pod.eth');
   console.log('pod', pod);
+  const admin = pod.admin;
+  console.log(admin, 'ADMIN');
+  const adminPod = await getPod(pod.admin);
+  console.log(adminPod, 'ADMIN POD');
+  const personas = await pod.getPersonas('0x3d76351819c5b188C0f7447fe7D1C7AA3e0325C0');
+  console.log('personas', personas);
+
+  // await pod.callAsPersona(
+  //   pod.burnMember,
+  //   ['0x8d2d96d31e86843e9B71E635beA331f9b1016055'],
+  //   personas[0]
+  // );
+
+  // const pod = await getPod('balloon.pod.eth');
+  // console.log('pod', pod);
+  // const personas = await pod.getPersonas('0x3d76351819c5b188C0f7447fe7D1C7AA3e0325C0');
+  // console.log('personas', personas);
+
+  // await pod.callAsPersona(
+  //   pod.mintMember,
+  //   ['0x8d2d96d31e86843e9B71E635beA331f9b1016055'],
+  //   personas[2],
+  // );
 }
 
 main();

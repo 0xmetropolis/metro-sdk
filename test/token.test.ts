@@ -32,10 +32,12 @@ function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
     },
     Safe: {
       address: orcanautAddress,
-      nonce: jest.fn().mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 5) }),
-      getThreshold: jest
-        .fn()
-        .mockResolvedValueOnce({ toNumber: jest.fn().mockImplementation(() => 10) }),
+      nonce: jest.fn().mockResolvedValueOnce({
+        toNumber: jest.fn().mockImplementation(() => 5),
+      }),
+      getThreshold: jest.fn().mockResolvedValueOnce({
+        toNumber: jest.fn().mockImplementation(() => 10),
+      }),
     },
     podId: orcanautPod.id,
     Name: { name: orcanautPod.ensName },
@@ -44,7 +46,7 @@ function mockGetPodFetchersByAddress(opts?: { overrideAdmin?: string }) {
 
 beforeAll(async () => {
   provider = new ethers.providers.InfuraProvider('mainnet', {
-    infura: '69ecf3b10bc24c6a972972666fe950c8',
+    infura: process.env.INFURA_KEY,
   });
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
@@ -73,7 +75,7 @@ describe('admin actions', () => {
 
   test('As an admin, I should be able to mint a member to a pod', async () => {
     provider = new ethers.providers.InfuraProvider('mainnet', {
-      infura: '69ecf3b10bc24c6a972972666fe950c8',
+      infura: process.env.INFURA_KEY,
     });
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
