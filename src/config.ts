@@ -58,8 +58,8 @@ export function init(input: {
 
   config.gnosisUrl =
     network === 1
-      ? 'https://safe-transaction.gnosis.io/api/v1'
-      : 'https://safe-transaction.goerli.gnosis.io/api/v1';
+      ? 'https://safe-transaction-mainnet.safe.global/api/v1'
+      : 'https://safe-transaction-goerli.safe.global/api/v1';
 
   config.etherscanUrl =
     network === 1 ? 'https://api.etherscan.io/api' : 'https://api-goerli.etherscan.io/api';
