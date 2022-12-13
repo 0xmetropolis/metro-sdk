@@ -3,7 +3,6 @@ import { getDeployment } from '@orcaprotocol/contracts';
 // These fetch goerli deployments, but we just need the ABIs so it's irrelevant where we're fetching from.
 import MemberToken from '@orcaprotocol/contracts/deployments/goerli/MemberToken.json';
 import { getSafeSingletonDeployment } from '@gnosis.pm/safe-deployments';
-import { getAddress } from 'ethers/lib/utils';
 import { config } from '../config';
 
 const GnosisSafe = getSafeSingletonDeployment({ version: '1.3.0' });
@@ -123,13 +122,6 @@ export function getContract(contractName: string, signer) {
   const contractJson = getDeployment(contractName, config.network);
   if (!contractJson) throw new RangeError(`Contract ABI could not be found for ${contractName}`);
   return new ethers.Contract(contractJson.address, contractJson.abi, signer);
-}
-
-export async function getIsLatestVersion(signer, pod) {
-  const memberToken = getContract('MemberToken', signer);
-  const latestController = getContract('ControllerLatest', signer);
-  const controllerAddress = await memberToken.memberController(pod.id);
-  return getAddress(latestController.address) === getAddress(controllerAddress);
 }
 
 /**

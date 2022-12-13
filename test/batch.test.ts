@@ -77,6 +77,25 @@ describe('batch transfer memberships', () => {
       batchTransferMembership(await mockSigner.getAddress(), userAddress3, [1, 11], mockSigner),
     ).rejects.toThrow(`Signer ${await mockSigner.getAddress()} is not a member of this pod`);
   });
+
+  test('should throw if the toAddress is already a pod member', async () => {
+    mockGetPodFetchersByAddress();
+    const mockBatchTransfer = jest.fn();
+    jest.spyOn(utils, 'getMetropolisContract').mockReturnValueOnce({
+      safeBatchTransferFrom: mockBatchTransfer,
+    });
+
+    await expect(
+      batchTransferMembership(
+        await mockSigner.getAddress(),
+        metropolis1WithAdminPod?.members[1],
+        podIds,
+        mockSigner,
+      ),
+    ).rejects.toThrow(
+      `Signer ${metropolis1WithAdminPod?.members[1]} is already a member of this pod`,
+    );
+  });
   test('should throw if the signer does not match the fromAddress', async () => {
     mockGetPodFetchersByAddress();
     const mockBatchTransfer = jest.fn();

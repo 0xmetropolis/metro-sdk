@@ -31,13 +31,23 @@ export default async function batchTransferMembership(
   // check the toAddress
   const checkedTo = checkAddress(toAddress);
 
+  // helper function to see if an address is or isn't already a pod member
+  const isPodMember = async address => Promise.all(pods.map(async pod => pod.isMember(address)));
+
+  // check to see if the toAddress is already a pod member
+  const isToAddressPodMember = await isPodMember(checkedTo);
+
+  // if any value is true, throw an error
+  if (isToAddressPodMember.includes(true)) {
+    throw new Error(`Signer ${checkedTo} is already a member of this pod`);
+  }
+
   if (signer) {
     const signerAddress = await signer.getAddress();
     if (checkedFrom !== signerAddress) throw new Error('Signer did not match the from address');
-    // we have to check all the pods to ensure the signer is a member of each one
-    const isPodMember = await Promise.all(pods.map(async pod => pod.isMember(signerAddress)));
-    // if any value in the isPodMember array is false, throw an erray
-    if (isPodMember.includes(false)) {
+    const isSignerPodMember = await isPodMember(signerAddress);
+    // if any value in the isPodMember array is false, throw an error
+    if (isSignerPodMember.includes(false)) {
       throw new Error(`Signer ${signerAddress} is not a member of this pod`);
     }
   }
