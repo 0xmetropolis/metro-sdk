@@ -5,14 +5,14 @@ import {
   handleEthersError,
   getIsSameVersion,
 } from './lib/utils';
-import type Pod from './Pod';
+import Pod from './Pod';
 
 /**
  * Batch transfers pod memberships. If a signer is provided, it will execute the transaction. Otherwise it will return the unsigned tx.
  *
  * @param fromAddress - Address that is giving up membership
  * @param toAddress - Address that will receive membership
- * @param pods - Array of pods for which the toAddress will receive membership
+ * @param podIds - Array of pod IDs for which the toAddress will receive membership
  * @param signer - If a signer is provided, then the tx will execute. Otherwise, an unsigned transaction will be returned.
  * @throws If toAddress is already a member
  * @throws if fromAddress is not a member
@@ -21,11 +21,11 @@ import type Pod from './Pod';
 export default async function batchTransferMembership(
   fromAddress: string,
   toAddress: string,
-  pods: Pod[],
+  podIds: number[],
   signer?: ethers.Signer,
 ): Promise<ethers.providers.TransactionResponse | { to: string; data: string }> {
-  // we need to get the podIDs from the pod object for safe batch transfer
-  const podIds = pods.map(pod => pod.id);
+  // we need to get the pod object for the podIds for the member and version checks
+  const pods = await Promise.all(podIds.map(async podId => new Pod(podId)));
   // check the fromAddress
   const checkedFrom = checkAddress(fromAddress);
   // check the toAddress
