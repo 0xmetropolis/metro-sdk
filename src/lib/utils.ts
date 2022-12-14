@@ -135,3 +135,18 @@ export function getIsSameVersion(podControllerValues) {
   const isSameVersion = allEqual(podControllerValues);
   return isSameVersion;
 }
+
+/**
+ * Determines if an address is or isn't a member of an array of pods
+ * @param pods - an array of pods
+ * @param address - a valid address
+ * @returns - a boolean value stating if a user is a member of all pods
+ */
+export async function isPodMember(pods, address) {
+  const isPodMemberArray = await Promise.all(pods.map(async pod => pod.isMember(address)));
+
+  if (isPodMemberArray.includes(false)) {
+    return false;
+  }
+  return true;
+}

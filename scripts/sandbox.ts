@@ -103,7 +103,7 @@ async function main() {
   const transfer = await batchTransferMembership(
     '0x76180A9ff1fd1EE37873717C7624E8c779cCf4f3',
     '0x3d76351819c5b188C0f7447fe7D1C7AA3e0325C0',
-    // [39, 40],
+    [39, 40],
     walletOne,
   );
   console.log(transfer, 'TRANSFER!');
