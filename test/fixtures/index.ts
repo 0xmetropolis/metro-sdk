@@ -2,8 +2,11 @@ import { getDeployment } from '@orcaprotocol/contracts';
 
 export const userAddress = '0x4B4C43F66ec007D1dBE28f03dAC975AAB5fbb888';
 export const userAddress2 = '0x1cC62cE7cb56ed99513823064295761f9b7C856e';
+export const userAddress3 = '0x47a842347E40C5bA9Ce653f3150A316622932fc1';
 export const orcanautAddress = '0x97F7Dcdf56934Cf87a2d5DF860fD881FA84ad142';
 export const { address: memberTokenAddress } = getDeployment('MemberToken', 1);
+
+export const podIds = [10, 11];
 
 export const orcaCorePod = {
   id: 0,
@@ -56,6 +59,25 @@ export const artNautPod = {
     '0x46E69D6801d4E09360Ab62A638849D72623A2e7E',
     '0x4846162806B025Dcd0759cACF9ec6F9474274282',
     '0xb4fbd802d9dc5C0208346c311BCB6B9ECFF468C6',
+  ],
+};
+
+export const metropolis1WithAdminPod = {
+  admin: '0xf0C7d25c942264D6F21871c05d3dB3b98344b499',
+  id: 10,
+  safe: '0x17CAc2cEe6dBC775aeD64A5E30d5B6CA9c200BaB',
+  ensName: '1-with-admin.pod.eth',
+  imageUrl:
+    'https://orcaprotocol-nft.vercel.app/assets/testnet/000000000000000000000000000000000000000000000000000000000000000a-image',
+  imageNoTextUrl:
+    'https://orcaprotocol-nft.vercel.app/assets/testnet/000000000000000000000000000000000000000000000000000000000000000a-image-no-text',
+  members: [
+    '0x094A473985464098b59660B37162a284b5132753',
+    '0x4B4C43F66ec007D1dBE28f03dAC975AAB5fbb888',
+    '0x61De0bbb6C8215Af3f821FE4884A28bc737f98D3',
+    '0x76180A9ff1fd1EE37873717C7624E8c779cCf4f3',
+    '0x85760ef61c0ccB7BCC4C7A0116d80D59D92e736d',
+    '0xf0C7d25c942264D6F21871c05d3dB3b98344b499',
   ],
 };
 

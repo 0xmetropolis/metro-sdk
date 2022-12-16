@@ -111,3 +111,42 @@ export async function getPreviousModule(safe, module, newController?: string) {
 
   return previousModule;
 }
+
+/**
+ * Returns ethers contract based on name
+ * @param contractName
+ * @param signer
+ * @returns
+ */
+export function getContract(contractName: string, signer) {
+  const contractJson = getDeployment(contractName, config.network);
+  if (!contractJson) throw new RangeError(`Contract ABI could not be found for ${contractName}`);
+  return new ethers.Contract(contractJson.address, contractJson.abi, signer);
+}
+
+/**
+ * Determines if an array of pods are on the same controller version
+ * @param pods - an array of pod controller versions
+ * @returns - a boolean value stating if all pods are on the same version
+ */
+export function getIsSameVersion(podControllerValues) {
+  // helper function to check if all pods have the same controller values
+  const allEqual = arr => arr.every(val => val === arr[0]);
+  const isSameVersion = allEqual(podControllerValues);
+  return isSameVersion;
+}
+
+/**
+ * Determines if an address is or isn't a member of an array of pods
+ * @param pods - an array of pods
+ * @param address - a valid address
+ * @returns - a boolean value stating if a user is a member of all pods
+ */
+export async function isPodMember(pods, address) {
+  const isPodMemberArray = await Promise.all(pods.map(async pod => pod.isMember(address)));
+
+  if (isPodMemberArray.includes(false)) {
+    return false;
+  }
+  return true;
+}

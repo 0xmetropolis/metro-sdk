@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import Pod from './Pod';
 import Proposal from './Proposal';
+import batchTransferMembership from './batch';
 import { multiPodCreate, podifySafe, enableController } from './pod-create';
 import { Pod as PodType, Proposal as ProposalType, ProposalStatus } from './types';
 import { init, config } from './config';
@@ -75,6 +76,7 @@ export {
   multiPodCreate,
   podifySafe,
   enableController,
+  batchTransferMembership,
   PodType as Pod,
   ProposalType as Proposal,
   ProposalStatus,

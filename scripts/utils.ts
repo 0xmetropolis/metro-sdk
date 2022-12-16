@@ -13,7 +13,7 @@ export function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export function setup(network = 4) {
+export function setup(network = 5) {
   const networkName = network === 1 ? 'mainnet' : 'goerli';
   const provider = new ethers.providers.InfuraProvider(networkName, process.env.INFURA_KEY);
   init({ provider, network });
