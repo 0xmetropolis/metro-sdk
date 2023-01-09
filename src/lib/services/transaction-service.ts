@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { ethers, BigNumber } from 'ethers';
-import { generateSignature } from '@gnosis.pm/safe-core-sdk/dist/src/utils/signatures';
-import EthersAdapter from '@gnosis.pm/safe-ethers-lib';
+import { generateSignature } from '@safe-global/safe-core-sdk/dist/src/utils/signatures';
+import EthersAdapter from '@safe-global/safe-ethers-lib';
 import type Proposal from '../../Proposal';
 import { config } from '../../config';
 import { lookupContractAbi } from './etherscan';
@@ -285,7 +285,7 @@ export async function approveSafeTransaction(
   const { safeTxHash } = safeTransaction;
   const ethAdapter = new EthersAdapter({
     ethers,
-    signer,
+    signerOrProvider: signer,
   });
 
   // Using Gnosis SDK to normalize signatures across particular wallet/provider combos.

@@ -39,10 +39,10 @@
   "dependencies": {
     "@0xsequence/multicall": "^0.40.5",
     "@ensdomains/ensjs": "^2.0.1",
-    "@gnosis.pm/safe-core-sdk": "^2.3.2",
     "@gnosis.pm/safe-deployments": "^1.10.0",
-    "@gnosis.pm/safe-ethers-lib": "^1.4.0",
     "@orcaprotocol/contracts": "^5.11.0",
+    "@safe-global/safe-core-sdk": "^3.2.2",
+    "@safe-global/safe-ethers-lib": "^1.8.0",
     "axios": "^0.25.0",
     "ethers": "^5.5.4",
     "typescript": "^4.6.2"
