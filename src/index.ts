@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import Pod from './Pod';
 import Proposal from './Proposal';
 import batchTransferMembership from './batch';
-import { multiPodCreate, podifySafe, enableController } from './pod-create';
+import { multiPodCreate, podifySafe, enableController, createPod } from './pod-create';
 import { Pod as PodType, Proposal as ProposalType, ProposalStatus } from './types';
 import { init, config } from './config';
 import { checkAddress } from './lib/utils';
@@ -74,6 +74,7 @@ export {
   fetchAdminPodIds,
   customSubgraphQuery,
   multiPodCreate,
+  createPod,
   podifySafe,
   enableController,
   batchTransferMembership,
