@@ -8,7 +8,7 @@
 
 ### Checklist
 
-<!-- `x` all completed boxes -->
+<!-- `x` completed boxes,  wrap tildes ~if unnecessary~ -->
 
 - [ ] Documentation updated
 - [ ] Tested code changes
