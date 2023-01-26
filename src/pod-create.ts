@@ -12,9 +12,7 @@ function createAddressPointer(number) {
 }
 
 function getImageUrl(nextPodId: number) {
-  const baseUrl = `https://orcaprotocol-nft.vercel.app${
-    config.network === 5 ? '/assets/testnet/' : '/assets/'
-  }`;
+  const baseUrl = `https://metropolis-nft.herokuapp.com/assets/${config.network}/`;
   return `${baseUrl}${nextPodId.toString(16).padStart(64, '0')}-image`;
 }
 
