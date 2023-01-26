@@ -122,9 +122,7 @@ export default class Pod {
       this.address = this.safe;
       this.ensName = Name.name;
 
-      const baseUrl = `https://orcaprotocol-nft.vercel.app${
-        network === 5 ? '/assets/testnet/' : '/assets/'
-      }`;
+      const baseUrl = `https://metropolis-nft.herokuapp.com/assets/${network}/`;
       // Pod ID converted to hex and left padded to 64 chars.
       const paddedId = podId.toString(16).padStart(64, '0');
       try {

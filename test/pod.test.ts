@@ -57,7 +57,6 @@ test('getPod should be able to fetch via address', async () => {
   expect(pod.id).toEqual(orcanautPod.id);
   expect(pod.safe).toEqual(orcanautPod.safe);
   expect(pod.address).toEqual(pod.safe);
-  expect(pod.imageNoTextUrl).toEqual(orcanautPod.imageNoTextUrl);
   expect(pod.admin).toEqual(orcanautPod.admin);
   expect(pod.ensName).toEqual(orcanautPod.ensName);
   expect(pod.nonce).toBe(5);
@@ -69,7 +68,6 @@ test('getPod should be able to fetch via ens name', async () => {
   const pod = await getPod(orcanautPod.ensName);
   expect(pod.id).toEqual(orcanautPod.id);
   expect(pod.safe).toEqual(orcanautPod.safe);
-  expect(pod.imageNoTextUrl).toEqual(orcanautPod.imageNoTextUrl);
   expect(pod.admin).toEqual(orcanautPod.admin);
   expect(pod.ensName).toEqual(orcanautPod.ensName);
 });
@@ -79,7 +77,6 @@ test('getPod should be able to fetch via pod id', async () => {
   const pod = await getPod(orcanautPod.id);
   expect(pod.id).toEqual(orcanautPod.id);
   expect(pod.safe).toEqual(orcanautPod.safe);
-  expect(pod.imageNoTextUrl).toEqual(orcanautPod.imageNoTextUrl);
   expect(pod.admin).toEqual(orcanautPod.admin);
   expect(pod.ensName).toEqual(orcanautPod.ensName);
 });

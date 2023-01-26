@@ -12,9 +12,9 @@ export const orcaCorePod = {
   id: 0,
   safe: '0x7bf660f3e287d2a05F46b72Ae69a048f3781Db90',
   imageUrl:
-    'https://orcaprotocol-nft.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000000-image',
+    'https://metropolis-nft.herokuapp.com/assets/5/0000000000000000000000000000000000000000000000000000000000000000-image',
   imageNoTextUrl:
-    'https://orcaprotocol-nft.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000000-image-no-text',
+    'https://metropolis-nft.herokuapp.com/assets/5/0000000000000000000000000000000000000000000000000000000000000000-image-no-text',
   admin: '0x4B4C43F66ec007D1dBE28f03dAC975AAB5fbb888',
   ensName: 'orca-core.pod.xyz',
 };
@@ -23,9 +23,9 @@ export const orcanautPod = {
   id: 1,
   safe: orcanautAddress,
   imageUrl:
-    'https://orcaprotocol-nft.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000001-image',
+    'https://metropolis-nft.herokuapp.com/assets/5/0000000000000000000000000000000000000000000000000000000000000001-image',
   imageNoTextUrl:
-    'https://orcaprotocol-nft.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000001-image-no-text',
+    'https://metropolis-nft.herokuapp.com/assets/5/0000000000000000000000000000000000000000000000000000000000000001-image-no-text',
   admin: '0x094A473985464098b59660B37162a284b5132753',
   ensName: 'orcanauts.pod.xyz',
   members: [
@@ -49,9 +49,9 @@ export const artNautPod = {
   safe: '0x25F55d2e577a937433686A01439E5fFdffe62218',
   ensName: 'art-naut.pod.xyz',
   imageUrl:
-    'https://orcaprotocol-nft.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000006-image',
+    'https://metropolis-nft.herokuapp.com/assets/5/0000000000000000000000000000000000000000000000000000000000000006-image',
   imageNoTextUrl:
-    'https://orcaprotocol-nft.vercel.app/assets/0000000000000000000000000000000000000000000000000000000000000006-image-no-text',
+    'https://metropolis-nft.herokuapp.com/assets/5/0000000000000000000000000000000000000000000000000000000000000006-image-no-text',
   members: [
     '0x094A473985464098b59660B37162a284b5132753',
     '0x29864e4d1588C4164DEe7cc495147Ec141f9c9d5',
@@ -68,9 +68,9 @@ export const metropolis1WithAdminPod = {
   safe: '0x17CAc2cEe6dBC775aeD64A5E30d5B6CA9c200BaB',
   ensName: '1-with-admin.pod.eth',
   imageUrl:
-    'https://orcaprotocol-nft.vercel.app/assets/testnet/000000000000000000000000000000000000000000000000000000000000000a-image',
+    'https://metropolis-nft.herokuapp.com/assets/5/000000000000000000000000000000000000000000000000000000000000000a-image',
   imageNoTextUrl:
-    'https://orcaprotocol-nft.vercel.app/assets/testnet/000000000000000000000000000000000000000000000000000000000000000a-image-no-text',
+    'https://metropolis-nft.herokuapp.com/assets/5/000000000000000000000000000000000000000000000000000000000000000a-image-no-text',
   members: [
     '0x094A473985464098b59660B37162a284b5132753',
     '0x4B4C43F66ec007D1dBE28f03dAC975AAB5fbb888',
