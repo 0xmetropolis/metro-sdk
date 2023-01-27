@@ -131,8 +131,8 @@ export default class Pod {
       } catch {
         this.description = null;
       }
-      const imageUrl = `${baseUrl}${paddedId}-image`;
-      const imageNoTextUrl = `${baseUrl}${paddedId}-image-no-text`;
+      const imageUrl = `${baseUrl}${paddedId}/image`;
+      const imageNoTextUrl = `${baseUrl}${paddedId}/image-no-text`;
 
       this.imageUrl = imageUrl;
       this.imageNoTextUrl = imageNoTextUrl;

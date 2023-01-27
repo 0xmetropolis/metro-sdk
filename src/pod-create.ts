@@ -13,7 +13,7 @@ function createAddressPointer(number) {
 
 function getImageUrl(nextPodId: number) {
   const baseUrl = `https://metropolis-nft.herokuapp.com/assets/${config.network}/`;
-  return `${baseUrl}${nextPodId.toString(16).padStart(64, '0')}-image`;
+  return `${baseUrl}${nextPodId.toString(16).padStart(64, '0')}/image`;
 }
 
 /**
