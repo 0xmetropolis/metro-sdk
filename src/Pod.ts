@@ -121,6 +121,7 @@ export default class Pod {
       this.safe = safe;
       this.address = this.safe;
       this.ensName = Name.name;
+      this.podName = this.ensName?.includes('.pod') ? this.ensName.split('.')[0] : this.ensName;
 
       const baseUrl = `https://metropolis-nft.herokuapp.com/assets/${network}/`;
       // Pod ID converted to hex and left padded to 64 chars.
@@ -160,6 +161,10 @@ export default class Pod {
 
   /** @property ENS name */
   ensName: string;
+
+  /** @property Pod name
+   * full ENS name if custom domain, otherwise ensLabel if pod URL */
+  podName: string;
 
   /** @property Admin address */
   admin: string;
