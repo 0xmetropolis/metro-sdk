@@ -15,15 +15,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
-          node-version: 16.12.0
+          node-version: 18.x
+
+      - name: Install dependencies
+        run: npm install --no-save
 
       - name: Lint, test, compile, and generate documentation
         run: |
-          npm ci
           npm run lint
           npm run test
           npm run compile
@@ -33,7 +35,7 @@ jobs:
           ALCHEMY_TOKEN: ${{ secrets.ALCHEMY_TOKEN }}
 
       - name: Semantic Release
-        uses: docker://ghcr.io/codfish/semantic-release-action@sha256:43a9e5ce88fc0460c22f3f3c45e39ac99e1cefff2ffd76c6e8c34306c8ccec91
+        uses: docker://ghcr.io/codfish/semantic-release-action@sha256:601fd6c1db9efbcfabd34ba4563e7d0b9eb0f8ba11316e3e7d6a9b6883dac8ba
         id: semantic
         with:
           branches: |
@@ -48,9 +50,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Dump semantic outputs
-        if: steps.semantic.outputs.new-release-published == 'true'
-        run: echo "$SEMANTIC_OUTPUTS"
-        env:
-          SEMANTIC_OUTPUTS: ${{ toJson(steps.semantic.outputs) }}

@@ -6,35 +6,24 @@ jobs:
   validate:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        node: [16.x, 18.x, 19.x]
+
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - uses: actions/checkout@v2
-
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
-          node-version: 14.17.5
+          node-version: ${{ matrix.node }}
 
-      - name: install dependencies
-        run: |
-          npm install -g npm
-          npm ci
-        env:
-          GITHUB_TOKEN: ${{ secrets.GPR_TOKEN }} # PAT to access packages
+      - name: Install dependencies
+        run: npm install --no-save
 
       - run: npm run lint
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # We just need a value here
 
       - run: npm run test
-        env:
-          CI: true
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # We just need a value here
 
       - run: npm run compile
-        env:
-          CI: true
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # We just need a value here
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
