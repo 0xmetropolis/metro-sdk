@@ -276,9 +276,9 @@ test('Pod.isAdmin() should return true/false if a given address is the admin', a
   jest.spyOn(axios, 'post').mockResolvedValueOnce(gqlGetUsers);
 
   const pod = await getPod(orcanautAddress);
-  const isAdmin1 = pod.isAdmin('0x094A473985464098b59660B37162a284b5132753');
+  const isAdmin1 = pod.isAdmin('0x7bf660f3e287d2a05F46b72Ae69a048f3781Db90');
   expect(isAdmin1).toBe(true);
-  const isAdmin1LowerCase = pod.isAdmin('0x094A473985464098b59660B37162a284b5132753'.toLowerCase());
+  const isAdmin1LowerCase = pod.isAdmin('0x7bf660f3e287d2a05F46b72Ae69a048f3781Db90'.toLowerCase());
   expect(isAdmin1LowerCase).toBe(true);
   const isAdmin2 = pod.isAdmin(userAddress);
   expect(isAdmin2).toBe(false);

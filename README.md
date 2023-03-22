@@ -1,13 +1,11 @@
-# orca-sdk
-
-Todo: update readme
+# metro-sdk
 
 ## Getting Started
 
 Initialize the SDK with the init function on startup:
 
 ```js
-import { init } from '@orcaprotocol/orca-sdk';
+import { init } from '@0xmetropolis/metro-sdk';
 
 // Any ethers provider works.
 // 1 for mainnet, 5 for goerli.
@@ -19,7 +17,7 @@ Once you init the SDK, you can call `getPod()`, `getUserPods()`, or `getAdminPod
 fetch Pod objects.
 
 ```js
-import { getPod, getUserPods, getAdminPods } from '@orcaprotocol/orca-sdk';
+import { getPod, getUserPods, getAdminPods } from '@0xmetropolis/metro-sdk';
 
 const podFromEnsName = await getPod('mypod.pod.xyz');
 // ENS names also work for the below.
@@ -41,12 +39,12 @@ const adminPods = await getAdminPods(adminAddress);
 Types can be imported as such:
 
 ```js
-import { Pod, Proposal } from '@orcaprotocol/orca-sdk';
+import { Pod, Proposal } from '@0xmetropolis/metro-sdk';
 ```
 
 ### Additional Documentation
 
-Additional documentation can be found [here](https://orcaprotocol.github.io/orca-sdk/)
+Additional documentation can be found [here](https://0xmetropolis.github.io/metro-sdk/)
 
 ## Test Scripts
 

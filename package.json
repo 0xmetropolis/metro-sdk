@@ -1,5 +1,5 @@
 {
-  "name": "@orcaprotocol/orca-sdk",
+  "name": "@0xmetropolis/metro-sdk",
   "version": "0.0.0-semantically-released",
   "description": "",
   "main": "dist/index.js",
@@ -16,14 +16,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/orcaprotocol/orca-sdk.git"
+    "url": "git+https://github.com/0xmetropolis/metro-sdk.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/orcaprotocol/orca-sdk/issues"
+    "url": "https://github.com/0xmetropolis/metro-sdk/issues"
   },
-  "homepage": "https://github.com/orcaprotocol/orca-sdk#readme",
+  "homepage": "https://github.com/0xmetropolis/metro-sdk#readme",
   "devDependencies": {
     "@babel/core": "^7.16.12",
     "@babel/preset-env": "^7.16.11",
