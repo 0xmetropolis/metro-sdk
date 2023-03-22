@@ -48,6 +48,6 @@ Additional documentation can be found [here](https://0xmetropolis.github.io/metr
 
 ## Test Scripts
 
-We have some test scripts to test approve/reject proposals and super proposals. They can be executed
-by duplicating the `env-examples.json` with private keys in `env.json`, and executing the
+There are have some test scripts to test approve/reject proposals and super proposals. They can be
+executed by duplicating the `env-examples.json` with private keys in `env.json`, and executing the
 transactions with `npx ts-node ./scripts/reject-superproposal.ts`.
