@@ -26,7 +26,7 @@ export const orcanautPod = {
     'https://metropolis-nft.herokuapp.com/assets/5/0000000000000000000000000000000000000000000000000000000000000001/image',
   imageNoTextUrl:
     'https://metropolis-nft.herokuapp.com/assets/5/0000000000000000000000000000000000000000000000000000000000000001/image-no-text',
-  admin: '0x094A473985464098b59660B37162a284b5132753',
+  admin: '0x7bf660f3e287d2a05F46b72Ae69a048f3781Db90',
   ensName: 'orcanauts.pod.xyz',
   members: [
     '0x094A473985464098b59660B37162a284b5132753',
